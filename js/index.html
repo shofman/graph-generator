@@ -1,0 +1,34 @@
+<html>
+<head>
+    <script type="text/javascript" src="./vis.js"></script>
+    <link href="./vis.css" rel="stylesheet" type="text/css" />
+
+    <style type="text/css">
+        #generation, #mynetwork {
+            display: inline;
+        }
+        #generation2 {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<script type="text/javascript" src="./generateDungeon.js"></script>
+<button id="rewind" onclick="rewind()">-</button>
+<input id="generation" type="range" min="1" max="15" range="1" value="15" onchange="drawDungeon()"/>
+<button id="advance" onclick="advance()">+</button>
+<input id="keys" type="checkbox" onchange="drawDungeon()"/>
+<button id="verify" onclick="verify()">Verify</button>
+<span id="seed"></span>
+<button id="generation2" onclick="drawDungeon()" type="button">Refresh</button>
+
+<div id="mynetwork"></div>
+
+<image id="imagegraph" src="./watertemple.png" width="800" height="800" />
+<!-- <image id="imagegraph" src="./zelda+dungeon2.jpg_large" width="800" height="800" /> -->
+
+<script type="text/javascript">
+    drawDungeon()
+</script>
+</body>
+</html>

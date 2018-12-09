@@ -1,0 +1,10 @@
+3) Create verifier - use iterative BFS to traverse tree, ensuring that the tree is beatable
+5) Implement a version of the shadow temple
+6) Create a way of scoring the dungeons - number of branching paths + traversal distance?
+  a) Should ensure that the boss key is not immediately available, nor is the key item
+7) Create random dungeon that uses probabilities:
+  a) 1 key item to unlock entries
+  b) Higher preference given to locks and keys vs special locks
+  c) 1/8 (one per dungeon world) chance of having a 'crystals' style lock in a dungeon
+  d) 1/4 having an 'arrows' style lock in a dungeon
+  Probabilities subject to change, depending on the results of the evaluator
