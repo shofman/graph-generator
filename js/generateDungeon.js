@@ -39,6 +39,16 @@ Repeat for any “open” subtree.
 Example dungeon node - {id: 1, label: 'Node 1'},
 */
 
+const KEY_TYPES = {
+  BOSS: 'boss',
+  NORMAL_KEY: 'key',
+  KEY_ITEM: 'key_item',
+  MULTI_KEY: 'multiKey',
+  MULTI_LOCK: 'multiLock',
+  SINGLE_LOCK_KEY: 'singleKeyLock',
+  UNKNOWN: 'unknown',
+}
+
 const getAllSubsets = theArray => 
   theArray.reduce(
     (subsets, value) => subsets.concat(
@@ -56,6 +66,7 @@ class Node {
     this.locked = false
     this.keys = []
     this.locks = []
+    this.type = undefined
   }
 
   getParent() {
@@ -94,8 +105,21 @@ class Node {
     this.keys = keys
   }
 
+  setType(type) {
+    this.type = type
+  }
+
   getKeys() {
     return this.keys
+  }
+
+  calculateHeight() {
+    const calculatedHeight = !!this.parent ? this.parent.calculateHeight() + 1 : 0
+    return calculatedHeight
+  }
+
+  isBossNode() {
+    return this.name === ''
   }
 
   setLocks(locks) {
@@ -111,7 +135,7 @@ class Node {
   }
 
   hasChildren() {
-    return !!this.children
+    return !!this.children.length
   }
 
   addChild(childNode) {
@@ -128,38 +152,41 @@ class Node {
   }
 
   insertLock(lockNode, childrenNodes) {
+    lockNode.setLocked()
     this.addChild(lockNode)
+
     childrenNodes.forEach(child => {
       this.removeChild(child)
       lockNode.addChild(child)
     })
   }
 
-  addObstacle(name, numberOfLocks, numberOfKeys, color, childrenToLock) {
+  addObstacle({ name, numberOfLocks, numberOfKeys, type, color, childrenToLock }) {
     const addedLocks = []
     const addedKeys = []
 
     for (let i of Array(numberOfLocks).keys()) {
-      const lockNode = new Node(
-        null,
-        createNode(`${name}Gate${numberOfLocks > 1 ? i + 1 : ''}`, color)
-      )
+      const lockNode = createNode(`${name}Gate${numberOfLocks > 1 ? i + 1 : ''}`, color)
       addedLocks.push(lockNode)
-      lockNode.setLocked()
       this.insertLock(lockNode, numberOfLocks > 1 ? [childrenToLock[i]] : childrenToLock)
     }
 
     for (let i of Array(numberOfKeys).keys()) {
-      const keyNode = new Node(
-        null,
-        createNode(`${name}${numberOfKeys > 1 ? i + 1 : ''}Key`, color)
-      )
+      const keyNode = createNode(`${name}${numberOfKeys > 1 ? i + 1 : ''}Key`, color)
       addedKeys.push(keyNode)
       this.addChild(keyNode)
     }
 
-    addedLocks.forEach(lock => lock.setKeys(addedKeys))
-    addedKeys.forEach(key => key.setLocks(addedLocks))
+    addedLocks.forEach(lock => {
+      lock.setKeys(addedKeys)
+      lock.setType(type)
+    })
+    addedKeys.forEach(key => {
+      key.setLocks(addedLocks)
+      key.setType(type)
+    })
+
+    return addedLocks.concat(addedKeys)
   }
 
   addRandomObstacle({
@@ -194,9 +221,8 @@ class Node {
       }
 
       if (result >= 1 / nodeSubsets.length && !(hasAdded && isSingleLock)) {
-        const lockNode = new Node(null, createNode(`${name}Gate${!isSingleLock ? i++ : ''}`, color))
+        const lockNode = createNode(`${name}Gate${!isSingleLock ? i++ : ''}`, color)
         hasAdded = true
-        lockNode.setLocked()
         if (forceAdd) {
           this.insertLock(lockNode, [child])
         } else {
@@ -212,14 +238,14 @@ class Node {
 
     if (!hasAdded) {
       // Pick one entry at random
-      const lockNode = new Node(null, createNode(`${name}Gate`, color))
+      const lockNode = createNode(`${name}Gate`, color)
       const childToLock = childrenToLock[Math.floor(randomizer() * childrenToLock.length)]
       this.insertLock(lockNode, [childToLock])
       addedLocks.push(lockNode)
     }
 
     if (isSingleKey) {
-      const keyNode = new Node(null, createNode(`${name}Key`, color))
+      const keyNode = createNode(`${name}Key`, color)
       this.addChild(keyNode)
       addedKeys.push(keyNode)
     } else {
@@ -228,10 +254,7 @@ class Node {
       const keysToGen = numberOfKeys[Math.floor(randomizer() * numberOfKeys.length)]
 
       for (let i of Array(keysToGen).keys()) {
-        const keyNode = new Node(
-          null,
-          createNode(`${name}${i + 1}Key`, color)
-        )
+        const keyNode = createNode(`${name}${i + 1}Key`, color)
         addedKeys.push(keyNode)
         this.addChild(keyNode)
       }
@@ -243,8 +266,8 @@ class Node {
 }
 
 class Tree {
-  constructor(nodeValue) {
-    this.rootValue = new Node(null, nodeValue)
+  constructor() {
+    this.rootValue = createNode('start', '#96c2fc', null)
   }
 
   draw() {
@@ -287,9 +310,16 @@ class Tree {
     }
   }
 
+  addEndState() {
+    const endNode = createNode('end', 'beige', this.rootValue)
+    this.rootValue.addChild(endNode)
+    return endNode
+  }
+
   createBossObstacle(endNode) {
     return {
       name: 'boss',
+      type: KEY_TYPES.BOSS,
       numberOfKeys: 1,
       numberOfLocks: 1,
       color: 'red',
@@ -300,6 +330,7 @@ class Tree {
   createLockObstacle(name, getChildrenToLock) {
     return {
       name,
+      type: KEY_TYPES.NORMAL_KEY,
       numberOfLocks: 1,
       numberOfKeys: 1,
       color: 'lightblue',
@@ -307,15 +338,13 @@ class Tree {
     }
   }
 
-  hardCode(step) {
-    const endNode = new Node(this.rootValue, createNode('end', 'beige'))
-    this.rootValue.addChild(endNode)
-
+  gnarledRoot(step) {
     const obstacles = [
-      this.createBossObstacle(endNode),
+      this.createBossObstacle(this.addEndState()),
       this.createLockObstacle('firstLock', rootValue => rootValue.getUnlockedChildren()),
       {
         name: 'arrow',
+        type: KEY_TYPES.KEY_ITEM,
         numberOfLocks: 3,
         numberOfKeys: 1,
         color: 'lightgreen',
@@ -324,6 +353,7 @@ class Tree {
       this.createLockObstacle('secondLock', rootValue => rootValue.getUnlockedChildren()),
       {
         name: 'aLock',
+        type: KEY_TYPES.SINGLE_LOCK_KEY,
         numberOfLocks: 1,
         numberOfKeys: 1,
         color: 'orange',
@@ -350,15 +380,13 @@ class Tree {
     return obstacles.length
   }
 
-  hardCode2(step) {
-    const endNode = new Node(this.rootValue, createNode('end', 'beige'))
-    this.rootValue.addChild(endNode)
-
+  moonlightGrotto(step) {
     const obstacles = [
-      this.createBossObstacle(endNode),
+      this.createBossObstacle(this.addEndState()),
       this.createLockObstacle('firstLock', rootValue => rootValue.getLockedChildren()),
       {
         name: 'crystal',
+        type: KEY_TYPES.MULTI_KEY,
         numberOfLocks: 1,
         numberOfKeys: 4,
         color: 'lightgreen',
@@ -366,6 +394,7 @@ class Tree {
       },
       {
         name: 'seedShooter',
+        type: KEY_TYPES.KEY_ITEM,
         numberOfLocks: 2,
         numberOfKeys: 1,
         color: 'orange',
@@ -383,16 +412,68 @@ class Tree {
     return obstacles.length
   }
 
-  hardCode3(step) {
-    const endNode = new Node(this.rootValue, createNode('end', 'beige'))
-    this.rootValue.addChild(endNode)
-
+  rocsFeather(step) {
     const obstacles = [
-      this.createBossObstacle(endNode),
+      this.createBossObstacle(this.addEndState()),
+      this.createLockObstacle('firstLock', rootValue => rootValue.getUnlockedChildren()),
+      this.createLockObstacle('secondLock', rootValue => rootValue.getFilteredChildren(['bossGate'])),
+      {
+        name: 'switchPanel',
+        type: KEY_TYPES.SINGLE_LOCK_KEY,
+        numberOfLocks: 1,
+        numberOfKeys: 1,
+        color: 'orange',
+        getChildrenToLock: rootValue => rootValue.getFilteredChildren(['firstLockGate', 'firstLockKey', 'secondLockGate']),
+      },
+      this.createLockObstacle('thirdLock', rootValue => rootValue.getFilteredChildren(['switchPanelGate'])),
+      {
+        name: 'rocsFeather',
+        type: KEY_TYPES.KEY_ITEM,
+        numberOfLocks: 3,
+        numberOfKeys: 1,
+        color: 'lightgreen',
+        getChildrenToLock: rootValue => rootValue.getFilteredChildren(['switchPanelKey', 'secondLockKey', 'thirdLockKey']),
+      },
+      this.createLockObstacle('fourthLock', rootValue => rootValue.getFilteredChildren(['rocsFeatherGate1', 'rocsFeatherGate3', 'rocsFeatherKey', 'thirdLockGate'])),
+      this.createLockObstacle('fifthLock', rootValue => rootValue.getFilteredChildren(['fourthLockGate', 'fourthLockKey'])),
+    ]
+
+    this.addDungeonObstacles(obstacles, step)
+
+    return obstacles.length
+  }
+
+  shadowTemple(step) {
+    const obstacles = [
+      this.createBossObstacle(this.addEndState()),
+      this.createLockObstacle('firstLock', rootValue => rootValue.getFilteredChildren(['bossGate'])),
+      this.createLockObstacle('secondLock', rootValue => rootValue.getFilteredChildren(['firstLockKey', 'bossKey', 'firstLockGate'])),
+      this.createLockObstacle('thirdLock', rootValue => rootValue.getFilteredChildren(['secondLockGate', 'secondLockKey'])),
+      this.createLockObstacle('fourthLock', rootValue => rootValue.getFilteredChildren(['thirdLockGate', 'thirdLockKey'])),
+      this.createLockObstacle('fifthLock', rootValue => rootValue.getFilteredChildren(['fourthLockGate', 'fourthLockKey'])),
+      {
+        name: 'hoverboots',
+        type: KEY_TYPES.KEY_ITEM,
+        numberOfLocks: 1,
+        numberOfKeys: 1,
+        color: 'lightgreen',
+        getChildrenToLock: rootValue => rootValue.getFilteredChildren(['fifthLockGate', 'fifthLockKey']),
+      },
+    ]
+
+    this.addDungeonObstacles(obstacles, step)
+
+    return obstacles.length
+  }
+
+  waterTemple(step) {
+    const obstacles = [
+      this.createBossObstacle(this.addEndState()),
       this.createLockObstacle('firstLock', rootValue => rootValue.getUnlockedChildren()),
       this.createLockObstacle('secondLock', rootValue => rootValue.getFilteredChildren(['firstLockGate'])),
       {
         name: 'longshot',
+        type: KEY_TYPES.KEY_ITEM,
         numberOfLocks: 3,
         numberOfKeys: 1,
         color: 'lightgreen',
@@ -402,6 +483,7 @@ class Tree {
       this.createLockObstacle('fourthLock', rootValue => rootValue.getFilteredChildren(['thirdLockGate'])),
       {
         name: 'level3Water',
+        type: KEY_TYPES.MULTI_LOCK,
         numberOfLocks: 2,
         numberOfKeys: 1,
         color: 'orange',
@@ -410,6 +492,7 @@ class Tree {
       this.createLockObstacle('fifthLock', rootValue => rootValue.getFilteredChildren(['level3WaterKey'])),
       {
         name: 'level2Water',
+        type: KEY_TYPES.SINGLE_LOCK_KEY,
         numberOfLocks: 1,
         numberOfKeys: 1,
         color: 'orange',
@@ -418,6 +501,7 @@ class Tree {
       this.createLockObstacle('sixthLock', rootValue => rootValue.getFilteredChildren(['level2WaterGate', 'level2WaterKey'])),
       {
         name: 'level1Water',
+        type: KEY_TYPES.SINGLE_LOCK_KEY,
         numberOfLocks: 1,
         numberOfKeys: 1,
         color: 'orange',
@@ -430,45 +514,7 @@ class Tree {
     return obstacles.length
   }
 
-  randomCreation(step, seedName) {
-    const endNode = new Node(this.rootValue, createNode('end', 'beige'))
-    this.rootValue.addChild(endNode)
-
-    const obstacles = [
-      {
-        name: 'boss',
-        color: 'red',
-        getChildrenToLock: () => [endNode],
-        isSingleKey: true,
-        isSingleLock: true,
-        probabilityToAdd: '100',
-      },
-      this.createLock('firstLock'),
-      {
-        name: 'arrow',
-        color: 'lightgreen',
-        getChildrenToLock: rootValue => rootValue.getChildren(),
-        isSingleKey: true,
-        isSingleLock: false,
-      },
-      this.createLock('secondLock'),
-      {
-        name: 'aLock',
-        color: 'orange',
-        getChildrenToLock: rootValue => rootValue.getChildren(),
-        isSingleKey: true,
-        isSingleLock: true,
-      },
-      this.createLock('thirdLock'),
-      this.createLock('fourthLock'),
-    ]
-
-    this.addRandomDungeonObstacle(obstacles, step, seedName)
-
-    return obstacles.length
-  }
-
-  createLock(name) {
+  createRandomLock(name) {
     return {
       name,
       color: 'lightblue',
@@ -478,20 +524,49 @@ class Tree {
     }
   }
 
-  randomCreation2(step, seedName) {
-    const endNode = new Node(this.rootValue, createNode('end', 'beige'))
-    this.rootValue.addChild(endNode)
+  createRandomBossObstacle(endNode) {
+    return {
+      name: 'boss',
+      color: 'red',
+      getChildrenToLock: () => [endNode],
+      isSingleKey: true,
+      isSingleLock: true,
+      probabilityToAdd: '100',
+    }
+  }
 
+  randomCreation(step, seedName) {
     const obstacles = [
+      this.createRandomBossObstacle(this.addEndState()),
+      this.createRandomLock('firstLock'),
       {
-        name: 'boss',
-        color: 'red',
-        getChildrenToLock: () => [endNode],
+        name: 'arrow',
+        color: 'lightgreen',
+        getChildrenToLock: rootValue => rootValue.getChildren(),
+        isSingleKey: true,
+        isSingleLock: false,
+      },
+      this.createRandomLock('secondLock'),
+      {
+        name: 'aLock',
+        color: 'orange',
+        getChildrenToLock: rootValue => rootValue.getChildren(),
         isSingleKey: true,
         isSingleLock: true,
-        probabilityToAdd: '100',
       },
-      this.createLock('firstLock'),
+      this.createRandomLock('thirdLock'),
+      this.createRandomLock('fourthLock'),
+    ]
+
+    this.addRandomDungeonObstacles(obstacles, step, seedName)
+
+    return obstacles.length
+  }
+
+  randomCreation2(step, seedName) {
+    const obstacles = [
+      this.createRandomBossObstacle(this.addEndState()),
+      this.createRandomLock('firstLock'),
       {
         name: 'crystal',
         color: 'lightgreen',
@@ -506,12 +581,56 @@ class Tree {
         isSingleKey: true,
         isSingleLock: false,
       },
-      this.createLock('secondLock'),
-      this.createLock('thirdLock'),
-      this.createLock('fourthLock'),
+      this.createRandomLock('secondLock'),
+      this.createRandomLock('thirdLock'),
+      this.createRandomLock('fourthLock'),
     ]
 
-    this.addRandomDungeonObstacle(obstacles, step, seedName)
+    this.addRandomDungeonObstacles(obstacles, step, seedName)
+
+    return obstacles.length
+  }
+
+  randomCreation3(step, seedName) { // Water temple
+    const obstacles = [
+      this.createRandomBossObstacle(this.addEndState()),
+      this.createRandomLock('firstLock'),
+      this.createRandomLock('secondLock'),
+      {
+        name: 'longshot',
+        color: 'lightgreen',
+        getChildrenToLock: rootValue => rootValue.getChildren(),
+        isSingleKey: true,
+        isSingleLock: false,
+      },
+      this.createRandomLock('thirdLock'),
+      this.createRandomLock('fourthLock'),
+      {
+        name: 'level3Water',
+        color: 'orange',
+        getChildrenToLock: rootValue => rootValue.getChildren(),
+        isSingleKey: true,
+        isSingleLock: false,
+      },
+      this.createRandomLock('fifthLock'),
+      {
+        name: 'level2Water',
+        color: 'orange',
+        getChildrenToLock: rootValue => rootValue.getChildren(),
+        isSingleKey: true,
+        isSingleLock: true,
+      },
+      this.createRandomLock('sixthLock'),
+      {
+        name: 'level1Water',
+        color: 'orange',
+        getChildrenToLock: rootValue => rootValue.getChildren(),
+        isSingleKey: true,
+        isSingleLock: true,
+      },
+    ]
+
+    this.addRandomDungeonObstacles(obstacles, step, seedName)
 
     return obstacles.length
   }
@@ -519,17 +638,13 @@ class Tree {
   addDungeonObstacles(obstacles, step) {
     const obstaclesToDraw = obstacles.slice(0, step)
     obstaclesToDraw.forEach(obstacle => {
-      this.rootValue.addObstacle(
-        obstacle.name,
-        obstacle.numberOfLocks,
-        obstacle.numberOfKeys,
-        obstacle.color,
-        obstacle.getChildrenToLock(this.rootValue)
-      )
+      const addedObstacles = this.rootValue.addObstacle(Object.assign(obstacle, {
+        childrenToLock: obstacle.getChildrenToLock(this.rootValue)
+      }))
     })
   }
 
-  addRandomDungeonObstacle(obstacles, step, seedName) {
+  addRandomDungeonObstacles(obstacles, step, seedName) {
     const random = AleaRandomizer(seedName)
 
     const obstaclesToDraw = obstacles.slice(0, step)
@@ -544,16 +659,11 @@ class Tree {
   }
 }
 
-const createNode = (name, lockColor) => {
-  totalSteps += 1
-  return { id: name, label: name, color: lockColor }
+const createNode = (name, lockColor, parent = null) => {
+  return new Node(parent, { id: name, label: name, color: lockColor })
 }
 
 const createConnection = (start, end) => ({ from: start, to: end })
-
-let currentStep = 0
-let totalSteps = 0
-let drawnDungeons = []
 
 const AleaRandomizer = seed => {
   if (seed === undefined) {
@@ -587,140 +697,52 @@ const AleaRandomizer = seed => {
   })()
 }
 
-const makeDungeon = (parentWrapper, containerName, seedName, createFuncString = 'randomCreation') => {
-  var containerNode = document.createElement('div')
+const makeDungeon = (currentStep, seedName, createTreeFunction = 'randomCreation') => {
+  
 
-  if (!containerNode) {
-    return 0
-  }
-  const style = containerNode.style
-  style.display = 'inline-flex'
-  style.border = '1px solid lightgray'
-  style.width = '520'
+  const tree = new Tree()
 
-
-  const tree = new Tree(createNode('start'))
-
-  const numberOfSteps = seedName ? tree[createFuncString](currentStep, seedName) : tree[createFuncString](currentStep)
+  const numberOfSteps = seedName ? 
+    tree[createTreeFunction](currentStep, seedName) :
+    tree[createTreeFunction](currentStep)
 
   const dungeonNodes = tree.draw()
 
-  const nodes = new vis.DataSet(dungeonNodes.rooms)
-
-  // create an array with edges
-  const useKeys = document.getElementById('keys').checked
-
-  let connections = dungeonNodes.connections
-  if (useKeys) {
-    connections = connections.concat(dungeonNodes.keyLockConnections)
-  }
-
-  const edges = new vis.DataSet(connections)
-
-  // provide the data in the vis format
-  const data = {
-    nodes: nodes,
-    edges: edges,
-  }
-
-  const options = {
-    interaction: {
-      dragNodes: false,
-    },
-    layout: {
-      hierarchical: {
-        enabled: true,
-        sortMethod: 'directed'
-      }
-    },
-  }
-
-  parentWrapper.appendChild(containerNode)
   return {
     tree,
-    containerNode,
-    data,
-    options,
-    numberOfSteps
+    numberOfSteps,
+    rooms: dungeonNodes.rooms,
+    connections: dungeonNodes.connections,
+    keyLockConnections: dungeonNodes.keyLockConnections,
   }
 }
 
-const drawDungeon = () => {
-  const generationElement = document.getElementById('generation')
+const createDungeons = (currentStep) => {
   let newDungeons = []
-  totalSteps = 0
-  currentStep = generationElement.valueAsNumber
-
-  const pageWidth = (window.innerWidth || document.body.clientWidth) - 50
-  const parentWrapper = document.getElementById('mynetwork')
-  parentWrapper.innerHTML = ''
-
-  newDungeons.push(makeDungeon(parentWrapper, 'mynetwork', 'apple'))
-  newDungeons.push(makeDungeon(parentWrapper, 'mynetwork2', 'apples'))
-  newDungeons.push(makeDungeon(parentWrapper, 'mynetwork3', 'low'))
-  newDungeons.push(makeDungeon(parentWrapper, 'mynetwork4', 'ap'))
-  // newDungeons.push(makeDungeon(parentWrapper, 'mynetwork5', undefined, 'hardCode'))
-  // newDungeons.push(makeDungeon(parentWrapper, 'mynetwork6', undefined, 'hardCode2'))
-  // newDungeons.push(makeDungeon(parentWrapper, 'mynetwork7', undefined, 'hardCode3'))
-  // newDungeons.push(makeDungeon(parentWrapper, 'mynetwork7', 'apples', 'randomCreation2'))
-  // newDungeons.push(makeDungeon(parentWrapper, 'mynetwork7', 'appl', 'randomCreation2'))
-  // newDungeons.push(makeDungeon(parentWrapper, 'mynetwork7', 'dome', 'randomCreation2'))
-  // newDungeons.push(makeDungeon(parentWrapper, 'mynetwork7', 'rad', 'randomCreation2'))
-  // newDungeons.push(makeDungeon(parentWrapper, 'mynetwork8', 'apple', 'randomCreation2')) // CREATES TOO MANY SEED SHOOTERS
-  // newDungeons.push(makeDungeon(parentWrapper, 'mynetwork9', undefined, 'randomCreation2')) // CREATES TOO MANY SEED SHOOTERS
-  let largestSteps = 0
-
-  newDungeons.forEach(dungeon => {
-    if (dungeon.numberOfSteps > largestSteps) {
-      largestSteps = dungeon.numberOfSteps
-    }
-    dungeon.containerNode.style.width = pageWidth / newDungeons.length
-    if (newDungeons.length === 1) {
-      dungeon.containerNode.style.width = 800
-    }
-    new vis.Network(dungeon.containerNode, dungeon.data, dungeon.options)
-  })
-
-  generationElement.max = largestSteps
-
-  drawnDungeons = newDungeons
+  // newDungeons.push(makeDungeon(currentStep, 'apple'))
+  // newDungeons.push(makeDungeon(currentStep, 'apples'))
+  // newDungeons.push(makeDungeon(currentStep, 'low'))
+  // newDungeons.push(makeDungeon(currentStep, 'ap'))
+  // newDungeons.push(makeDungeon(currentStep, undefined, 'gnarledRoot'))
+  // newDungeons.push(makeDungeon(currentStep, undefined, 'moonlightGrotto'))
+  newDungeons.push(makeDungeon(currentStep, 'test', 'waterTemple'))
+  newDungeons.push(makeDungeon(currentStep, 'test', 'shadowTemple'))
+  // newDungeons.push(makeDungeon(currentStep, 'test', 'rocsFeather'))
+  // newDungeons.push(makeDungeon(currentStep, 'apples', 'randomCreation2'))
+  // newDungeons.push(makeDungeon(currentStep, 'appl', 'randomCreation2'))
+  // newDungeons.push(makeDungeon(currentStep, 'dome', 'randomCreation2'))
+  // newDungeons.push(makeDungeon(currentStep, 'rad', 'randomCreation2'))
+  // newDungeons.push(makeDungeon(currentStep, 'apple', 'randomCreation2'))
+  // newDungeons.push(makeDungeon(currentStep, 1544468349857.5571, 'randomCreation2'))
+  // newDungeons.push(makeDungeon(currentStep, 1544468125239.0205, 'randomCreation2'))
+  // newDungeons.push(makeDungeon(currentStep, 1544468247205.152, 'randomCreation2'))
+  // newDungeons.push(makeDungeon(currentStep, 1544461558359.5315, 'randomCreation3'))
+  // newDungeons.push(makeDungeon(currentStep, undefined, 'randomCreation3'))
+  return newDungeons
 }
 
-rewind = () => {
-  const generation = document.getElementById('generation')
-  generation.valueAsNumber = generation.valueAsNumber - 1
-  drawDungeon()
+findNode = (path, name) => {
+  return path.filter(node => node.name === name).pop()
 }
 
-advance = () => {
-  const generation = document.getElementById('generation')
-  generation.valueAsNumber = generation.valueAsNumber + 1
-  drawDungeon()
-}
 
-verify = () => {
-  if (drawnDungeons.length) {
-    drawnDungeons.forEach(dungeon => {
-      const tree = dungeon.tree
-
-      let complexity = 0
-      const path = []
-      const blockedPaths = []
-
-      const startNode = tree.rootValue
-
-      startNode.children.forEach(child => {
-        if (!child.locked) {
-          //  && child.locks.length && child.locks.some(child => startNode.children.includes(child))
-          path.push(child)
-        } else {
-          blockedPaths.push(child)
-        }
-      })
-
-      console.log('stuff', path, blockedPaths)
-
-      console.log('dueng', tree)
-    })
-  }
-}

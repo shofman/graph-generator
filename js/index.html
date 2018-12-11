@@ -13,12 +13,17 @@
     </style>
 </head>
 <body>
+<script type="text/javascript" src="./ui.js"></script>
 <script type="text/javascript" src="./generateDungeon.js"></script>
+<script type="text/javascript" src="./verifyDungeon.js"></script>
+<script type="text/javascript" src="./calculateLeafDistances.js"></script>
+<script type="text/javascript" src="./evaluateDungeon.js"></script>
 <button id="rewind" onclick="rewind()">-</button>
-<input id="generation" type="range" min="1" max="15" range="1" value="15" onchange="drawDungeon()"/>
+<input id="generation" type="range" min="0" max="15" range="1" value="15" onchange="drawDungeon()"/>
 <button id="advance" onclick="advance()">+</button>
 <input id="keys" type="checkbox" onchange="drawDungeon()"/>
 <button id="verify" onclick="verify()">Verify</button>
+<button id="verify" onclick="evaluateDungeon()">Evaluate</button>
 <span id="seed"></span>
 <button id="generation2" onclick="drawDungeon()" type="button">Refresh</button>
 
