@@ -39,16 +39,6 @@ Repeat for any “open” subtree.
 Example dungeon node - {id: 1, label: 'Node 1'},
 */
 
-const KEY_TYPES = {
-  BOSS: 'boss',
-  NORMAL_KEY: 'key',
-  KEY_ITEM: 'key_item',
-  MULTI_KEY: 'multiKey',
-  MULTI_LOCK: 'multiLock',
-  SINGLE_LOCK_KEY: 'singleKeyLock',
-  UNKNOWN: 'unknown',
-}
-
 const getAllSubsets = theArray => 
   theArray.reduce(
     (subsets, value) => subsets.concat(
@@ -191,6 +181,7 @@ class Node {
 
   addRandomObstacle({
     name,
+    type,
     isSingleLock,
     isSingleKey,
     color,
@@ -260,8 +251,16 @@ class Node {
       }
     }
 
-    addedLocks.forEach(lock => lock.setKeys(addedKeys))
-    addedKeys.forEach(key => key.setLocks(addedLocks))
+    addedLocks.forEach(lock => {
+      lock.setKeys(addedKeys)
+      lock.setType(type)
+    })
+    addedKeys.forEach(key => {
+      key.setLocks(addedLocks)
+      key.setType(type)
+    })
+
+    return addedLocks.concat(addedKeys)
   }
 }
 
@@ -327,206 +326,25 @@ class Tree {
     }
   }
 
-  createLockObstacle(name, getChildrenToLock) {
-    return {
-      name,
-      type: KEY_TYPES.NORMAL_KEY,
-      numberOfLocks: 1,
-      numberOfKeys: 1,
-      color: 'lightblue',
-      getChildrenToLock,
-    }
-  }
-
-  gnarledRoot(step) {
-    const obstacles = [
-      this.createBossObstacle(this.addEndState()),
-      this.createLockObstacle('firstLock', rootValue => rootValue.getUnlockedChildren()),
-      {
-        name: 'arrow',
-        type: KEY_TYPES.KEY_ITEM,
-        numberOfLocks: 3,
-        numberOfKeys: 1,
-        color: 'lightgreen',
-        getChildrenToLock: rootValue => rootValue.getChildren(),
-      },
-      this.createLockObstacle('secondLock', rootValue => rootValue.getUnlockedChildren()),
-      {
-        name: 'aLock',
-        type: KEY_TYPES.SINGLE_LOCK_KEY,
-        numberOfLocks: 1,
-        numberOfKeys: 1,
-        color: 'orange',
-        getChildrenToLock: rootValue =>
-          rootValue.getChildren().filter(child => child.value.label === 'arrowGate3'),
-      },
-      this.createLockObstacle('thirdLock', rootValue =>
-        rootValue.getChildren().filter(
-          child => child.value.label === 'aLockGate' || child.value.label === 'arrowGate2'
-        )
-      ),
-      this.createLockObstacle('fourthLock', rootValue =>
-        rootValue.getChildren().filter(
-          child =>
-            child.value.label === 'aLockKey' ||
-            child.value.label === 'thirdLockGate' ||
-            child.value.label === 'thirdLockKey'
-        )
-      ),
-    ]
-
+  createHardCodedDungeon(step, uniqueObstacles) {
+    const baseObstacles = [this.createBossObstacle(this.addEndState())]
+    const obstacles = baseObstacles.concat(uniqueObstacles)
     this.addDungeonObstacles(obstacles, step)
-
     return obstacles.length
   }
 
-  moonlightGrotto(step) {
-    const obstacles = [
-      this.createBossObstacle(this.addEndState()),
-      this.createLockObstacle('firstLock', rootValue => rootValue.getLockedChildren()),
-      {
-        name: 'crystal',
-        type: KEY_TYPES.MULTI_KEY,
-        numberOfLocks: 1,
-        numberOfKeys: 4,
-        color: 'lightgreen',
-        getChildrenToLock: rootValue => rootValue.getUnlockedChildren(),
-      },
-      {
-        name: 'seedShooter',
-        type: KEY_TYPES.KEY_ITEM,
-        numberOfLocks: 2,
-        numberOfKeys: 1,
-        color: 'orange',
-        getChildrenToLock: rootValue => rootValue.getFilteredChildren(['firstLockGate', 'crystal4Key']),
-      },
-      this.createLockObstacle('secondLock', rootValue => rootValue.getFilteredChildren(['seedShooterKey'])),
-      this.createLockObstacle('thirdLock', rootValue => rootValue.getFilteredChildren(['secondLockGate'])),
-      this.createLockObstacle('fourthLock', rootValue =>
-        rootValue.getFilteredChildren(['seedShooterGate1', 'seedShooterGate2', 'crystalGate', 'crystal3Key', 'thirdLockGate', 'secondLockKey'])
-      ),
-    ]
-
-    this.addDungeonObstacles(obstacles, step)
+  createRandomDungeon(step, seedName, uniqueObstacles) {
+    const baseObstacles = [this.createRandomBossObstacle(this.addEndState())]
+    const obstacles = baseObstacles.concat(uniqueObstacles)
+    this.addRandomDungeonObstacles(obstacles, step, seedName)
 
     return obstacles.length
-  }
-
-  rocsFeather(step) {
-    const obstacles = [
-      this.createBossObstacle(this.addEndState()),
-      this.createLockObstacle('firstLock', rootValue => rootValue.getUnlockedChildren()),
-      this.createLockObstacle('secondLock', rootValue => rootValue.getFilteredChildren(['bossGate'])),
-      {
-        name: 'switchPanel',
-        type: KEY_TYPES.SINGLE_LOCK_KEY,
-        numberOfLocks: 1,
-        numberOfKeys: 1,
-        color: 'orange',
-        getChildrenToLock: rootValue => rootValue.getFilteredChildren(['firstLockGate', 'firstLockKey', 'secondLockGate']),
-      },
-      this.createLockObstacle('thirdLock', rootValue => rootValue.getFilteredChildren(['switchPanelGate'])),
-      {
-        name: 'rocsFeather',
-        type: KEY_TYPES.KEY_ITEM,
-        numberOfLocks: 3,
-        numberOfKeys: 1,
-        color: 'lightgreen',
-        getChildrenToLock: rootValue => rootValue.getFilteredChildren(['switchPanelKey', 'secondLockKey', 'thirdLockKey']),
-      },
-      this.createLockObstacle('fourthLock', rootValue => rootValue.getFilteredChildren(['rocsFeatherGate1', 'rocsFeatherGate3', 'rocsFeatherKey', 'thirdLockGate'])),
-      this.createLockObstacle('fifthLock', rootValue => rootValue.getFilteredChildren(['fourthLockGate', 'fourthLockKey'])),
-    ]
-
-    this.addDungeonObstacles(obstacles, step)
-
-    return obstacles.length
-  }
-
-  shadowTemple(step) {
-    const obstacles = [
-      this.createBossObstacle(this.addEndState()),
-      this.createLockObstacle('firstLock', rootValue => rootValue.getFilteredChildren(['bossGate'])),
-      this.createLockObstacle('secondLock', rootValue => rootValue.getFilteredChildren(['firstLockKey', 'bossKey', 'firstLockGate'])),
-      this.createLockObstacle('thirdLock', rootValue => rootValue.getFilteredChildren(['secondLockGate', 'secondLockKey'])),
-      this.createLockObstacle('fourthLock', rootValue => rootValue.getFilteredChildren(['thirdLockGate', 'thirdLockKey'])),
-      this.createLockObstacle('fifthLock', rootValue => rootValue.getFilteredChildren(['fourthLockGate', 'fourthLockKey'])),
-      {
-        name: 'hoverboots',
-        type: KEY_TYPES.KEY_ITEM,
-        numberOfLocks: 1,
-        numberOfKeys: 1,
-        color: 'lightgreen',
-        getChildrenToLock: rootValue => rootValue.getFilteredChildren(['fifthLockGate', 'fifthLockKey']),
-      },
-    ]
-
-    this.addDungeonObstacles(obstacles, step)
-
-    return obstacles.length
-  }
-
-  waterTemple(step) {
-    const obstacles = [
-      this.createBossObstacle(this.addEndState()),
-      this.createLockObstacle('firstLock', rootValue => rootValue.getUnlockedChildren()),
-      this.createLockObstacle('secondLock', rootValue => rootValue.getFilteredChildren(['firstLockGate'])),
-      {
-        name: 'longshot',
-        type: KEY_TYPES.KEY_ITEM,
-        numberOfLocks: 3,
-        numberOfKeys: 1,
-        color: 'lightgreen',
-        getChildrenToLock: rootValue => rootValue.getFilteredChildren(['secondLockKey', 'secondLockGate', 'bossGate']),
-      },
-      this.createLockObstacle('thirdLock', rootValue => rootValue.getFilteredChildren(['longshotKey', 'firstLockKey'])),
-      this.createLockObstacle('fourthLock', rootValue => rootValue.getFilteredChildren(['thirdLockGate'])),
-      {
-        name: 'level3Water',
-        type: KEY_TYPES.MULTI_LOCK,
-        numberOfLocks: 2,
-        numberOfKeys: 1,
-        color: 'orange',
-        getChildrenToLock: rootValue => rootValue.getFilteredChildren(['longshotGate1', 'fourthLockGate'])
-      },
-      this.createLockObstacle('fifthLock', rootValue => rootValue.getFilteredChildren(['level3WaterKey'])),
-      {
-        name: 'level2Water',
-        type: KEY_TYPES.SINGLE_LOCK_KEY,
-        numberOfLocks: 1,
-        numberOfKeys: 1,
-        color: 'orange',
-        getChildrenToLock: rootValue => rootValue.getFilteredChildren(['fifthLockGate', 'longshotGate3', 'thirdLockKey', 'fourthLockKey']),
-      },
-      this.createLockObstacle('sixthLock', rootValue => rootValue.getFilteredChildren(['level2WaterGate', 'level2WaterKey'])),
-      {
-        name: 'level1Water',
-        type: KEY_TYPES.SINGLE_LOCK_KEY,
-        numberOfLocks: 1,
-        numberOfKeys: 1,
-        color: 'orange',
-        getChildrenToLock: rootValue => rootValue.getFilteredChildren(['longshotGate2', 'sixthLockGate', 'fifthLockKey', 'sixthLockKey']),
-      },
-    ]
-
-    this.addDungeonObstacles(obstacles, step)
-
-    return obstacles.length
-  }
-
-  createRandomLock(name) {
-    return {
-      name,
-      color: 'lightblue',
-      getChildrenToLock: rootValue => rootValue.getChildren(),
-      isSingleLock: true,
-      isSingleKey: true,
-    }
   }
 
   createRandomBossObstacle(endNode) {
     return {
       name: 'boss',
+      type: KEY_TYPES.BOSS,
       color: 'red',
       getChildrenToLock: () => [endNode],
       isSingleKey: true,
@@ -535,12 +353,12 @@ class Tree {
     }
   }
 
-  randomCreation(step, seedName) {
-    const obstacles = [
-      this.createRandomBossObstacle(this.addEndState()),
+  randomFortressOfWinds(step, seedName) {
+    return this.createRandomDungeon(step, seedName, [
       this.createRandomLock('firstLock'),
       {
         name: 'arrow',
+        type: KEY_TYPES.KEY_ITEM,
         color: 'lightgreen',
         getChildrenToLock: rootValue => rootValue.getChildren(),
         isSingleKey: true,
@@ -549,6 +367,7 @@ class Tree {
       this.createRandomLock('secondLock'),
       {
         name: 'aLock',
+        type: KEY_TYPES.SINGLE_LOCK_KEY,
         color: 'orange',
         getChildrenToLock: rootValue => rootValue.getChildren(),
         isSingleKey: true,
@@ -556,19 +375,16 @@ class Tree {
       },
       this.createRandomLock('thirdLock'),
       this.createRandomLock('fourthLock'),
-    ]
-
-    this.addRandomDungeonObstacles(obstacles, step, seedName)
-
-    return obstacles.length
+    ])
   }
 
-  randomCreation2(step, seedName) {
+  randomMoonlightGrotto(step, seedName) {
     const obstacles = [
       this.createRandomBossObstacle(this.addEndState()),
       this.createRandomLock('firstLock'),
       {
         name: 'crystal',
+        type: KEY_TYPES.MULTI_KEY,
         color: 'lightgreen',
         getChildrenToLock: rootValue => rootValue.getChildren(),
         isSingleKey: false,
@@ -576,6 +392,7 @@ class Tree {
       },
       {
         name: 'seedShooter',
+        type: KEY_TYPES.KEY_ITEM,
         color: 'orange',
         getChildrenToLock: rootValue => rootValue.getChildren(),
         isSingleKey: true,
@@ -591,13 +408,14 @@ class Tree {
     return obstacles.length
   }
 
-  randomCreation3(step, seedName) { // Water temple
+  randomWaterTemple(step, seedName) {
     const obstacles = [
       this.createRandomBossObstacle(this.addEndState()),
       this.createRandomLock('firstLock'),
       this.createRandomLock('secondLock'),
       {
         name: 'longshot',
+        type: KEY_TYPES.KEY_ITEM,
         color: 'lightgreen',
         getChildrenToLock: rootValue => rootValue.getChildren(),
         isSingleKey: true,
@@ -607,6 +425,7 @@ class Tree {
       this.createRandomLock('fourthLock'),
       {
         name: 'level3Water',
+        type: KEY_TYPES.MULTI_LOCK,
         color: 'orange',
         getChildrenToLock: rootValue => rootValue.getChildren(),
         isSingleKey: true,
@@ -615,6 +434,7 @@ class Tree {
       this.createRandomLock('fifthLock'),
       {
         name: 'level2Water',
+        type: KEY_TYPES.SINGLE_LOCK_KEY,
         color: 'orange',
         getChildrenToLock: rootValue => rootValue.getChildren(),
         isSingleKey: true,
@@ -623,6 +443,7 @@ class Tree {
       this.createRandomLock('sixthLock'),
       {
         name: 'level1Water',
+        type: KEY_TYPES.SINGLE_LOCK_KEY,
         color: 'orange',
         getChildrenToLock: rootValue => rootValue.getChildren(),
         isSingleKey: true,
@@ -666,10 +487,6 @@ const createNode = (name, lockColor, parent = null) => {
 const createConnection = (start, end) => ({ from: start, to: end })
 
 const AleaRandomizer = seed => {
-  if (seed === undefined) {
-    seed = +new Date() + Math.random()
-    document.getElementById('seed').innerHTML = seed
-  }
   function Mash() {
     var n = 4022871197
     return function(r) {
@@ -697,19 +514,105 @@ const AleaRandomizer = seed => {
   })()
 }
 
-const makeDungeon = (currentStep, seedName, createTreeFunction = 'randomCreation') => {
-  
+const generateSeedName = () => {
+  return +new Date() + Math.random()
+}
 
+const makeDungeon = (currentStep, seedName, arrayOfSteps = fortressOfWinds) => {
+  if (!seedName) {
+    seedName = generateSeedName()
+  }
   const tree = new Tree()
-
-  const numberOfSteps = seedName ? 
-    tree[createTreeFunction](currentStep, seedName) :
-    tree[createTreeFunction](currentStep)
-
+  const numberOfSteps = tree.createHardCodedDungeon(currentStep, arrayOfSteps)
   const dungeonNodes = tree.draw()
 
   return {
     tree,
+    seedName,
+    numberOfSteps,
+    rooms: dungeonNodes.rooms,
+    connections: dungeonNodes.connections,
+    keyLockConnections: dungeonNodes.keyLockConnections,
+  }
+}
+
+const transposeStepsToRandom = arrayOfSteps => {
+  const createRandomLock = (name, type, color) => {
+    return {
+      name,
+      type,
+      color,
+      getChildrenToLock: rootValue => rootValue.getChildren(),
+      isSingleLock: true,
+      isSingleKey: true,
+    }
+  }
+
+  const createRandomKeyItem = (name, color, numberOfLocks) => {
+    return {
+      name,
+      type: KEY_TYPES.KEY_ITEM,
+      color,
+      getChildrenToLock: rootValue => rootValue.getChildren(),
+      isSingleKey: true,
+      isSingleLock: numberOfLocks === 1,
+    }
+  }
+
+  const createMultiLock = (name, color) => {
+    return {
+      name,
+      type: KEY_TYPES.MULTI_LOCK,
+      color,
+      getChildrenToLock: rootValue => rootValue.getChildren(),
+      isSingleKey: true,
+      isSingleLock: false,
+    }
+  }
+
+  const createMultiKey = (name, color) => {
+    return {
+      name,
+      type: KEY_TYPES.MULTI_KEY,
+      color,
+      getChildrenToLock: rootValue => rootValue.getChildren(),
+      isSingleLock: true,
+      isSingleKey: false,
+    }
+  }
+
+  return arrayOfSteps.map(step => {
+    switch (step.type) {
+      case KEY_TYPES.NORMAL_KEY:
+      case KEY_TYPES.SINGLE_LOCK_KEY:
+        return createRandomLock(step.name, step.type, step.color)
+      break
+      case KEY_TYPES.KEY_ITEM:
+        return createRandomKeyItem(step.name, step.color, step.numberOfLocks)
+      break
+      case KEY_TYPES.MULTI_LOCK:
+        return createMultiLock(step.name, step.color)
+      case KEY_TYPES.MULTI_KEY:
+        return createMultiKey(step.name, step.color)
+      default:
+        console.log('we shouldnot be here')
+        return createRandomLock(step.name, step.type, step.color)
+    }
+  })
+}
+
+const makeRandomDungeon = (currentStep, seedName, arrayOfSteps = fortressOfWinds) => {
+  if (!seedName) {
+    seedName = generateSeedName()
+  }
+  const tree = new Tree()
+  const convertedSteps = transposeStepsToRandom(arrayOfSteps)
+  const numberOfSteps = tree.createRandomDungeon(currentStep, seedName, convertedSteps)
+  const dungeonNodes = tree.draw()
+
+  return {
+    tree,
+    seedName,
     numberOfSteps,
     rooms: dungeonNodes.rooms,
     connections: dungeonNodes.connections,
@@ -723,21 +626,62 @@ const createDungeons = (currentStep) => {
   // newDungeons.push(makeDungeon(currentStep, 'apples'))
   // newDungeons.push(makeDungeon(currentStep, 'low'))
   // newDungeons.push(makeDungeon(currentStep, 'ap'))
-  // newDungeons.push(makeDungeon(currentStep, undefined, 'gnarledRoot'))
-  // newDungeons.push(makeDungeon(currentStep, undefined, 'moonlightGrotto'))
-  newDungeons.push(makeDungeon(currentStep, 'test', 'waterTemple'))
-  newDungeons.push(makeDungeon(currentStep, 'test', 'shadowTemple'))
-  // newDungeons.push(makeDungeon(currentStep, 'test', 'rocsFeather'))
-  // newDungeons.push(makeDungeon(currentStep, 'apples', 'randomCreation2'))
-  // newDungeons.push(makeDungeon(currentStep, 'appl', 'randomCreation2'))
-  // newDungeons.push(makeDungeon(currentStep, 'dome', 'randomCreation2'))
-  // newDungeons.push(makeDungeon(currentStep, 'rad', 'randomCreation2'))
-  // newDungeons.push(makeDungeon(currentStep, 'apple', 'randomCreation2'))
-  // newDungeons.push(makeDungeon(currentStep, 1544468349857.5571, 'randomCreation2'))
-  // newDungeons.push(makeDungeon(currentStep, 1544468125239.0205, 'randomCreation2'))
-  // newDungeons.push(makeDungeon(currentStep, 1544468247205.152, 'randomCreation2'))
-  // newDungeons.push(makeDungeon(currentStep, 1544461558359.5315, 'randomCreation3'))
-  // newDungeons.push(makeDungeon(currentStep, undefined, 'randomCreation3'))
+  // newDungeons.push(makeDungeon(currentStep, 'skullWoods', skullWoods))
+  // newDungeons.push(makeDungeon(currentStep, 'towerOfHera', towerOfHera))
+  // newDungeons.push(makeDungeon(currentStep, 'spiritTemple', spiritTemple))
+
+  newDungeons.push(makeDungeon(currentStep, 'fortressOfWinds', fortressOfWinds))
+  newDungeons.push(makeDungeon(currentStep, 'moonlightGrotto', moonlightGrotto))
+  newDungeons.push(makeDungeon(currentStep, 'waterTemple', waterTemple))
+  newDungeons.push(makeDungeon(currentStep, 'shadowTemple', shadowTemple))
+  newDungeons.push(makeDungeon(currentStep, 'rocsFeather', rocsFeather))
+  newDungeons.push(makeDungeon(currentStep, 'jabujabuOracle', jabujabuOracle))
+  newDungeons.push(makeDungeon(currentStep, 'swordAndShield', swordAndShield))
+  newDungeons.push(makeDungeon(currentStep, 'gnarledRoot', gnarledRoot))
+  newDungeons.push(makeDungeon(currentStep, 'dancingDragon', dancingDragon))
+  newDungeons.push(makeDungeon(currentStep, 'unicornsCave', unicornsCave))
+  newDungeons.push(makeDungeon(currentStep, 'faceShrine', faceShrine))
+  newDungeons.push(makeDungeon(currentStep, 'palaceOfDarkness', palaceOfDarkness))
+  newDungeons.push(makeDungeon(currentStep, 'greatBayTemple', greatBayTemple))
+  newDungeons.push(makeDungeon(currentStep, 'mermaidsCave', mermaidsCave))
+  newDungeons.push(makeDungeon(currentStep, 'explorersCave', explorersCave))
+  newDungeons.push(makeDungeon(currentStep, 'stoneTowerTemple', stoneTowerTemple))
+  newDungeons.push(makeDungeon(currentStep, 'tailCave', tailCave))
+  newDungeons.push(makeDungeon(currentStep, 'spiritsGrave', spiritsGrave))
+  newDungeons.push(makeDungeon(currentStep, 'earthTemple', earthTemple))
+  newDungeons.push(makeDungeon(currentStep, 'windTemple', windTemple))
+  newDungeons.push(makeDungeon(currentStep, 'towerOfTheGods', towerOfTheGods))
+  newDungeons.push(makeDungeon(currentStep, 'deepwoodShrine', deepwoodShrine))
+  newDungeons.push(makeDungeon(currentStep, 'palaceOfWinds', palaceOfWinds))
+  newDungeons.push(makeDungeon(currentStep, 'forestTempleTwilight', forestTempleTwilight))
+  newDungeons.push(makeDungeon(currentStep, 'snowPeakRuins', snowPeakRuins))
+  newDungeons.push(makeDungeon(currentStep, 'sandShip', sandShip))
+  newDungeons.push(makeDungeon(currentStep, 'skyViewTemple', skyViewTemple))
+  newDungeons.push(makeDungeon(currentStep, 'desertPalace', desertPalace))
+  newDungeons.push(makeDungeon(currentStep, 'turtleRock', turtleRock))
+  newDungeons.push(makeDungeon(currentStep, 'dragonRoostCavern', dragonRoostCavern))
+  newDungeons.push(makeDungeon(currentStep, 'forestTemple', forestTemple))
+  newDungeons.push(makeDungeon(currentStep, 'jabujabuOcarina',jabujabuOcarina))
+  newDungeons.push(makeDungeon(currentStep, 'fireTemple', fireTemple))
+
+  const toShow = [
+    'spiritsGrave',
+    'palaceOfDarkness'
+  ]
+
+  newDungeons = newDungeons.filter(dungeon => {
+    if (!toShow.length) {
+      return true
+    }
+    return toShow.includes(dungeon.seedName)
+  })
+
+  // newDungeons.push(makeRandomDungeon(currentStep, 'apples', swordAndShield))
+  // newDungeons.push(makeRandomDungeon(currentStep, undefined, swordAndShield))
+  // newDungeons.push(makeRandomDungeon(currentStep, undefined, dancingDragon))
+  // newDungeons.push(makeRandomDungeon(currentStep, undefined, waterTemple))
+  // newDungeons.push(makeRandomDungeon(currentStep, 1544562670984.7566, waterTemple)) // Decent Water temple
+  // newDungeons.push(makeRandomDungeon(currentStep, 1544562760739.3171, waterTemple)) // Impossible water temple
   return newDungeons
 }
 

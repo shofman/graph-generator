@@ -12,7 +12,15 @@ const createContainerNode = (totalNumberToCreate) => {
   if (totalNumberToCreate === 1) {
     containerNode.style.width = 800
   }
+
   return containerNode
+}
+
+const createTitleNode = (seedName) => {
+  const titleNode = document.createElement('span')
+  const style = titleNode.style
+  titleNode.innerHTML = seedName
+  return titleNode
 }
 
 const createVisualization = (dungeonInfo) => {
@@ -37,7 +45,14 @@ const createVisualization = (dungeonInfo) => {
   return data
 }
 
-const drawDungeon = () => {
+let cachedDungeons = []
+
+
+const drawDungeon = (useCachedDungeon = false) => {
+  if (useCachedDungeon) {
+    return cachedDungeons
+  }
+
   const generationElement = document.getElementById('generation')
   const currentStep = generationElement.valueAsNumber
 
@@ -65,13 +80,24 @@ const drawDungeon = () => {
       largestSteps = dungeonData.numberOfSteps
     }
     const containerNode = createContainerNode(newDungeons.length)
-    parentWrapper.appendChild(containerNode)
+    const titleNode = createTitleNode(dungeonData.seedName)
+
+    const wrapperNode = document.createElement('div')
+
+    wrapperNode.style.display = 'inline-flex'
+    wrapperNode.style['flex-direction'] = 'column'
+    wrapperNode.appendChild(titleNode)
+    wrapperNode.appendChild(containerNode)
+
     const visualizationData = createVisualization(dungeonData)
     new vis.Network(containerNode, visualizationData, drawOptions)
+
+    parentWrapper.appendChild(wrapperNode)
   })
 
   generationElement.max = largestSteps
 
+  cachedDungeons = newDungeons
   return newDungeons
 }
 

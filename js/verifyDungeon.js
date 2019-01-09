@@ -1,6 +1,6 @@
 verify = (verifications=1) => {
   for(let i=0; i<verifications; i++) {
-    const newDungeons = drawDungeon()
+    const newDungeons = drawDungeon(true)
     console.log(verifyDungeons(newDungeons))
   }
 }
