@@ -13,3 +13,8 @@
 5) Handle bugs with "level3WaterGate" not being locked
 6) When generating a legit dungeon, figure out the averages of the available children, vs the selected amount (to get a sense of how many times we select all, some, or branch off completely. And also whether we typically are locking off keys or locks)
 7) Make key item more random in nature (number of unlocks, etc)
+8) // Investigate why this failed = 1545429503897.7168 for water temple2
+9) Change up the calculation for keys - a key should be able to open any lock (the names are just for ensuring structure)
+
+Dungeons should make for backtracking interesting (e.g. key item is needed, or there are one way paths)
+Items should be visible sometimes, but not attainable. How to pull this off?

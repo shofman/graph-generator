@@ -10,7 +10,7 @@ const createContainerNode = (totalNumberToCreate) => {
   const pageWidth = (window.innerWidth || document.body.clientWidth) - 50
   containerNode.style.width = pageWidth / totalNumberToCreate
   if (totalNumberToCreate === 1) {
-    containerNode.style.width = 800
+    containerNode.style.width = 1000
   }
 
   return containerNode

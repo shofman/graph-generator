@@ -1,9 +1,13 @@
 const KEY_TYPES = {
   BOSS: 'boss',
   NORMAL_KEY: 'key',
-  KEY_ITEM: 'key_item',
+  KEY_ITEM: 'keyItem',
+  SINGLE_ROOM_PUZZLE: 'singleRoomPuzzle',
+  COMBAT_KEY: 'combatKey',
+  MINI_BOSS_KEY: 'miniBoss',
   MULTI_KEY: 'multiKey',
   MULTI_LOCK: 'multiLock',
+  EXTERNAL_KEY: 'externalLock',
   SINGLE_LOCK_KEY: 'singleKeyLock',
   UNKNOWN: 'unknown',
 }
