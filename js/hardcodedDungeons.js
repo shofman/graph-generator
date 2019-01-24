@@ -91,7 +91,7 @@ const createKeyItem = (name, numberOfLocks, childrenToLock) => {
 const createCombatPuzzleKey = (name, childrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.COMBAT_KEY,
+    type: KEY_TYPES.SINGLE_ROOM_PUZZLE,
     numberOfKeys: 1,
     numberOfLocks: 1,
     color: 'silver',
@@ -113,7 +113,7 @@ const createPuzzleKey = (name, childrenToLock) => {
 const createMiniboss = (name, childrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.MINI_BOSS_KEY,
+    type: KEY_TYPES.SINGLE_ROOM_PUZZLE,
     numberOfKeys: 1,
     numberOfLocks: 1,
     color: 'purple',
@@ -128,6 +128,34 @@ const fortressOfWinds = [
   createSingleLock('aLock', 'orange', ['arrowGate3']),
   createFilteredLockObstacle('thirdLock', ['aLockGate', 'arrowGate2']),
   createFilteredLockObstacle('fourthLock', ['aLockKey', 'thirdLockGate', 'thirdLockKey']),
+]
+
+const fortressOfWinds2 = [
+  createFilteredLockObstacle('firstLock', ['bossKey']),
+  createKeyItem('digMitts', 3, ['bossGate', 'firstLockKey', 'firstLockGate']),
+  createExternalLock('bombableWall', ['digMittsKey']),
+  createCombatPuzzleKey('dodgeEnemies', ['bombableWallGate']),
+  createMiniboss('miniboss', ['dodgeEnemiesGate', 'dodgeEnemiesKey']),
+  createPuzzleKey('eyePuzzle', ['minibossGate', 'minibossKey']),
+  createCombatPuzzleKey('platformDodge', ['eyePuzzleGate', 'eyePuzzleKey']),
+  createFilteredLockObstacle('fourthLock', ['platformDodgeKey', 'platformDodgeGate']),
+  createSingleLock('minish2', 'orange', ['digMittsGate2']),
+  createFilteredLockObstacle('secondLock', ['minish2Gate', 'digMittsGate3']),
+  createCombatPuzzleKey('enemies1', ['minish2Key']),
+  createPuzzleKey('clonePuzzle1', ['secondLockKey']),
+  createCombatPuzzleKey('spinningLogs', ['clonePuzzle1Gate', 'clonePuzzle1Key']),
+  createExternalLock('sprint', ['enemies1Gate', 'enemies1Key', 'spinningLogsGate', 'spinningLogsKey', 'secondLockGate']),
+  createFilteredLockObstacle('thirdLock', ['sprintGate']),
+  createCombatPuzzleKey('enemies2', ['thirdLockKey']),
+  createSingleLock('minish1', 'orange', ['enemies2Gate', 'enemies2Key']),
+  createPuzzleKey('clonePuzzle2', ['minish1Key']),
+  createCombatPuzzleKey('enemies3', ['clonePuzzle2Gate', 'clonePuzzle2Key']),
+  createPuzzleKey('pullSwitchPuzzle', ['enemies3Gate', 'enemies3Key', 'minish1Gate']),
+  createCombatPuzzleKey('enemies4', ['fourthLockGate', 'thirdLockGate']),
+  createPuzzleKey('clonePuzzle3', ['fourthLockKey']),
+  createCombatPuzzleKey('platformPuzzle', ['clonePuzzle3Gate', 'clonePuzzle3Key']),
+  createCombatPuzzleKey('enemies5', ['platformPuzzleGate', 'platformPuzzleKey']),
+  createExternalLock('eyeArrows', ['enemies5Gate', 'enemies5Key']),
 ]
 
 const rocsFeather = [
@@ -910,7 +938,7 @@ const spiritTemple = [
 
 
 const forestTemple = [
-  createSingleLock('spinningPuzzle', 'cyan', ['bossGate']),
+  createPuzzleKey('spinningPuzzle', ['bossGate']),
   createMultiKey('poeSisters', 'orange', 4, ['spinningPuzzleGate', 'spinningPuzzleKey']),
   createCombatPuzzleKey('killPoeSister', ['poeSisters4Key']),
   createCombatPuzzleKey('killPoeSister2', ['killPoeSisterGate', 'killPoeSisterKey']),
@@ -937,25 +965,23 @@ const forestTemple = [
 ]
 
 const fireTemple = [
-  createSingleLock('fireMiniboss2', 'silver', ['bossKey']),
+  createMiniboss('fireMiniboss2', ['bossKey']),
   createFilteredLockObstacle('firstLock', ['fireMiniboss2Gate', 'fireMiniboss2Key']),
   createKeyItem('hammer', 3, ['firstLockGate', 'firstLockKey', 'bossGate']),
-  createSingleLock('raceSwitch', 'pink', ['hammerKey', 'hammerGate3']),
-  createSingleLock('dropBomb2', 'green', ['raceSwitchKey', 'raceSwitchGate']),
-  createSingleLock('fireMiniboss1', 'silver', ['dropBomb2Gate']),
-  createSingleLock('fireMaze2', 'orange', ['fireMiniboss1Gate', 'fireMiniboss1Key']),
+  createCombatPuzzleKey('raceSwitch', ['hammerKey', 'hammerGate3']),
+  createPuzzleKey('crystal2', ['raceSwitchKey', 'raceSwitchGate']),
+  createMiniboss('fireMiniboss1', ['crystal2Gate', 'crystal2Key']),
+  createCombatPuzzleKey('fireMaze2', ['fireMiniboss1Gate', 'fireMiniboss1Key']),
   createFilteredLockObstacle('secondLock', ['fireMaze2Gate', 'fireMaze2Key']),
-  createSingleLock('fireMaze1', 'orange', ['secondLockGate']),
+  createCombatPuzzleKey('fireMaze1', ['secondLockGate']),
   createFilteredLockObstacle('thirdLock', ['fireMaze1Gate', 'fireMaze1Key']),
-  // Scarecrow puzzle
   createFilteredLockObstacle('fourthLock', ['secondLockKey', 'thirdLockGate', 'thirdLockKey']),
-  // Arrows for map
   createFilteredLockObstacle('fifthLock', ['fourthLockGate']),
-  createSingleLock('dropBomb1', 'green', ['fifthLockGate', 'fifthLockKey', 'fourthLockKey']),
-  createSingleLock('dragBlock', 'green', ['dropBomb1Gate']),
+  createPuzzleKey('crystal', ['fifthLockGate', 'fifthLockKey', 'fourthLockKey']),
+  createExternalLock('dragBlock', ['crystalGate', 'crystalKey']),
   createFilteredLockObstacle('sixthLock', ['dragBlockGate']),
   createFilteredLockObstacle('seventhLock', ['sixthLockGate']),
-  createSingleLock('bombWall', 'green', ['seventhLockKey']),
+  createExternalLock('bombWall', ['seventhLockKey']),
   createFilteredLockObstacle('eighthLock', ['seventhLockGate', 'sixthLockKey', 'bombWallGate']),
 ]
 

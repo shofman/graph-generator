@@ -56,6 +56,7 @@ calculateDungeonScore = dungeon => {
     numberOfMeaningfulBranches: 0,
     treeStructure: {},
     maxHeight: 0,
+    visitedPath: dungeon.visitedPath,
     criticalPathDistance: calculateVisitedPathCost(dungeon.visitedPath),
     numberOfNodes: dungeon.visitedPath.length
   }
@@ -245,7 +246,7 @@ evaluateDungeon = () => {
       return calcScore(aScore, bScore)
     }
 
-    evaluations.sort(sortByNormalizedCriticalPath).forEach(dungeon => console.log(dungeon, dungeon.criticalPathDistance))
+    evaluations.sort(sortByNormalizedCriticalPath).forEach(dungeon => console.log(dungeon, dungeon.criticalPathDistance / dungeon.numberOfNodes))
     // evaluations.sort(sortByBossKey).forEach(dungeon => console.log(dungeon))
     // evaluations.sort(sortByKeyItem).forEach(dungeon => console.log(dungeon))
     // evaluations.sort(sortBySumOfKeys).forEach(dungeon => console.log(dungeon))
@@ -275,5 +276,7 @@ evaluateDungeon = () => {
   // distance between boss key and entrance. Should be greater than 1
   // Total branching (how many children exist at a level). Water temple has a max of eight 
   // Complete path length - between 17 -27 segments long
+
+  // Add entry that looks at distance between types of keys (ensuring there's less clustering of puzzles/external locks in an area)
 
 }

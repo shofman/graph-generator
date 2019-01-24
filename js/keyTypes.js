@@ -4,7 +4,6 @@ const KEY_TYPES = {
   KEY_ITEM: 'keyItem',
   SINGLE_ROOM_PUZZLE: 'singleRoomPuzzle',
   COMBAT_KEY: 'combatKey',
-  MINI_BOSS_KEY: 'miniBoss',
   MULTI_KEY: 'multiKey',
   MULTI_LOCK: 'multiLock',
   EXTERNAL_KEY: 'externalLock',
