@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Puzzle Generator</title>
+    <style>
+      * { padding: 0; margin: 0; }
+      canvas { background: #eee; display: block; margin: 0 auto; }
+      button { width: 20px; height: 20px; }
+    </style>
+</head>
+<body>
+
+<canvas id="myCanvas" width="480" height="320"></canvas>
+<button id="rewind" onclick="rewind()">-</button>
+<input id="grids" type="range" min="0" range="1" onchange="drawGridAtCurrentIndexValue()"/>
+<button id="advance" onclick="advance()">+</button>
+
+<script>
+const AleaRandomizer = seed => {
+  function Mash() {
+    var n = 4022871197
+    return function(r) {
+      for (var t, f, s, u = 0, e = 0.02519603282416938; u < r.length; u++)
+        (s = r.charCodeAt(u)),
+        (f = e * (n += s) - ((n * e) | 0)),
+        (n = 4294967296 * ((t = f * ((e * n) | 0)) - (t | 0)) + (t | 0))
+      return (n | 0) * 2.3283064365386963e-10
+    }
+  }
+  return (function() {
+    var m = Mash(),
+      a = m(' '),
+      b = m(' '),
+      c = m(' '),
+      x = 1
+    ;(seed = seed.toString()), (a -= m(seed)), (b -= m(seed)), (c -= m(seed))
+    a < 0 && a++, b < 0 && b++, c < 0 && c++
+    return function() {
+      var y = x * 2.3283064365386963e-10 + a * 2091639
+      ;(a = b), (b = c)
+      return (c = y - (x = y | 0))
+    }
+  })()
+}
+
+const canvas = document.getElementById('myCanvas')
+const ctx = canvas.getContext('2d')
+let gridList = []
+const pixelSize = 20
+
+const gridSpace = 3
+const gridNumber = 3
+
+const gridYLength = gridNumber * gridSpace + gridNumber * gridSpace
+const gridXLength = gridNumber * gridSpace + gridNumber * gridSpace
+
+canvas.height = gridYLength * pixelSize
+canvas.width = gridXLength * pixelSize
+
+const obstacle = 3
+const target = 5
+const emptySpace = 0
+
+const initialGrid = []
+
+for (let i=0; i<gridYLength; i++) {
+  initialGrid.push(Array.apply(null, Array(gridXLength)).map((_, index) => {
+    if (i >= gridNumber * gridSpace || index >= gridNumber * gridSpace) { return 0 }
+    if (i === Math.floor(gridNumber / 2) * gridSpace && index === Math.floor(gridNumber / 2) * gridSpace) {
+      return target
+    }
+    return i % gridSpace === 0 && index % gridSpace === 0 ? obstacle : emptySpace
+  }))
+}
+
+gridList.push(initialGrid)
+
+const increaseRowGridByIndex = (currentGrid, index) => {
+  const row = currentGrid[index]
+  const shiftByEmpty = Array.apply(null, Array(gridSpace)).map(() => emptySpace)
+  const newRow = shiftByEmpty.concat([...row.slice(0, row.length-gridSpace)])
+  const copyGrid = JSON.parse(JSON.stringify(currentGrid))
+  copyGrid[index] = newRow
+  return copyGrid
+}
+
+const decreaseRowGridByIndex = (currentGrid, index) => {
+  const row = currentGrid[index]
+  const shiftByEmpty = Array.apply(null, Array(gridSpace)).map(() => emptySpace)
+  const newRow = [...row.slice(gridSpace, row.length)].concat(shiftByEmpty)
+  const copyGrid = JSON.parse(JSON.stringify(currentGrid))
+  copyGrid[index] = newRow
+  return copyGrid
+}
+
+const swapGrid = currentGrid => {
+  // Use stringify to copy, since we have an array of arrays, and these are copied by reference instead of value
+  const copyGrid = JSON.parse(JSON.stringify(currentGrid))
+  if (currentGrid[0].length !== currentGrid.length) {
+    throw new Error('cannot swap grids - invalid indices')
+  }
+
+  currentGrid.forEach((row, rowIndex) => {
+    row.forEach((item, columnIndex) => {
+      copyGrid[columnIndex][rowIndex] = currentGrid[rowIndex][columnIndex]
+    })
+  })
+
+  return copyGrid
+}
+
+const increaseColumnGridByIndex = (currentGrid, index) => {
+  const swappedGrid = swapGrid(currentGrid)
+  const shiftGrid = increaseRowGridByIndex(swappedGrid, index)
+  return swapGrid(shiftGrid)
+}
+
+const decreaseColumnGridByIndex = (currentGrid, index) => {
+  const swappedGrid = swapGrid(currentGrid)
+  const shiftGrid = decreaseRowGridByIndex(swappedGrid, index)
+  return swapGrid(shiftGrid)
+}
+
+const generateAvailableMoves = (gridNumber) => {
+  // Start with only right moves and down (to be reversed by left moves and up)
+  const possibleMoves = []
+  for(let i=0; i<gridNumber; i++) {
+    possibleMoves.push(`D${i}`)
+    possibleMoves.push(`R${i}`)
+  }
+  return possibleMoves
+}
+
+const shuffleMoves = (moves, randomizer) => {
+  const shuffledMoves = []
+  while (moves.length) {
+    const randomIndex = Math.floor(randomizer() * moves.length)
+    const selectedItem = moves.splice(randomIndex, 1)[0]
+    shuffledMoves.push(selectedItem)
+  }
+  return shuffledMoves
+}
+
+const parseMove = (grid, move) => {
+  console.log('move', move)
+  const [direction, index] = move.split('')
+  switch(direction) {
+  case 'D':
+    return increaseColumnGridByIndex(grid, index * gridSpace)
+  case 'R':
+    return increaseRowGridByIndex(grid, index * gridSpace)
+  default:
+    throw new Error('Not implemented yet')
+  }
+}
+
+const seed = Math.random()
+
+const randomizer = AleaRandomizer(seed)
+
+const moves = generateAvailableMoves(gridNumber)
+const shuffledMoves = shuffleMoves(moves, randomizer)
+
+while (shuffledMoves.length) {
+  const currentMove = shuffledMoves.shift()
+  const newGrid = parseMove(gridList[gridList.length - 1], currentMove)
+  gridList.push(newGrid)
+}
+
+const startingPosition = gridList.length - 1
+
+let currentGrid = gridList[startingPosition]
+
+const drawToIndexElement = document.getElementById('grids')
+
+
+drawToIndexElement.setAttribute('max', startingPosition)
+drawToIndexElement.setAttribute('min', 0)
+drawToIndexElement.value = startingPosition
+
+const rewind = () => {
+  const currentIndex = drawToIndexElement.value
+  if (currentIndex - 1 >= 0) {
+    drawToIndexElement.value = Number(currentIndex) - 1
+    drawGridAtCurrentIndexValue()
+  }
+}
+const advance = () => {
+  const currentIndex = drawToIndexElement.value
+  if (Number(currentIndex) + 1 < gridList.length) {
+    drawToIndexElement.value = Number(currentIndex) + 1
+    drawGridAtCurrentIndexValue()
+  }
+}
+
+const drawGridAtCurrentIndexValue = () => {
+  const currentIndex = drawToIndexElement.value
+  currentGrid = gridList[currentIndex]
+}
+
+drawGridAtCurrentIndexValue()
+
+const Button = function(ctx, x, y, color, circleSize, index, isVerticalButton) {
+  const onClick = function(){
+    if (!this.hasClicked) {
+      this.hasClicked = true
+      this.color = 'black'
+      if (isVerticalButton) {
+        currentGrid = decreaseColumnGridByIndex(gridList[gridList.length - 1], index * gridSpace)
+      } else {
+        currentGrid = decreaseRowGridByIndex(gridList[gridList.length - 1], index * gridSpace)
+      }
+      gridList.push(currentGrid)
+    }
+  }
+  return {
+    x,
+    y,
+    color,
+    circleSize,
+    radius: circleSize,
+    index,
+    onClick,
+    hasClicked: false,
+  }
+}
+
+const buttonPositions = []
+
+function isIntersect(point, circle) {
+  return Math.sqrt(Math.pow(point.x-circle.x, 2) + Math.pow(point.y - circle.y, 2)) < circle.radius
+}
+
+canvas.addEventListener('click', (e) => {
+  function relMouseCoords(event){
+    let totalOffsetX = 0
+    let totalOffsetY = 0
+    let canvasX = 0
+    let canvasY = 0
+    let currentElement = canvas
+
+    do{
+      totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft
+      totalOffsetY += currentElement.offsetTop - currentElement.scrollTop
+      currentElement = currentElement.offsetParent
+    }
+    while(currentElement)
+
+    canvasX = event.pageX - totalOffsetX
+    canvasY = event.pageY - totalOffsetY
+
+    return {x:canvasX, y:canvasY}
+  }
+
+  const mousePoint = relMouseCoords(e)
+
+  buttonPositions.forEach(circle => {
+    if (isIntersect(mousePoint, circle)) {
+      circle.onClick()
+    }
+  })
+})
+
+const shiftToCenter = 50
+const buttonRadius = 10
+
+function setupButtons() {
+  const topLeft = { x: shiftToCenter, y: shiftToCenter }
+
+  let index=0
+
+  for (let i=topLeft.y; i < topLeft.y + gridNumber * gridSpace * pixelSize; i+= pixelSize * gridSpace) {
+    const isVerticalButton = false
+    const button = new Button(ctx, topLeft.x - pixelSize * 2, i + pixelSize, 'green', buttonRadius, index++, isVerticalButton)
+    buttonPositions.push(button)
+  }
+
+  index=0
+  for (let i=topLeft.x; i< topLeft.x + gridNumber * gridSpace * pixelSize; i += pixelSize * gridSpace) {
+    const isVerticalButton = true
+    const button = new Button(ctx, i + pixelSize, topLeft.y - pixelSize * 2, 'green', buttonRadius, index++, isVerticalButton)
+    buttonPositions.push(button)
+  }
+}
+
+setupButtons()
+
+function drawButtons() {
+  buttonPositions.forEach(button => {
+    ctx.beginPath()
+    ctx.arc(button.x, button.y, button.circleSize, 0, Math.PI * 2, true)
+    ctx.fillStyle=button.color
+    ctx.fill()
+    ctx.closePath()
+  })
+}
+
+function drawBricks() {
+  for(var c=0; c<gridYLength; c++) {
+    for(var r=0; r<gridXLength; r++) {
+      var brickX = (r*(pixelSize))+(pixelSize / 2)
+      var brickY = (c*(pixelSize))+(pixelSize / 2)
+      if(currentGrid[c][r] === obstacle) {
+        ctx.beginPath()
+        ctx.rect(shiftToCenter + brickX, shiftToCenter + brickY, pixelSize, pixelSize)
+        ctx.fillStyle = '#0095DD'
+        ctx.fill()
+        ctx.closePath()
+      } else if (currentGrid[c][r] === target) {
+        ctx.beginPath()
+        ctx.rect(shiftToCenter + brickX, shiftToCenter + brickY, pixelSize, pixelSize)
+        ctx.fillStyle = 'red'
+        ctx.fill()
+        ctx.closePath()
+      }
+    }
+  }
+}
+
+function keyDownHandler(e) {
+
+  if (e.keyCode === 32) { // Space
+    buttonPositions.forEach(button => {
+      button.hasClicked = false
+      button.color = 'green'
+    })
+    drawToIndexElement.value = startingPosition
+    gridList = gridList.slice(0, startingPosition + 1)
+    drawGridAtCurrentIndexValue()
+  }
+}
+
+document.addEventListener('keydown', keyDownHandler, false)
+
+function checkForWin() {
+  if (JSON.stringify(currentGrid) === JSON.stringify(initialGrid) && drawToIndexElement.value > 0) {
+    ctx.font = '80px Comic Sans MS'
+    ctx.fillStyle = 'red'
+    ctx.textAlign = 'center'
+    ctx.fillText('You win!', canvas.width/2, canvas.height/2)
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  drawBricks()
+  drawButtons()
+  drawTarget()
+  checkForWin()
+  requestAnimationFrame(draw)
+}
+
+draw()
+</script>
+
+</body>
+</html>

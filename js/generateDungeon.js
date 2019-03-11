@@ -39,10 +39,72 @@ Repeat for any “open” subtree.
 Example dungeon node - {id: 1, label: 'Node 1'},
 */
 
+import { KEY_TYPES } from './keyTypes.js'
+import { AleaRandomizer } from './AleaRandomizer.js'
+import { calculateDungeonScore } from './evaluateDungeon.js'
+import { verifyDungeon } from './verifyDungeon.js'
+import { 
+  fortressOfWinds,
+  fortressOfWinds2,
+  // rocsFeather,
+  shadowTemple,
+  shadowTemple2,
+  waterTemple,
+  waterTemple2,
+  gnarledRoot,
+  gnarledRoot2,
+  snakeRemains,
+  poisonMoth,
+  dancingDragon,
+  dancingDragon2,
+  unicornsCave,
+  unicornsCave2,
+  ancientRuins,
+  explorersCrypt,
+  swordAndShield,
+  swordAndShield2,
+  faceShrine,
+  palaceOfDarkness,
+  greatBayTemple,
+  explorersCave,
+  stoneTowerTemple,
+  tailCave,
+  spiritsGrave,
+  spiritsGrave2,
+  wingDungeon,
+  moonlightGrotto,
+  moonlitGrotto,
+  skullDungeon,
+  crownDungeon,
+  mermaidsCave,
+  mermaidsCave2,
+  jabujabuBelly,
+  jabujabuOracle,
+  ancientTomb,
+  earthTemple,
+  // windTemple,
+  towerOfTheGods,
+  deepwoodShrine,
+  palaceOfWinds,
+  forestTempleTwilight,
+  snowPeakRuins,
+  sandShip,
+  skyViewTemple,
+  desertPalace,
+  turtleRock,
+  // skullWoods,
+  // towerOfHera,
+  dragonRoostCavern,
+  spiritTemple,
+  forestTemple,
+  fireTemple,
+  jabujabuOcarina,
+} from './hardcodedDungeons.js'
+
 const getAllSubsets = arrayOfChildren => 
   arrayOfChildren.reduce(
     (subsets, value) => subsets.concat(
-     subsets.map(set => [value,...set])
+      subsets.map(set => [value,...set])
     ),
     [[]]
   ).filter(item => item.length !== 0)
@@ -107,12 +169,20 @@ class Node {
     this.type = type
   }
 
+  setPuzzle(isPuzzle = false) {
+    this.isPuzzle = isPuzzle
+  }
+
+  setCombat(isCombat = false) {
+    this.isCombat = isCombat
+  }
+
   getKeys() {
     return this.keys
   }
 
   calculateHeight() {
-    const calculatedHeight = !!this.parent ? this.parent.calculateHeight() + 1 : 0
+    const calculatedHeight = this.parent ? this.parent.calculateHeight() + 1 : 0
     return calculatedHeight
   }
 
@@ -166,7 +236,7 @@ class Node {
     })
   }
 
-  addObstacle({ name, numberOfLocks, numberOfKeys, type, color, childrenToLock }) {
+  addObstacle({ name, numberOfLocks, numberOfKeys, type, color, childrenToLock, isPuzzle, isCombat }) {
     const addedLocks = []
     const addedKeys = []
 
@@ -185,10 +255,14 @@ class Node {
     addedLocks.forEach(lock => {
       lock.setKeys(addedKeys)
       lock.setType(type)
+      lock.setPuzzle(isPuzzle)
+      lock.setCombat(isCombat)
     })
     addedKeys.forEach(key => {
       key.setLocks(addedLocks)
       key.setType(type)
+      key.setPuzzle(isPuzzle)
+      key.setCombat(isCombat)
     })
 
     return addedLocks.concat(addedKeys)
@@ -199,6 +273,8 @@ class Node {
     type,
     isSingleLock,
     isSingleKey,
+    isCombat,
+    isPuzzle,
     color,
     childrenToLock,
     randomizer,
@@ -301,10 +377,14 @@ class Node {
     addedLocks.forEach(lock => {
       lock.setKeys(addedKeys)
       lock.setType(type)
+      lock.setPuzzle(isPuzzle)
+      lock.setCombat(isCombat)
     })
     addedKeys.forEach(key => {
       key.setLocks(addedLocks)
       key.setType(type)
+      key.setPuzzle(isPuzzle)
+      key.setCombat(isCombat)
     })
 
     return addedLocks.concat(addedKeys)
@@ -319,17 +399,15 @@ class Tree {
   draw() {
     const connections = []
     const keyLockConnections = []
-    let rooms = []
+    let nodes = []
 
     const drawQueue = []
 
     drawQueue.push(this.rootValue)
-    rooms.push(this.rootValue.getValue())
+    nodes.push(this.rootValue.getValue())
 
     while (drawQueue.length) {
       const currentValue = drawQueue[0]
-      if (currentValue.isLocked()) {
-      }
       const childrenToDraw = currentValue.getChildren()
 
       if (childrenToDraw.length) {
@@ -342,15 +420,15 @@ class Tree {
           return item.getValue()
         })
 
-        rooms = rooms.concat(childrenNodes)
+        nodes = nodes.concat(childrenNodes)
       }
       drawQueue.shift()
     }
 
-    const unique = [...new Set(rooms.filter(item => item.id))]
+    const unique = [...new Set(nodes.filter(item => item.id))]
 
     return {
-      rooms: unique,
+      nodes: unique,
       connections,
       keyLockConnections,
     }
@@ -402,7 +480,7 @@ class Tree {
 
   addDungeonObstacles(obstacles) {
     obstacles.forEach(obstacle => {
-      const addedObstacles = this.rootValue.addObstacle(Object.assign(obstacle, {
+      this.rootValue.addObstacle(Object.assign(obstacle, {
         childrenToLock: obstacle.getChildrenToLock(this.rootValue)
       }))
     })
@@ -426,34 +504,6 @@ const createNode = (name, lockColor, parent = null) => {
 
 const createConnection = (start, end) => ({ from: start, to: end })
 
-const AleaRandomizer = seed => {
-  function Mash() {
-    var n = 4022871197
-    return function(r) {
-      for (var t, s, u = 0, e = 0.02519603282416938; u < r.length; u++)
-        (s = r.charCodeAt(u)),
-          (f = e * (n += s) - ((n * e) | 0)),
-          (n = 4294967296 * ((t = f * ((e * n) | 0)) - (t | 0)) + (t | 0))
-      return (n | 0) * 2.3283064365386963e-10
-    }
-  }
-  return (function() {
-    var m = Mash(),
-      a = m(' '),
-      b = m(' '),
-      c = m(' '),
-      x = 1,
-      y
-    ;(seed = seed.toString()), (a -= m(seed)), (b -= m(seed)), (c -= m(seed))
-    a < 0 && a++, b < 0 && b++, c < 0 && c++
-    return function() {
-      var y = x * 2.3283064365386963e-10 + a * 2091639
-      ;(a = b), (b = c)
-      return (c = y - (x = y | 0))
-    }
-  })()
-}
-
 const generateSeedName = () => {
   return +new Date() + Math.random()
 }
@@ -471,10 +521,14 @@ const makeDungeon = (currentStep, seedName, arrayOfSteps = fortressOfWinds) => {
     seedName,
     numberOfSteps,
     arrayOfSteps,
-    rooms: dungeonNodes.rooms,
+    nodes: dungeonNodes.nodes,
     connections: dungeonNodes.connections,
     keyLockConnections: dungeonNodes.keyLockConnections,
   }
+}
+
+const createRandomPuzzleLock = (name, type, color) => {
+  return Object.assign(createRandomLock(name, type, color), { isPuzzle: true, isCombat: false })
 }
 
 const createRandomLock = (name, type, color) => {
@@ -535,22 +589,20 @@ const createRandomMultiKey = (name, color) => {
 const transposeStepsToRandom = arrayOfSteps => {
   return arrayOfSteps.map(step => {
     switch (step.type) {
-      case KEY_TYPES.NORMAL_KEY:
-      case KEY_TYPES.SINGLE_LOCK_KEY:
-      case KEY_TYPES.SINGLE_ROOM_PUZZLE:
-      case KEY_TYPES.EXTERNAL_KEY:
-        return createRandomLock(step.name, step.type, step.color)
-      break
-      case KEY_TYPES.KEY_ITEM:
-        return createRandomKeyItem(step.name, step.numberOfLocks)
-      break
-      case KEY_TYPES.MULTI_LOCK:
-        return createRandomMultiLock(step.name, step.color)
-      case KEY_TYPES.MULTI_KEY:
-        return createRandomMultiKey(step.name, step.color)
-      default:
-        console.log('we shouldnot be here')
-        return createRandomLock(step.name, step.type, step.color)
+    case KEY_TYPES.NORMAL_KEY:
+    case KEY_TYPES.SINGLE_LOCK_KEY:
+    case KEY_TYPES.SINGLE_ROOM_PUZZLE:
+    case KEY_TYPES.EXTERNAL_KEY:
+      return createRandomLock(step.name, step.type, step.color)
+    case KEY_TYPES.KEY_ITEM:
+      return createRandomKeyItem(step.name, step.numberOfLocks)
+    case KEY_TYPES.MULTI_LOCK:
+      return createRandomMultiLock(step.name, step.color)
+    case KEY_TYPES.MULTI_KEY:
+      return createRandomMultiKey(step.name, step.color)
+    default:
+      console.log('we shouldnot be here')
+      return createRandomLock(step.name, step.type, step.color)
     }
   })
 }
@@ -571,6 +623,7 @@ const resultFromProbability = (randomizer, resultTable, pickedValue) => {
       }
     }
   })
+
   return pickedValue
 }
 
@@ -621,7 +674,6 @@ const createRandomSteps2 = (tree, currentStep, randomizer) => {
   */
   
   const randomObstacles = []
-  let tries = 1
 
   let termination
 
@@ -629,7 +681,7 @@ const createRandomSteps2 = (tree, currentStep, randomizer) => {
     const randomProbability = randomizer()
     let newKey
     if (randomProbability < .27) {
-      newKey = createRandomLock('puzzleLock' + puzzleLockId++, KEY_TYPES.SINGLE_ROOM_PUZZLE, 'pink')
+      newKey = createRandomPuzzleLock('puzzleLock' + puzzleLockId++, KEY_TYPES.SINGLE_ROOM_PUZZLE, 'pink')
     } else if (randomProbability < .27 + .23) {
       newKey = createRandomLock('combatLock' + combatLockId++, KEY_TYPES.SINGLE_ROOM_PUZZLE, 'silver')
     } else if (randomProbability < .27 + .23 + .27) {
@@ -658,156 +710,134 @@ const createRandomSteps2 = (tree, currentStep, randomizer) => {
   insertionPoint = Math.floor(randomizer()*(randomObstacles.length / 2))
   randomObstacles.splice(insertionPoint, 0, createRandomMiniboss('miniboss'))
 
-  return tree.createRandomDungeon(currentStep, randomizer, randomObstacles)
+  const newTreeLength = tree.createRandomDungeon(currentStep, randomizer, randomObstacles)
+
+  return {
+    newTreeLength,
+    obstacleSteps: randomObstacles
+  }
 }
 
-const createRandomSteps = (randomizer) => {
-  // TODO - change this to be dependent on `dungeon difficulty`
-  // TODO - change the probabilities to be based off number of current nodes
-  // TODO - add in new dungeon types (miniboss, puzzle rooms, combat rooms)
-  // TODO - Allow for key items to be used further along within the dungeon 
-  //     (e.g. create key item, and then add to a point further down - see dancing dragon dungeon for slingshot example)
-  const ADD_MULTI_LOCK_PROBABILITY = .1
-  const ADD_MULTI_KEY_PROBABILITY = .15
-  const NORMAL_KEY_PROBABILITIES = [1, .9, .8, .6, .3, .2, .1, .1]
-  const KEY_ITEM_PROBABILITIES = {
-    1: 20,
-    2: 50,
-    3: 20,
-    4: 10,
-  }
+const createRoomsFromSteps = (steps, randomizer) => {
+  console.log('steps', steps)
+  let rooms = []
 
-  // Need to add miniboss potential here
-  // Need to worry about floating point precision here (hooray Javascript)
-  // multiLock should be prioritized in the middle,
-  // Mulitkey can be whenever
-  // Need to determine whether the single room puzzle is more agility/combat focussed, or a problem to solve
-  const stillNeedToAddKeyItemProbability = {
-    [KEY_TYPES.NORMAL_KEY]: 20,
-    [KEY_TYPES.KEY_ITEM]: 50,
-    [KEY_TYPES.SINGLE_ROOM_PUZZLE]: 10,
-    [KEY_TYPES.SINGLE_LOCK_KEY]: 10,
-    [KEY_TYPES.EXTERNAL_KEY]: 5,
-  }
-  // TODO - come up with non-tired name
-  const nonKeyItemProbability = {
-   [KEY_TYPES.NORMAL_KEY]: 30,
-   [KEY_TYPES.SINGLE_ROOM_PUZZLE]: 20,
-   [KEY_TYPES.SINGLE_LOCK_KEY]: 20,
-   [KEY_TYPES.EXTERNAL_KEY]: 15, 
-  }
-  const addableItems = [KEY_TYPES.NORMAL_KEY, KEY_TYPES.KEY_ITEM, KEY_TYPES.SINGLE_ROOM_PUZZLE, KEY_TYPES.SINGLE_LOCK_KEY, KEY_TYPES.EXTERNAL_KEY]
+  const allPotentialNodes = steps.visitedPath.slice()
 
-  // TODO - handle case where we have both multiLock and multiKey = probability is over 1
-  const shouldHaveMultiLock = randomizer() <= ADD_MULTI_LOCK_PROBABILITY
-  if (shouldHaveMultiLock) {
-    addableItems.push(KEY_TYPES.MULTI_LOCK)
-    stillNeedToAddKeyItemProbability[KEY_TYPES.MULTI_LOCK] = 5
-    nonKeyItemProbability[KEY_TYPES.MULTI_LOCK] = 15
-  }
+  const startNode = allPotentialNodes[0]
+  const externalKeys = []
+  let remainingKeys = []
 
-  const shouldHaveMultiKey = randomizer() <= ADD_MULTI_KEY_PROBABILITY
-  if (shouldHaveMultiKey) { 
-    addableItems.push(KEY_TYPES.MULTI_KEY)
-    stillNeedToAddKeyItemProbability[KEY_TYPES.MULTI_KEY] = 10
-    stillNeedToAddKeyItemProbability[KEY_TYPES.SINGLE_LOCK_KEY] = 5
-    nonKeyItemProbability[KEY_TYPES.MULTI_KEY] = 15
-  }
-
-  if (!shouldHaveMultiKey && !shouldHaveMultiLock) {
-    stillNeedToAddKeyItemProbability[KEY_TYPES.SINGLE_LOCK_KEY] += 5
-    stillNeedToAddKeyItemProbability[KEY_TYPES.SINGLE_ROOM_PUZZLE] += 5
-    stillNeedToAddKeyItemProbability[KEY_TYPES.NORMAL_KEY] -= 5
-
-    nonKeyItemProbability[KEY_TYPES.SINGLE_ROOM_PUZZLE] = 25
-    nonKeyItemProbability[KEY_TYPES.SINGLE_LOCK_KEY] = 25
-    nonKeyItemProbability[KEY_TYPES.EXTERNAL_KEY] = 20 
-  }
-
-  const keyNames = ['firstLock', 'secondLock', 'thirdLock', 'fourthLock', 'fifthLock', 'sixthLock', 'seventhLock', 'eighthLock']
-  let finishedGenerating = false
-  let finishedAddingNormalKeys = false
-  let finishedAddingMultiKeys = false
-  let finishedAddingMultiLocks = false
-  let finishedAddingKeyItem = false
-
-  if (keyNames.length !== NORMAL_KEY_PROBABILITIES.length) {
-    alert('something is wrong')
-  }
-
-  const addedNormalKeys = []
-  const randomObstacles = []
-
-  const maxTries = 100
-  let tries = 0
-
-  let singlePuzzleId = 1
-  let singleLockId = 1
-  let externalId = 1
-  let multiLockId = 1
-  let multiKeyId = 1
-
-  do {
-    // Pick an eligible candidate to add 
-    // TODO - Adjust probabilities based off current children groups as well (e.g. avoid having a flat row of keys)
-    // Check if the probability of adding it is good
-      // Yes - 
-    const probabilityToUse = finishedAddingKeyItem ? nonKeyItemProbability : stillNeedToAddKeyItemProbability
-    const keyTypeToAdd = resultFromProbability(randomizer, probabilityToUse, KEY_TYPES.NORMAL_KEY)
-
-    if (keyTypeToAdd === KEY_TYPES.NORMAL_KEY) {
-      const keyResult = randomizer()
-
-      if (keyResult >= 1-NORMAL_KEY_PROBABILITIES[addedNormalKeys.length] && !finishedAddingNormalKeys) {
-        const keyName = keyNames[addedNormalKeys.length]
-        const newKey = createRandomLock(keyName, keyTypeToAdd, 'lightblue')
-        addedNormalKeys.push(newKey)
-        randomObstacles.push(newKey)
-      } else {
-        finishedAddingNormalKeys = true
-      }
-    } else if (keyTypeToAdd === KEY_TYPES.SINGLE_ROOM_PUZZLE) {
-      const newKey = createRandomLock('puzzle' + singlePuzzleId++, keyTypeToAdd, 'silver')
-      randomObstacles.push(newKey)
-    } else if (keyTypeToAdd === KEY_TYPES.SINGLE_LOCK_KEY) {
-      const newKey = createRandomLock('singleLock' + singleLockId++, keyTypeToAdd, 'orange')
-      randomObstacles.push(newKey)
-    } else if (keyTypeToAdd === KEY_TYPES.KEY_ITEM) {
-      const numberOfLocks = resultFromProbability(randomizer, KEY_ITEM_PROBABILITIES, 2)
-      const newKey = createRandomKeyItem('keyItem')
-      randomObstacles.push(newKey)
-
-      // Remove from pool once added
-      // delete stillNeedToAddKeyItemProbability[keyTypeToAdd]
-      finishedAddingKeyItem = true
-    } else if (keyTypeToAdd === KEY_TYPES.EXTERNAL_KEY) {
-      const newKey = createRandomLock('externalKey' + externalId++, keyTypeToAdd, 'green')
-      randomObstacles.push(newKey)
-    } else if (keyTypeToAdd === KEY_TYPES.MULTI_LOCK) {
-      const newKey = createRandomLock('multiLock' + multiLockId++, keyTypeToAdd, 'cyan')
-      randomObstacles.push(newKey)
-    } else if (keyTypeToAdd === KEY_TYPES.MULTI_KEY) {
-      const newKey = createRandomLock('multiKey' + multiKeyId++, keyTypeToAdd, 'cyan')
-      randomObstacles.push(newKey)
+  startNode.children.forEach(child => { 
+    if (child.type === KEY_TYPES.EXTERNAL_KEY && !child.locked) {
+      externalKeys.push(child)
     } else {
-      console.log('gotta handle this', keyTypeToAdd)
+      remainingKeys.push(child)
     }
+  })
 
-    finishedGenerating = finishedAddingNormalKeys && finishedAddingKeyItem
-  } while (++tries < maxTries && !finishedGenerating)
+  const firstRoom = {
+    nodesInRoom: [ startNode, ...externalKeys ],
+    isFirstRoom: true,
+  }
 
-  return randomObstacles
+  rooms.push(firstRoom)
 
-  // Rules
-  // Max eight locks per dungeon - once this limit is reached, we can only return other types of locks
-  // One key item per dungeon - try to place earlier (so that it is found later)
-  // Ensure that external items cannot be locked off (e.g. bombs must be available at the start (since they are not the key item))
-  // Figure out a way of encouraging a sophisticated form of locking - maybe to do with prioritizing keys over gates, or increasing the probabilities of locking for items without children
-  // If including single room puzzles, ensure that the key and the lock are tied together (both locked and accessible at the same time)
-  // Only one multi-lock per dungeon
-  // Only one multi-key per dungeon (barring the monkey aggregation one)
-  // If there is a multi-lock already, then the probability to include a multikey should be reduced. The opposite is also true
-  
+  const isKeyWithSharedGate = (otherKeys, item) => 
+    item.locked === false && item.locks.length === 1 && otherKeys.includes(item.locks[0])
+
+  const hasSingleChild = node => node.children && node.children.length === 1
+
+  const hasMoreDescendents = node => {
+    if (node.children && node.children) {
+      return node.children.some(child => child.children.length > 0)
+    }
+    return false
+  }
+
+  const isPuzzleNode = node => node.isPuzzle === true
+
+  if (remainingKeys.some(item => item.type === KEY_TYPES.SINGLE_ROOM_PUZZLE)) {
+    const result = remainingKeys.reduce((arrayResult, item) => {
+      if (item.type === KEY_TYPES.SINGLE_ROOM_PUZZLE) {
+        if (isKeyWithSharedGate(remainingKeys, item)) {
+          const correspondingGate = remainingKeys.find(lock => item.locks[0] === lock)
+          const newRoom = { nodesInRoom: [ item, correspondingGate ] }
+
+          console.log('hasMoreDescendents', hasMoreDescendents(correspondingGate))
+
+          if (hasSingleChild(correspondingGate)) {
+            if (isPuzzleNode(correspondingGate) && !hasMoreDescendents(correspondingGate)) {
+              newRoom.nodesInRoom.push(correspondingGate.children[0])
+            }
+          }
+
+          // if (correspondingGate.childr)
+          arrayResult.singleRooms.push(newRoom)
+        }
+      } else {
+        arrayResult.otherRooms.push(item)
+      }
+      return arrayResult
+    }, { singleRooms: [], otherRooms: []})
+
+    rooms = rooms.concat(result.singleRooms)
+    remainingKeys = result.otherRooms
+  }
+
+  const externalLockNewRoomProbabilities = {
+    ['true']: 50,
+    ['false']: 50,
+  }
+
+  if (remainingKeys.some(item => item.type === KEY_TYPES.EXTERNAL_KEY)) {
+    const result = remainingKeys.reduce((arrayResult, item) => {
+      if (item.type === KEY_TYPES.EXTERNAL_KEY) {
+        const shouldAddToExistingRoom = resultFromProbability(randomizer, externalLockNewRoomProbabilities, false)
+
+        if (shouldAddToExistingRoom === 'true') {
+          console.log('we are adding to a new room', shouldAddToExistingRoom)
+        } else {
+          const newRoom = { nodesInRoom: [ item ]}
+          arrayResult.singleRooms.push(newRoom)
+        }
+      } else {
+        arrayResult.otherRooms.push(item)
+      }
+      return arrayResult
+    }, { singleRooms: [], otherRooms: []})
+
+    rooms = rooms.concat(result.singleRooms)
+    remainingKeys = result.otherRooms
+  }
+
+  const normalGatesNewRoomProbabilities = {
+    ['true']: 25,
+    ['false']: 75,
+  }
+
+  if (remainingKeys.some(item => item.type === KEY_TYPES.NORMAL_KEY)) {
+    const result = remainingKeys.reduce((arrayResult, item) => {
+      if (item.type === KEY_TYPES.NORMAL_KEY) {
+        const shouldAddToExistingRoom = resultFromProbability(randomizer, normalGatesNewRoomProbabilities, false)
+
+        if (shouldAddToExistingRoom === 'true') {
+          console.log('we are adding to a new room', shouldAddToExistingRoom)
+        } else {
+          const newRoom = { nodesInRoom: [ item ]}
+          arrayResult.singleRooms.push(newRoom)
+        }
+      } else {
+        arrayResult.otherRooms.push(item)
+      }
+      return arrayResult
+    }, { singleRooms: [], otherRooms: []})
+
+    rooms = rooms.concat(result.singleRooms)
+    remainingKeys = result.otherRooms
+  }
+
+  return rooms
 }
 
 const makeRandomDungeon = (currentStep, seedName, arrayOfSteps) => {
@@ -817,27 +847,32 @@ const makeRandomDungeon = (currentStep, seedName, arrayOfSteps) => {
   const randomizer = AleaRandomizer(seedName)
   const tree = new Tree()
   let numberOfSteps
+  let convertedSteps
 
   if (arrayOfSteps) {
-    const convertedSteps = transposeStepsToRandom(arrayOfSteps)
+    convertedSteps = transposeStepsToRandom(arrayOfSteps)
     numberOfSteps = tree.createRandomDungeon(currentStep, randomizer, convertedSteps)
   } else {
-    numberOfSteps = createRandomSteps2(tree, currentStep, randomizer)
+    const result = createRandomSteps2(tree, currentStep, randomizer)
+    convertedSteps = result.obstacleSteps
+    numberOfSteps = result.newTreeLength
   }
   
   const dungeonNodes = tree.draw()
 
   return {
     tree,
+    randomizer,
     seedName,
     numberOfSteps,
-    rooms: dungeonNodes.rooms,
+    convertedSteps,
+    nodes: dungeonNodes.nodes,
     connections: dungeonNodes.connections,
     keyLockConnections: dungeonNodes.keyLockConnections,
   }
 }
 
-const createDungeons = (currentStep) => {
+export const createDungeons = (currentStep) => {
   let newDungeons = []
   // newDungeons.push(makeDungeon(currentStep, 'apple'))
   // newDungeons.push(makeDungeon(currentStep, 'apples'))
@@ -914,26 +949,31 @@ const createDungeons = (currentStep) => {
     // 'spiritTemple',
     // 'palaceOfDarkness'
 
-    'fortressOfWinds3',
-    'explorersCrypt',
-    'waterTemple2',
-    'forestTemple',
-    'mermaidsCave2',
-    'dancingDragon2',
-    // 'jabujabuOracle',
-    'unicornsCave2',
-    'crownDungeon',
-    'ancientTomb',
-    // 'fireTemple',
-    'swordAndShield2',
-    'moonlitGrotto',
-    'snakeRemains',
+    'spiritsGrave3',
+
+    // 'spiritsGrave2',
+    // 'fortressOfWinds3',
+    // 'explorersCrypt',
+    // 'waterTemple2',
+    // 'forestTemple',
+    // 'mermaidsCave2',
+    // 'dancingDragon2',
+    // // 'jabujabuOracle',
+    // 'unicornsCave2',
+    // 'crownDungeon',
+    // 'ancientTomb',
+    // // 'fireTemple',
+    // 'swordAndShield2',
+    // 'moonlitGrotto',
+    // 'snakeRemains',
   ]
 
   let averageKeyItemPos = 0
   let averageNumberOfSteps = 0
   let leastAmountOfSteps = 100
   let totalLength = newDungeons.length
+
+  let showDebugInfo = false
 
   newDungeons = newDungeons.filter(dungeon => {
     averageNumberOfSteps += dungeon.numberOfSteps
@@ -954,9 +994,12 @@ const createDungeons = (currentStep) => {
   averageKeyItemPos /= totalLength
   averageNumberOfSteps /= totalLength
 
-  // console.log('average position of key item is', averageKeyItemPos)
-  // console.log('averageNumberOfSteps', averageNumberOfSteps)
-  // console.log('leastAmountOfSteps', leastAmountOfSteps)
+  if (showDebugInfo) {
+    console.log('average position of key item is', averageKeyItemPos)
+    console.log('averageNumberOfSteps', averageNumberOfSteps)
+    console.log('leastAmountOfSteps', leastAmountOfSteps)
+  }
+
 
   // newDungeons.push(makeRandomDungeon(currentStep, 'apples', swordAndShield))
   // newDungeons.push(makeRandomDungeon(currentStep, undefined, fortressOfWinds2))
@@ -965,23 +1008,33 @@ const createDungeons = (currentStep) => {
   // newDungeons.push(makeRandomDungeon(currentStep, 1544562670984.7566, waterTemple)) // Decent Water temple
   // newDungeons.push(makeRandomDungeon(currentStep, 1544562760739.3171, waterTemple)) // Impossible water temple
   // newDungeons.push(makeRandomDungeon(currentStep, undefined, waterTemple2))
-  // newDungeons.push(makeRandomDungeon(currentStep, 1548002081215.0908))
+  // newDungeons.push(makeRandomDungeon(currentStep, 1550663388801.0613))
 
-  let tries = 0
+  const fixed = true
 
-  while (tries++ < 1000) {
-    const currentDungeon = makeRandomDungeon(currentStep)
-    const dungeonInfo = calculateDungeonScore(verifyDungeon(currentDungeon))
-    if (dungeonInfo.criticalPathDistance / dungeonInfo.numberOfNodes > 5) {
-      newDungeons.push(currentDungeon)
-      break
+  if (fixed) {
+    // const currentDungeon = makeRandomDungeon(currentStep, 1550962391952.9353)
+    const currentDungeon = makeRandomDungeon(currentStep, 1551628833378.7515)
+    const dungeonInfo = verifyDungeon(currentDungeon)
+    newDungeons.push(currentDungeon)
+    const rooms = createRoomsFromSteps(dungeonInfo, currentDungeon.randomizer)
+    console.log('rooms', rooms)
+  } else {
+    let tries = 0
+
+    while (tries++ < 1000) {
+      const currentDungeon = makeRandomDungeon(currentStep)
+      const dungeonInfo = verifyDungeon(currentDungeon)
+      const dungeonScore = calculateDungeonScore(dungeonInfo)
+      if (dungeonScore.criticalPathDistance / dungeonScore.numberOfNodes > 5) {
+        newDungeons.push(currentDungeon)
+        const rooms = createRoomsFromSteps(dungeonInfo, currentDungeon.randomizer)
+        console.log('rooms', rooms)
+        break
+      }
     }
   }
+
+
   return newDungeons
 }
-
-findNode = (path, name) => {
-  return path.filter(node => node.name === name).pop()
-}
-
-

@@ -1,22 +1,24 @@
-verify = (verifications=1) => {
+import { drawDungeonTree } from './ui.js'
+import { KEY_TYPES } from './keyTypes.js' 
+
+export const verify = (verifications=1) => {
   for(let i=0; i<verifications; i++) {
-    const newDungeons = drawDungeon(true)
+    const newDungeons = drawDungeonTree(true)
     console.log(verifyDungeons(newDungeons))
   }
 }
 
-verifyDungeon = dungeon => {
+export const verifyDungeon = dungeon => {
   const tree = dungeon.tree
 
-  let complexity = 0
   const startNode = tree.rootValue
   const visitedPath = [startNode]
   let blockedPaths = []
 
   // Possibly split into key and gates here
   const keysGroupedByType = Object.values(KEY_TYPES).reduce(function(result, keyType) {
-      result[keyType] = []
-      return result
+    result[keyType] = []
+    return result
   }, {})
 
   const addChildToPaths = child => {
@@ -63,9 +65,9 @@ verifyDungeon = dungeon => {
   return { dungeon, visitedPath, keysGroupedByType }
 }
 
-verifyDungeons = (drawnDungeons) => {
-  if (drawnDungeons && drawnDungeons.length) {
-    return drawnDungeons.map(verifyDungeon)
+export const verifyDungeons = (createdDungeons) => {
+  if (createdDungeons && createdDungeons.length) {
+    return createdDungeons.map(verifyDungeon)
   } else {
     alert('no dungeons to verify')
   }

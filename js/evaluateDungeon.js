@@ -1,11 +1,19 @@
-isMeaningfulBranch = (node) => {
-  nodeHasBranchingBinaryChildren = node => {
+import { getDistanceBetweenLeafs, getLockedDistanceBetweenLeafs } from './calculateLeafDistances.js'
+import { drawDungeonTree } from './ui.js'
+import { verifyDungeons } from './verifyDungeon.js'
+import { KEY_TYPES } from './keyTypes.js'
+
+export const isMeaningfulBranch = (node) => {
+  const nodeHasBranchingBinaryChildren = node => {
     return node.children.length === 2 && node.children.every(child => child.children.length >= 2)
   }
   return node.hasChildren() && (node.children.length >= 3 || nodeHasBranchingBinaryChildren(node))
 }
 
-calculateVisitedPathCost = (visitedPath) => {
+// TODO - try using dfs and comparing the results (because players will likely do both - bfs is unlikely to be the sole/popular strategy)
+
+const calculateVisitedPathCost = (visitedPath) => {
+  window.visitedPath = visitedPath
   let index1 = 0
   let index2 = 1
 
@@ -21,7 +29,9 @@ calculateVisitedPathCost = (visitedPath) => {
   return distance
 }
 
-calculateDungeonScore = dungeon => {
+window.calcPath = calculateVisitedPathCost
+
+export const calculateDungeonScore = dungeon => {
   let dungeonInfo = {
     aName: dungeon.dungeon.seedName || dungeon.seedName,
     keys: {
@@ -82,96 +92,101 @@ calculateDungeonScore = dungeon => {
     const currentNodeGroup = dungeon.keysGroupedByType[classifiedNodeKeys]
     if (currentNodeGroup.length) {
       switch (classifiedNodeKeys) {
-        case KEY_TYPES.BOSS: {
-          currentNodeGroup.forEach(key => {
-            const bossGate = key.locks[0]
-            dungeonInfo.keys.bossKey.distanceToGate = getDistanceBetweenLeafs(bossGate, key).distance
-            dungeonInfo.keys.bossKey.lockedDistance = getLockedDistanceBetweenLeafs(key, bossGate)
-            dungeonInfo.keys.bossKey.distanceToStart = key.calculateHeight()
-            dungeonInfo.keys.bossKey.lockedDistanceToStart = getLockedDistanceBetweenLeafs(key, dungeon.visitedPath[0])
+      case KEY_TYPES.BOSS: {
+        currentNodeGroup.forEach(key => {
+          const bossGate = key.locks[0]
+          dungeonInfo.keys.bossKey.distanceToGate = getDistanceBetweenLeafs(bossGate, key).distance
+          dungeonInfo.keys.bossKey.lockedDistance = getLockedDistanceBetweenLeafs(key, bossGate)
+          dungeonInfo.keys.bossKey.distanceToStart = key.calculateHeight()
+          dungeonInfo.keys.bossKey.lockedDistanceToStart = getLockedDistanceBetweenLeafs(key, dungeon.visitedPath[0])
+        })
+        break
+      }
+
+      case KEY_TYPES.KEY_ITEM: {
+        let totalKeyItemDistanceFromStart = 0
+        currentNodeGroup.forEach(key => {
+          totalKeyItemDistanceFromStart += key.calculateHeight()
+
+          const keyItemLocks = key.locks
+          keyItemLocks.forEach(keyItemLock => {
+            dungeonInfo.keys.keyItem.avgDistanceToGate += getDistanceBetweenLeafs(keyItemLock, key).distance
+            dungeonInfo.keys.keyItem.avgLockedDistance += getLockedDistanceBetweenLeafs(keyItemLock, key)
           })
-          break
-        }
-
-        case KEY_TYPES.KEY_ITEM: {
-          let totalKeyItemDistanceFromStart = 0
-          currentNodeGroup.forEach(key => {
-            totalKeyItemDistanceFromStart += key.calculateHeight()
-
-            const keyItemLocks = key.locks
-            keyItemLocks.forEach(keyItemLock => {
-              dungeonInfo.keys.keyItem.avgDistanceToGate += getDistanceBetweenLeafs(keyItemLock, key).distance
-              dungeonInfo.keys.keyItem.avgLockedDistance += getLockedDistanceBetweenLeafs(keyItemLock, key)
-            })
             
-            dungeonInfo.keys.keyItem.avgDistanceToGate = dungeonInfo.keys.keyItem.avgDistanceToGate / keyItemLocks.length
-            dungeonInfo.keys.keyItem.avgLockedDistance = dungeonInfo.keys.keyItem.avgLockedDistance / keyItemLocks.length
+          dungeonInfo.keys.keyItem.avgDistanceToGate = dungeonInfo.keys.keyItem.avgDistanceToGate / keyItemLocks.length
+          dungeonInfo.keys.keyItem.avgLockedDistance = dungeonInfo.keys.keyItem.avgLockedDistance / keyItemLocks.length
+        })
+
+        dungeonInfo.keys.keyItem.distanceToStart = totalKeyItemDistanceFromStart / currentNodeGroup.length
+        break
+      }
+
+      case KEY_TYPES.MULTI_KEY: {
+        currentNodeGroup.forEach(key => {
+          const locks = key.locks
+          locks.forEach(lock => {
+            dungeonInfo.keys.multiKey.avgDistance += getDistanceBetweenLeafs(lock, key).distance
+            dungeonInfo.keys.multiKey.avgLockedDistance += getLockedDistanceBetweenLeafs(lock, key)
           })
-
-          dungeonInfo.keys.keyItem.distanceToStart = totalKeyItemDistanceFromStart / currentNodeGroup.length
-          break
-        }
-
-        case KEY_TYPES.MULTI_KEY: {
-          currentNodeGroup.forEach(key => {
-            const locks = key.locks
-            locks.forEach(lock => {
-              dungeonInfo.keys.multiKey.avgDistance += getDistanceBetweenLeafs(lock, key).distance
-              dungeonInfo.keys.multiKey.avgLockedDistance += getLockedDistanceBetweenLeafs(lock, key)
-            })
             
+        })
+
+        dungeonInfo.keys.multiKey.avgDistance = dungeonInfo.keys.multiKey.avgDistance  / currentNodeGroup.length
+        dungeonInfo.keys.multiKey.avgLockedDistance = dungeonInfo.keys.multiKey.avgLockedDistance  / currentNodeGroup.length
+        break
+      }
+
+      case KEY_TYPES.MULTI_LOCK: {
+        currentNodeGroup.forEach(key => {
+          const locks = key.locks
+          locks.forEach(lock => {
+            dungeonInfo.keys.multiLock.avgDistance += getDistanceBetweenLeafs(lock, key).distance
+            dungeonInfo.keys.multiLock.avgLockedDistance += getLockedDistanceBetweenLeafs(lock, key)
           })
 
-          dungeonInfo.keys.multiKey.avgDistance = dungeonInfo.keys.multiKey.avgDistance  / currentNodeGroup.length
-          dungeonInfo.keys.multiKey.avgLockedDistance = dungeonInfo.keys.multiKey.avgLockedDistance  / currentNodeGroup.length
-          break
-        }
+          dungeonInfo.keys.multiLock.avgDistance = dungeonInfo.keys.multiLock.avgDistance  / locks.length
+          dungeonInfo.keys.multiLock.avgLockedDistance = dungeonInfo.keys.multiLock.avgLockedDistance  / locks.length
+        })
 
-        case KEY_TYPES.MULTI_LOCK: {
-          currentNodeGroup.forEach(key => {
-            const locks = key.locks
-            locks.forEach(lock => {
-              dungeonInfo.keys.multiLock.avgDistance += getDistanceBetweenLeafs(lock, key).distance
-              dungeonInfo.keys.multiLock.avgLockedDistance += getLockedDistanceBetweenLeafs(lock, key)
-            })
+        break
+      }
 
-            dungeonInfo.keys.multiLock.avgDistance = dungeonInfo.keys.multiLock.avgDistance  / locks.length
-            dungeonInfo.keys.multiLock.avgLockedDistance = dungeonInfo.keys.multiLock.avgLockedDistance  / locks.length
+      case KEY_TYPES.NORMAL_KEY: {
+        currentNodeGroup.forEach(key => {
+          const locks = key.locks
+          locks.forEach(lock => {
+            dungeonInfo.keys.normalKey.avgDistance += getDistanceBetweenLeafs(lock, key).distance
+            dungeonInfo.keys.normalKey.lockedDistance += getLockedDistanceBetweenLeafs(lock, key)
           })
-
-          break
-        }
-
-        case KEY_TYPES.NORMAL_KEY: {
-          currentNodeGroup.forEach(key => {
-            const locks = key.locks
-            locks.forEach(lock => {
-              dungeonInfo.keys.normalKey.avgDistance += getDistanceBetweenLeafs(lock, key).distance
-              dungeonInfo.keys.normalKey.lockedDistance += getLockedDistanceBetweenLeafs(lock, key)
-            })
             
-          })
-          dungeonInfo.keys.normalKey.avgDistance = dungeonInfo.keys.normalKey.avgDistance / currentNodeGroup.length
-          dungeonInfo.keys.normalKey.lockedDistance = dungeonInfo.keys.normalKey.lockedDistance / currentNodeGroup.length
-          break
-        }
+        })
+        dungeonInfo.keys.normalKey.avgDistance = dungeonInfo.keys.normalKey.avgDistance / currentNodeGroup.length
+        dungeonInfo.keys.normalKey.lockedDistance = dungeonInfo.keys.normalKey.lockedDistance / currentNodeGroup.length
+        break
+      }
 
-        case KEY_TYPES.COMBAT_KEY:
-        case KEY_TYPES.SINGLE_LOCK_KEY:
-          currentNodeGroup.forEach(key => {
-            const locks = key.locks
-            locks.forEach(lock => {
-              dungeonInfo.keys.specialKey.avgDistance += getDistanceBetweenLeafs(lock, key).distance
-              dungeonInfo.keys.specialKey.avgLockedDistance += getLockedDistanceBetweenLeafs(lock, key)
-            })
+      case KEY_TYPES.COMBAT_KEY:
+      case KEY_TYPES.SINGLE_LOCK_KEY:
+        currentNodeGroup.forEach(key => {
+          const locks = key.locks
+          locks.forEach(lock => {
+            dungeonInfo.keys.specialKey.avgDistance += getDistanceBetweenLeafs(lock, key).distance
+            dungeonInfo.keys.specialKey.avgLockedDistance += getLockedDistanceBetweenLeafs(lock, key)
+          })
             
-            dungeonInfo.keys.specialKey.avgDistance = dungeonInfo.keys.specialKey.avgDistance / locks.length
-            dungeonInfo.keys.specialKey.avgLockedDistance = dungeonInfo.keys.specialKey.avgLockedDistance / locks.length
-          })
-          break
+          dungeonInfo.keys.specialKey.avgDistance = dungeonInfo.keys.specialKey.avgDistance / locks.length
+          dungeonInfo.keys.specialKey.avgLockedDistance = dungeonInfo.keys.specialKey.avgLockedDistance / locks.length
+        })
+        break
 
-        default: {
-        }
+      case KEY_TYPES.SINGLE_ROOM_PUZZLE:
+      case KEY_TYPES.EXTERNAL_KEY:
+        break
+
+      default: {
+        break
+      }
       }
     }
   })
@@ -188,11 +203,11 @@ calculateDungeonScore = dungeon => {
 
   avgTreeWidth /= Object.values(dungeonInfo.treeStructure).length
 
-  return Object.assign(dungeonInfo, { maxTreeWidth })
+  return Object.assign(dungeonInfo, { maxTreeWidth, avgTreeWidth })
 }
 
-evaluateDungeon = () => {
-  const verifiedDungeons = verifyDungeons(drawDungeon(true))
+export const evaluateDungeon = () => {
+  const verifiedDungeons = verifyDungeons(drawDungeonTree(true))
   if (verifiedDungeons) {
     const evaluations = verifiedDungeons.filter(dungeon => !!dungeon.visitedPath.length).map(calculateDungeonScore)
 
@@ -246,10 +261,11 @@ evaluateDungeon = () => {
       return calcScore(aScore, bScore)
     }
 
+    const noLog = () => {}
+    evaluations.sort(sortByBossKey).forEach(dungeon => noLog(dungeon))
+    evaluations.sort(sortByKeyItem).forEach(dungeon => noLog(dungeon))
+    evaluations.sort(sortBySumOfKeys).forEach(dungeon => noLog(dungeon))
     evaluations.sort(sortByNormalizedCriticalPath).forEach(dungeon => console.log(dungeon, dungeon.criticalPathDistance / dungeon.numberOfNodes))
-    // evaluations.sort(sortByBossKey).forEach(dungeon => console.log(dungeon))
-    // evaluations.sort(sortByKeyItem).forEach(dungeon => console.log(dungeon))
-    // evaluations.sort(sortBySumOfKeys).forEach(dungeon => console.log(dungeon))
   }
 
 
@@ -278,5 +294,8 @@ evaluateDungeon = () => {
   // Complete path length - between 17 -27 segments long
 
   // Add entry that looks at distance between types of keys (ensuring there's less clustering of puzzles/external locks in an area)
+
+
+  // Ensure that the ratio between combat rooms and puzzle rooms are evenly distributed 
 
 }

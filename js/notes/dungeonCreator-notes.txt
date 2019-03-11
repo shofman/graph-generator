@@ -1,0 +1,47 @@
+dungeonCreator Notes
+--------------------
+
+Non-linearity is optimal - we want to minimize the amount of backtracking. (Ones with the largest distance between nodes on the graph should somehow provide a shortcut)
+
+
+Evaluation metrics
+------------------
+Mission Linearity: the number of nodes on the shortest direct
+path between start and end of the mission graph, divided by
+nodes within the graph total. 
+missionL = Number of Nodes on Shortest Path / Total Nodes in Graph
+
+Map Linearity: a weighted scoring of each room with one or more
+forward exits divided by all rooms with any forward exits: those
+with a single entrance and exit (fully linear) have weight 1; those
+with two forward exits have weight 0.5, and those with three
+exits are considered maximally non-linear and do not contribute
+to the numerator. ‘Dead ends’ (rooms with an entrance but no
+forward exit) are not directly counted by this metric. In Fig. 3
+this is (1 × 12 + 0.5 × 3) ÷ 15 = 0.9.
+mapL = (1×SingleExits) + (0.5×DoubleExits) + (0×TripleExits) / Total Rooms with Exits
+
+Leniency: the proportion of safe rooms within the dungeon graph
+to total rooms. For the purposes of this evaluation we have
+considered only local combat challenges and the final Boss node
+to be ‘unsafe’, though the precise calculation of this metric is
+to a degree dependent on the details of the final realisation of a
+level: it is possible that any of the traversal or puzzle challenges
+or even dungeon item locks could be implemented in a way that
+was potentially ‘unsafe’ for the player character. In Fig. 3, this is
+15 ÷ 19 = 0.789473684.
+leniency =
+Number of Safe Rooms / Total Rooms
+
+Path Redundancy: the number of rooms that are present but do
+not need to be visited in order to complete the level, divided by all
+rooms. In these are defined as rooms that “do not eventually
+lead to, or themselves contain, any reward”, and are byproducts
+of possible expansions of the graph-rewriting rules used in that
+system. However under the ASP formulation described in Sec. 3
+these rooms are only generated as optional ‘exploration’ paths
+leading to non-critical reward nodes — a comparable but not
+identical concept. In Fig. 3, these are the combat challenge and
+dungeon item lock blocking access to the Map reward, and the
+measure is 3 ÷ 19 = 0.157894737.
+redundancy = Number of Non-critical Rooms / Total Rooms

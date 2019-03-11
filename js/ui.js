@@ -1,3 +1,5 @@
+import { createDungeons } from './generateDungeon.js'
+
 const createContainerNode = (totalNumberToCreate) => {
   const containerNode = document.createElement('div')
   if (!containerNode) {
@@ -9,8 +11,9 @@ const createContainerNode = (totalNumberToCreate) => {
 
   const pageWidth = (window.innerWidth || document.body.clientWidth) - 50
   containerNode.style.width = pageWidth / totalNumberToCreate
+  containerNode.style.height = 800
   if (totalNumberToCreate === 1) {
-    containerNode.style.width = 1000
+    containerNode.style.width = 800
   }
 
   return containerNode
@@ -18,13 +21,12 @@ const createContainerNode = (totalNumberToCreate) => {
 
 const createTitleNode = (seedName) => {
   const titleNode = document.createElement('span')
-  const style = titleNode.style
   titleNode.innerHTML = seedName
   return titleNode
 }
 
 const createVisualization = (dungeonInfo) => {
-  const nodes = new vis.DataSet(dungeonInfo.rooms)
+  const nodes = new vis.DataSet(dungeonInfo.nodes)
 
   // create an array with edges
   const useKeys = document.getElementById('keys').checked
@@ -46,9 +48,9 @@ const createVisualization = (dungeonInfo) => {
 }
 
 let cachedDungeons = []
+let largestSteps = 0
 
-
-const drawDungeon = (useCachedDungeon = false) => {
+export const drawDungeonTree = (useCachedDungeon = false) => {
   if (useCachedDungeon) {
     return cachedDungeons
   }
@@ -73,7 +75,6 @@ const drawDungeon = (useCachedDungeon = false) => {
       }
     },
   }
-  let largestSteps = 0
 
   newDungeons.forEach(dungeonData => {
     if (dungeonData.numberOfSteps > largestSteps) {
@@ -101,14 +102,14 @@ const drawDungeon = (useCachedDungeon = false) => {
   return newDungeons
 }
 
-rewind = () => {
+export const rewind = () => {
   const generation = document.getElementById('generation')
   generation.valueAsNumber = generation.valueAsNumber - 1
-  drawDungeon()
+  drawDungeonTree()
 }
 
-advance = () => {
+export const advance = () => {
   const generation = document.getElementById('generation')
   generation.valueAsNumber = generation.valueAsNumber + 1
-  drawDungeon()
+  drawDungeonTree()
 }

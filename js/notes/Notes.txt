@@ -1,0 +1,165 @@
+Notes
+-----
+KI = Key Item (# of blocking locks - position within steps)
+M = Miniboss (position within steps)
+PK = Puzzle Keys (# of single room puzzles)
+CP = Combat puzzle (# of single room meaningful combats - e.g. kill all enemies to proceed, destroy to receive item)
+L = Locks (# of locked doors in dungeon)
+MK = MultiKey (# of MultiKey items - # of Keys required to unlock - position within steps)
+SL = SingleLock (# of locks that span across rooms (switches to reach other areas, raising water levels etc))
+EL = ExternalLock (# of locks )
+
+
+dancingDragon2 - KI: 3-8:25, M: 11:25, PK: 6/25, CP: 7/25, L: 5/25, MK: 1/25-2-12:25, SL: 2/25, EL: 2/25
+{1: 10, 2: 11, 3: 3, 4: 1}
+
+unicornsCave2 - KI: 3-13:22, M: 11:22, PK: 4/22, CP: 7/22, L: 5/22, MK: 1/22-2-7:22, SL: 1/22, EL: 2/22
+{1: 8, 2: 12, 3: 1, 4: 1}
+
+mermaidsCave2 - KI: 2-6:27, M: 8:27, PK: 2/27, CP: 2/27, L: 6/27, SL: 4/27, EL: 11/27 
+{1: 19, 2: 6, 3: 1, 4: 1}
+
+explorersCrypt - KI: 1-13:28, M: 5:28, PK: 9/28, CP: 7/28, L: 6/28, MK: 1/28-2-10:28, EL: 3/28
+{1: 13, 2: 10, 3: 3, 4: 1, 6: 1}
+
+swordAndShield2 - KI: 1-19:28, M: 16:28, PK: 6/28, CP: 4/28, L: 7/28, MK: 1/28-2-22:28, SL: 6/28, EL:  2/28
+{1: 17, 2: 8, 3: 1, 7: 1, 9: 1}
+
+crownDungeon - KI: 4-11:20, M: 12:20, PK: 7/20, L: 7/20, SL: 1/20, EL: 5/20
+{1: 11, 2: 7, 4: 1, 5: 1}
+
+ancientTomb - KI: 1-17:26, M: 15:26, PK: 7/26, CP: 4/26, L: 5/26, MK: 1/26-4-2:26, EL: 7/26
+{1: 10, 2: 12, 3: 3, 6: 1}
+
+forestTemple - KI: 3-15:24, PK: 5/24, CP: 10/24, L: 5/24, MK: 1/24-4-2:24, SL: 1/24, EL: 1/24
+{1: 9, 2: 12, 3: 2, 5: 1}
+
+fireTemple - KI: 3-3:18, M: 6:18, 1:18, PK: 2/18, CP: 3/18, L: 8/18, EL: 2/18
+{1: 6, 2: 8, 3: 4}
+
+waterTemple2 - KI: 4-10:30, M: 13:30, PK: 5/30, CP: 6/30, L: 6/30, MK: 1/30-4-9:30, SL: 6/30, EL: 4/30
+{1: 10, 2: 15, 3: 1, 4: 2, 5: 2}
+
+forestOfWinds - KI: 3-2:25, M: 5:25, PK: 5/25, CP: 9/25, L: 4/25, SL: 2/25, EL: 3/25
+{1: 10, 2: 12, 3: 2, 5: 1}
+
+moonlitGrotto - KI: 2-7:16, M: 5:16, PK: 7/16, CP: 1/16, L: 4/16, EL: 1/16, MK: 1/16-4-6:16
+{1: 8, 2: 5, 3: 1, 4: 1, 7: 1}
+
+snakeRemains - KI: 2-9:15, M: 5:15, PK: 5/15, CP: 3/15, L: 3/15, EL: 2/15, MK: 1/16-2-1:15
+{1: 6, 2: 6, 3: 3}
+
+TODO - Need to subtract 2 from each total - keyItems and Minibosses should not count to the total for probabilities
+
+KeyItemChildrenProbabilites - { 1: 3/13, 2: 3/13, 3: 5/13, 4: 2/13 }
+KeyItemPlacementProbabilities -
+
+3-8:25
+3-13:22
+2-6:27
+1-13:28
+1-19:28
+4-11:20
+1-17:26
+3-15:24
+3-3:18
+4-10:30
+3-2:25
+2-7:16
+2-9:15
+
+
+MinibossProbabilities - 
+
+PuzzleKeyProbabilities - 
+6/23 * 1/13 +
+4/20 * 1/13 +
+2/25 * 1/13 +
+9/26 * 1/13 +
+6/26 * 1/13 +
+7/18 * 1/13 +
+7/24 * 1/13 +
+5/22 * 1/13 +
+2/16 * 1/13 +
+5/28 * 1/13 +
+5/23 * 1/13 +
+7/14 * 1/13 +
+5/13 * 1/13 = 0.23906013502 vs 0.26393838788 vs 0.26
+
+CombatPuzzleProbabilties - 
+7/23 * 1/13 +
+7/20 * 1/13 +
+2/25 * 1/13 +
+7/26 * 1/13 +
+4/26 * 1/13 +
+4/24 * 1/13 +
+10/22 * 1/13 +
+3/16 * 1/13 +
+6/28 * 1/13 +
+9/23 * 1/13 +
+1/14 * 1/13 +
+3/13 * 1/13 = 0.20190711709 vs 0.22107113343 vs 0.22
+
+LockProbabilities - 
+5/23 * 1/13 +
+5/20 * 1/13 +
+6/25 * 1/13 +
+6/26 * 1/13 +
+7/26 * 1/13 +
+7/18 * 1/13 +
+5/24 * 1/13 +
+5/22 * 1/13 +
+8/16 * 1/13 +
+6/28 * 1/13 +
+4/23 * 1/13 +
+4/14 * 1/13 +
+3/13 * 1/13 = 0.23991277952 vs 0.26435142523 vs 0.26
+
+ExternalLockProbabilities - 
+(will need to take into account number of previous dungeons)
+2/23 * 1/13 +
+2/20 * 1/13 +
+11/25 * 1/13 +
+3/26 * 1/13 +
+2/26 * 1/13 +
+5/18 * 1/13 +
+7/24 * 1/13 +
+1/22 * 1/13 +
+2/16 * 1/13 +
+4/28 * 1/13 +
+3/23 * 1/13 +
+1/14 * 1/13 +
+2/13 * 1/13 = 0.14446639542 vs 0.15828691189 vs 0.16
+
+SingleLockProbabilities - 
+2/23 * 1/13 +
+1/20 * 1/13 +
+4/25 * 1/13 +
+6/26 * 1/13 +
+1/18 * 1/13 +
+1/22 * 1/13 +
+6/28 * 1/13 +
+2/23 * 1/13 = 0.06611962111 vs 0.07153677611 vs 0.07
+
+MultiKeyProbabilities - 
+1/23 * 1/13 +
+1/20 * 1/13 +
+1/26 * 1/13 +
+1/26 * 1/13 +
+1/24 * 1/13 +
+1/22 * 1/13 +
+1/28 * 1/13 +
+1/14 * 1/13 +
+1/14 * 1/13 = 0.03041112733 vs 0.03354569065 vs 0.03
+MultiKeyPlacementProbabilities - 
+
+
+
+
+
+take placement positions and create probability to add
+Probability increases the more steps there are that we add a miniboss or key item
+(should take multiKey and make it part of this rule instead, allocating its small probabilities equally between the largest three). Probability to add multiKey is 9/13 (for best dungeons) or 15/52 (for all dungeons)
+
+if not miniboss, and not keyItem, add another key type with the following probabilities:
+  0.26 +  0.22 +  0.26 +  0.16 +  0.07 +  0.03

@@ -1,4 +1,4 @@
-const KEY_TYPES = {
+export const KEY_TYPES = {
   BOSS: 'boss',
   NORMAL_KEY: 'key',
   KEY_ITEM: 'keyItem',

@@ -1,4 +1,4 @@
-getDistanceBetweenLeafs = (leaf1, leaf2) => {
+export const getDistanceBetweenLeafs = (leaf1, leaf2) => {
   const leaf1Path = []
   const leaf2Path = []
 
@@ -60,7 +60,7 @@ getDistanceBetweenLeafs = (leaf1, leaf2) => {
 }
 
 // Distance between leafs, but taking into account locked door costs (e.g. how much you have to travel around)
-getLockedDistanceBetweenLeafs = (leaf1, leaf2, withRecursion = false) => {
+export const getLockedDistanceBetweenLeafs = (leaf1, leaf2, withRecursion = false) => {
   const distanceObject = getDistanceBetweenLeafs(leaf1, leaf2)
 
   if (distanceObject.criticalPath.length) {

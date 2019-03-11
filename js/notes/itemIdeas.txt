@@ -1,0 +1,14 @@
+sonic thumper
+laser generator
+glasses to look behind walls
+painter (paint walls)
+heat gloves - melt ice
+Lay ice on floor
+Fire jumping thing
+
+Item that returns you to the start
+  - if used in a dungeon room, we return to the start of the room
+  - if used at the start of a room, you return to the start of the dungeon
+  - if used at the start of a dungeon, you return to the start of a region
+  - if used at the start of a region, you return to the start of the map
+  - (bonus easter egg), if you used at the start of a map, you end up in a limbo state with something (like a bonus item)
