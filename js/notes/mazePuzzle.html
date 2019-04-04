@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Puzzle Generator</title>
+    <style>* { padding: 0; margin: 0; } canvas { background: #eee; display: block; margin: 0 auto; }</style>
+</head>
+<body>
+
+<canvas id="myCanvas" width="480" height="320"></canvas>
+
+<script>
+const canvas = document.getElementById('myCanvas')
+const ctx = canvas.getContext('2d')
+const grid = []
+const pixelSize = 20
+const gridY = canvas.height
+const gridX = canvas.width
+
+const gridYLength = (gridY / pixelSize) - 1
+const gridXLength = (gridX / pixelSize) - 1
+
+for (let i=0; i<gridYLength; i++) {
+  grid.push(Array.apply(null, Array(gridXLength)).map(() => 0))
+}
+
+const playerIndicator = 1
+const obstacle = 3
+const emptySpace = 0
+
+grid[0][3] = obstacle
+grid[0][1] = obstacle
+grid[0][5] = obstacle
+grid[3][5] = obstacle
+
+
+let playerXPos = 0
+let playerYPos = 0
+
+grid[playerYPos][playerXPos] = playerIndicator
+
+var rightPressed = false
+var leftPressed = false
+var upPressed = false
+var downPressed = false
+
+document.addEventListener('keydown', keyDownHandler, false)
+
+function keyDownHandler(e) {
+  let playerMovementDistance = 1
+  let hasMoved = false
+  let currentXPos = playerXPos
+  let currentYPos = playerYPos
+
+  if(e.keyCode == 39 && playerXPos + playerMovementDistance < grid[0].length) {
+    rightPressed = true
+    hasMoved = true
+    playerXPos += playerMovementDistance
+  }
+  if(e.keyCode === 38 && playerYPos - playerMovementDistance >= 0) {
+    upPressed = true
+    hasMoved = true
+    playerYPos -= playerMovementDistance
+  }
+  if(e.keyCode == 37 && playerXPos - playerMovementDistance >= 0) {
+    leftPressed = true
+    hasMoved = true
+    playerXPos -= playerMovementDistance
+  }
+  if (e.keyCode === 40 && playerYPos + playerMovementDistance < grid.length) {
+    downPressed = true
+    hasMoved = true
+    playerYPos += playerMovementDistance
+  }
+
+  if (hasMoved) {
+    grid[currentYPos][currentXPos] = emptySpace
+    grid[playerYPos][playerXPos] = playerIndicator
+  }
+}
+
+function drawCharacter() {
+  ctx.beginPath()
+  ctx.arc((playerXPos * pixelSize) + pixelSize, (playerYPos * pixelSize) + pixelSize, pixelSize / 2, 0, Math.PI*2)
+  ctx.fillStyle = '#0095DD'
+  ctx.fill()
+  ctx.closePath()
+}
+
+function drawBricks() {
+  for(var c=0; c<gridYLength; c++) {
+    for(var r=0; r<gridXLength; r++) {
+      if(grid[c][r] === obstacle) {
+        var brickX = (r*(pixelSize))+(pixelSize / 2)
+        var brickY = (c*(pixelSize))+(pixelSize / 2)
+        ctx.beginPath()
+        ctx.rect(brickX, brickY, pixelSize, pixelSize)
+        ctx.fillStyle = '#0095DD'
+        ctx.fill()
+        ctx.closePath()
+      }
+    }
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  drawCharacter()
+  drawBricks()
+
+  requestAnimationFrame(draw)
+}
+
+draw()
+</script>
+
+</body>
+</html>

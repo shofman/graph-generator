@@ -39,7 +39,7 @@ function getRandomInt(randomizer, min, max) {
   return Math.floor(randomResult * (max - min)) + min //The maximum is exclusive and the minimum is inclusive
 }
 
-function generateHardcodedIceGrid(width, height, seed) {
+function generateIceGrid(width, height, seed) {
   const xDirections = [ 0, 1, -1, 0]
   const yDirections = [-1, 0,  0, 1]
   const directionLetters = ['U', 'R', 'L', 'D']
@@ -48,13 +48,13 @@ function generateHardcodedIceGrid(width, height, seed) {
 
   while (tries++ < 10000) {
     const isValidPosition = (row, column) => {
-      const isWithinGrid = (0 <= row && row < height && 0 <= column && column < width)
       const isStartingPosition = (row === startPositionY && column === startPositionX)
       const isEndingPosition = (row === endPositionY && column === endPositionX)
       if (isStartingPosition || isEndingPosition) {
         return true
       }
 
+      const isWithinGrid = (0 <= row && row < height && 0 <= column && column < width)
       if (!isWithinGrid) {
         return false
       }
@@ -170,7 +170,7 @@ const createGrid = () => {
 
   // const brokenSeed = 0.3955406636481307
   console.log('seed', seed)
-  const result = generateHardcodedIceGrid(gridXLength, gridYLength, seed)
+  const result = generateIceGrid(gridXLength, gridYLength, seed)
 
   startingXPos = result.startingPosition.x + 1
   startingYPos = 0

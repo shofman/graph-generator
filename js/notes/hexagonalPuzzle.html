@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Puzzle Generator</title>
+    <style>* { padding: 0; margin: 0; } canvas { background: #eee; display: block; margin: 0 auto; }</style>
+</head>
+<body>
+
+<canvas id="myCanvas" width="480" height="320"></canvas>
+
+<script>
+// Puzzle algorithm
+// Create spacious hexagonal grid (probability wise, we will need a propensity for certain amounts of each length)
+// For each active tile, place a value of 1, 2 or 3 on it. 
+// Tie rows together - these make the sums
+// Display the sums at the edge
+// User can then add 1, 2 or 3 items to each active grid. Once all of the totals equal their desired amount, the game has been won
+const AleaRandomizer = seed => {
+  function Mash() {
+    var n = 4022871197
+    return function(r) {
+      for (var t, f, s, u = 0, e = 0.02519603282416938; u < r.length; u++)
+        (s = r.charCodeAt(u)),
+        (f = e * (n += s) - ((n * e) | 0)),
+        (n = 4294967296 * ((t = f * ((e * n) | 0)) - (t | 0)) + (t | 0))
+      return (n | 0) * 2.3283064365386963e-10
+    }
+  }
+  return (function() {
+    var m = Mash(),
+      a = m(' '),
+      b = m(' '),
+      c = m(' '),
+      x = 1
+    ;(seed = seed.toString()), (a -= m(seed)), (b -= m(seed)), (c -= m(seed))
+    a < 0 && a++, b < 0 && b++, c < 0 && c++
+    return function() {
+      var y = x * 2.3283064365386963e-10 + a * 2091639
+      ;(a = b), (b = c)
+      return (c = y - (x = y | 0))
+    }
+  })()
+}
+
+
+const canvas = document.getElementById('myCanvas')
+const ctx = canvas.getContext('2d')
+const grid = {}
+const emptyGrid = {}
+const pixelSize = 20
+const gridY = canvas.height
+const gridX = canvas.width
+// const brokenSeed = 0.0012788003196881892 - has sparseness
+const seed = Math.random()
+console.log('seed', seed)
+const randomizer = AleaRandomizer(seed)
+
+const gridYLength = (gridY / pixelSize) - 1
+const gridXLength = (gridX / pixelSize) - 1
+
+const generateKey = (x, y) => {
+  const key = `${x},${y}`
+  return key
+}
+
+for (let y=0; y<gridYLength; y++) {
+  for (let x=0; x<gridXLength; x+=2) {
+    const key = generateKey(x + ((y+x) % 2), y)
+    grid[key] = Math.floor(randomizer() * 3) + 1
+    emptyGrid[key] = 0
+  }
+}
+
+document.addEventListener('keydown', keyDownHandler, false)
+
+function keyDownHandler(e) {
+  if (e.keyCode === 32) {
+    for (let y=0; y<gridYLength; y++) {
+      for (let x=0; x<gridXLength; x+=2) {
+        const key = generateKey(x + ((y+x) % 2), y)
+        emptyGrid[key] = 0
+
+        console.log('hexPositions', hexPositions)
+      }
+    }
+    hexPositions = hexPositions.map(hex => {
+      hex.currentValue = 0
+      return hex
+    })
+  }
+}
+
+function isIntersect(point, circle) {
+  return Math.sqrt(Math.pow(point.x-circle.x, 2) + Math.pow(point.y - circle.y, 2)) < circle.radius
+}
+
+canvas.addEventListener('click', (e) => {
+  function relMouseCoords(event){
+    let totalOffsetX = 0
+    let totalOffsetY = 0
+    let canvasX = 0
+    let canvasY = 0
+    let currentElement = canvas
+
+    do{
+      totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft
+      totalOffsetY += currentElement.offsetTop - currentElement.scrollTop
+      currentElement = currentElement.offsetParent
+    }
+    while(currentElement)
+
+    canvasX = event.pageX - totalOffsetX
+    canvasY = event.pageY - totalOffsetY
+
+    return {x:canvasX, y:canvasY}
+  }
+
+  const mousePoint = relMouseCoords(e)
+
+  hexPositions.forEach(hex => {
+    if (isIntersect(mousePoint, hex)) {
+      hex.onClick()
+    }
+  })
+})
+
+const Hex = (x, y, radius, value, key, currentValue = 0) => ({
+  onClick: () => {
+    console.log('currentValue', currentValue)
+    emptyGrid[key] = (Number(currentValue) + 1) % 4
+    currentValue = (Number(currentValue) + 1) % 4
+  },
+  x,
+  y,
+  radius,
+  value,
+  key,
+  currentValue
+})
+
+let hexPositions = []
+
+const setupHexes = () => {
+  for(let c=0; c<gridYLength; c++) {
+    for(let r=0; r<gridXLength; r++) {
+      const key = generateKey(r, c)
+      if (Object.keys(grid).includes(key)) {
+        const distance = getDistanceFromCenter(r, c)
+        if (distance > largestValue) {
+          largestValue = distance
+        }
+      }
+    }
+  }
+}
+
+const getDistanceFromCenter = (x, y) => {
+  return Math.sqrt(Math.pow(y - gridYLength / 2, 2) + Math.pow(x - gridXLength / 2, 2))
+}
+
+function getRandomInt(randomizer, min, max) {
+  const randomResult = randomizer()
+  min = Math.ceil(min)
+  max = Math.floor(max)
+  return Math.floor(randomResult * (max - min)) + min //The maximum is exclusive and the minimum is inclusive
+}
+
+let largestValue = 0
+
+const createPlayableGrid = () => {
+  for(let c=0; c<gridYLength; c++) {
+    for(let r=0; r<gridXLength+1; r++) {
+      const key = generateKey(r, c)
+      if (Object.keys(grid).includes(key)) {
+        const normalizedDistance = getDistanceFromCenter(r, c) / largestValue
+        const randomChanceToRemove = getRandomInt(randomizer, 0, 7)
+        if (normalizedDistance >= .25|| randomChanceToRemove  === 0 || randomChanceToRemove === 1) {
+          delete grid[key]
+          delete emptyGrid[key]
+        } else {
+          const sideLength = pixelSize / 1.4
+          const hexagonAngle = 0.523598776 // 30 degrees in radians
+          const hexRadius = Math.cos(hexagonAngle) * sideLength
+          const brickX = (r*(pixelSize))
+          const brickY = (c*(pixelSize))
+          hexPositions.push(Hex(brickX + pixelSize / 2 , brickY + pixelSize / 1.5, hexRadius, grid[key], key))
+        }
+      }
+    }
+  }
+}
+
+const lineGrid = {
+  horizontal: [],
+  vertical: [],
+  diagonalSouthwestToNorthEast: [],
+  diagonalNorthwestToSouthEast: [],
+}
+
+const createLines = () => {
+  // Horizontal lines
+  const validHexes = Object.keys(grid)
+
+  validHexes.forEach(hexEntry => {
+    const newLine = []
+    const currentEntry = hexEntry
+    const [hexX, hexY] = currentEntry.split(',')
+    let xNeighbor = Number(hexX) + 2
+    let horizontalNeighbor = generateKey(xNeighbor, hexY)
+
+    if (validHexes.includes(horizontalNeighbor)) {
+      newLine.push(currentEntry)
+    }
+
+
+    while (validHexes.includes(horizontalNeighbor)) {
+      newLine.push(horizontalNeighbor)
+      xNeighbor = Number(xNeighbor) + 2
+      horizontalNeighbor = generateKey(xNeighbor, hexY)
+    }
+    
+    if (newLine.length > 1 && !lineGrid.horizontal.some(possibleArray => possibleArray.includes(currentEntry))) {
+      lineGrid.horizontal.push(newLine)
+    }
+  })
+
+  // Vertical lines
+  validHexes.forEach(hexEntry => {
+    const newLine = []
+    const currentEntry = hexEntry
+    const [hexX, hexY] = currentEntry.split(',')
+
+    let yNeighbor = Number(hexY) + 2
+    let verticalNeighbor = generateKey(hexX, yNeighbor)
+
+    if (validHexes.includes(verticalNeighbor)) {
+      newLine.push(currentEntry)
+    }
+
+    while(validHexes.includes(verticalNeighbor)) {
+      newLine.push(verticalNeighbor)
+      yNeighbor = Number(yNeighbor) + 2
+      verticalNeighbor = generateKey(hexX, yNeighbor)
+    }
+
+    if (newLine.length > 1 && !lineGrid.vertical.some(possibleArray => possibleArray.includes(currentEntry))) {
+      lineGrid.vertical.push(newLine)
+    }
+  })
+
+  // Diagonal northwest to southeast lines
+  validHexes.forEach(hexEntry => {
+    const newLine = []
+    const currentEntry = hexEntry
+    const [hexX, hexY] = currentEntry.split(',')
+
+    let xNeighbor = Number(hexX) + 1
+    let yNeighbor = Number(hexY) + 1
+
+    let diagonalNorthwestNeighbor = generateKey(xNeighbor, yNeighbor)
+
+    if (validHexes.includes(diagonalNorthwestNeighbor)) {
+      newLine.push(currentEntry)
+    }
+
+    while(validHexes.includes(diagonalNorthwestNeighbor)) {
+      newLine.push(diagonalNorthwestNeighbor)
+      xNeighbor = Number(xNeighbor) + 1
+      yNeighbor = Number(yNeighbor) + 1
+      diagonalNorthwestNeighbor = generateKey(xNeighbor, yNeighbor)
+    }
+
+    if (newLine.length > 1 && !lineGrid.diagonalNorthwestToSouthEast.some(possibleArray => possibleArray.includes(currentEntry))) {
+      lineGrid.diagonalNorthwestToSouthEast.push(newLine)
+    }
+  })
+
+  validHexes.forEach(hexEntry => {
+    const newLine = []
+    const currentEntry = hexEntry
+    const [hexX, hexY] = currentEntry.split(',')
+
+    let xNeighbor = Number(hexX) - 1
+    let yNeighbor = Number(hexY) + 1
+
+    let diagonalSouthwestNeighbor = generateKey(xNeighbor, yNeighbor)
+
+    if (validHexes.includes(diagonalSouthwestNeighbor)) {
+      newLine.push(currentEntry)
+    }
+
+    while(validHexes.includes(diagonalSouthwestNeighbor)) {
+      newLine.push(diagonalSouthwestNeighbor)
+      xNeighbor = Number(xNeighbor) - 1
+      yNeighbor = Number(yNeighbor) + 1
+      diagonalSouthwestNeighbor = generateKey(xNeighbor, yNeighbor)
+    }
+
+    if (newLine.length > 1 && !lineGrid.diagonalSouthwestToNorthEast.some(possibleArray => possibleArray.includes(currentEntry))) {
+      lineGrid.diagonalSouthwestToNorthEast.push(newLine)
+    }
+  })
+
+  // Strip entries that are not shared
+}
+const colors = ['blue', 'red', 'brown', 'orange']
+const initialHints = {}
+
+const calculateHints = () => {
+  Object.keys(lineGrid).forEach((key, index) => {
+    const currentDirection = lineGrid[key]
+    currentDirection.forEach(line => {
+      const total = line.reduce((value, currentItem) => value + grid[currentItem], 0)
+      initialHints[JSON.stringify(line)] = total
+    })
+
+  })
+}
+
+const drawHints = () => {
+  Object.keys(lineGrid).forEach((key, index) => {
+    const currentDirection = lineGrid[key]
+    currentDirection.forEach(line => {
+      const total = initialHints[JSON.stringify(line)]
+      const [endPositionX, endPositionY] = line[line.length - 1].split(',')
+     ;z
+      if (index === 0) {
+        ctx.strokeText(total, endPositionX * pixelSize+(pixelSize / 2) + pixelSize - 5, endPositionY * pixelSize+(pixelSize - 3))
+      } else if (index === 1) {
+        ctx.strokeText(total, endPositionX * pixelSize+(pixelSize / 2), endPositionY * pixelSize+(2 * pixelSize) - 3)
+      } else if (index === 2) {
+        ctx.strokeText(total, endPositionX * pixelSize+(pixelSize / 2) - pixelSize + 10, endPositionY * pixelSize+(2 * pixelSize) - 5)
+      } else if (index === 3) {
+        ctx.strokeText(total, endPositionX * pixelSize+(pixelSize / 2) + pixelSize - 10, endPositionY * pixelSize+(2 * pixelSize) - 5)
+      }
+      ;z
+    })
+
+  })
+}
+
+setupHexes()
+createPlayableGrid()
+
+createLines()
+calculateHints()
+
+function drawHexagon(x, y) {
+  const  sideLength = pixelSize / 1.4
+  const hexagonAngle = 0.523598776 // 30 degrees in radians
+  const hexHeight = Math.sin(hexagonAngle) * sideLength
+  const hexRadius = Math.cos(hexagonAngle) * sideLength
+  const hexRectangleHeight = sideLength + 2 * hexHeight
+  const  hexRectangleWidth = 2 * hexRadius
+
+  ctx.beginPath()
+  ctx.strokeStyle = 'black'
+  ctx.moveTo(x + hexRadius, y)
+  ctx.lineTo(x + hexRectangleWidth, y + hexHeight)
+  ctx.lineTo(x + hexRectangleWidth, y + hexHeight + sideLength)
+  ctx.lineTo(x + hexRadius, y + hexRectangleHeight)
+  ctx.lineTo(x, y + sideLength + hexHeight)
+  ctx.lineTo(x, y + hexHeight)
+  ctx.closePath()
+  ctx.stroke()
+}
+
+function drawBrick(x, y, size) {
+  ctx.beginPath()
+  ctx.rect(x, y, size, size)
+  ctx.fillStyle = '#0095DD'
+  ctx.fill()
+  ctx.closePath()
+}
+
+function drawBricks() {
+  for(let c=0; c<gridYLength; c++) {
+    for(let r=0; r<gridXLength; r++) {
+      const key = generateKey(r, c)
+      if (Object.keys(grid).includes(key)) {
+        let brickX
+        let brickY
+        brickX = (r*(pixelSize))
+        brickY = (c*(pixelSize))
+        drawHexagon(brickX, brickY)
+        if (emptyGrid[key] === 1) {
+          brickX = (r*(pixelSize))+(pixelSize / 2)
+          brickY = (c*(pixelSize))+(pixelSize / 2)
+          drawBrick(brickX, brickY, pixelSize / 3)
+    
+        } else if (emptyGrid[key] === 2) {
+          brickX = (r*(pixelSize))
+          brickY = (c*(pixelSize))+(pixelSize / 2)
+          drawBrick(brickX, brickY, pixelSize / 3)
+
+          brickX = (r*(pixelSize)) + (pixelSize / 2) + (pixelSize/10)
+          brickY = (c*(pixelSize))+(pixelSize / 2)
+          drawBrick(brickX, brickY, pixelSize / 3)
+        } else if (emptyGrid[key] === 3) {
+          brickX = (r*(pixelSize))
+          brickY = (c*(pixelSize))+(pixelSize / 2)
+          drawBrick(brickX, brickY, pixelSize / 3)
+
+          brickX = (r*(pixelSize)) + (pixelSize / 2) + (pixelSize/10)
+          brickY = (c*(pixelSize))+(pixelSize / 2)
+          drawBrick(brickX, brickY, pixelSize / 3)
+
+          brickX = (r*(pixelSize)) + (pixelSize / 3)
+          brickY = (c*(pixelSize))+(pixelSize)
+          drawBrick(brickX, brickY, pixelSize / 3)
+        }
+      }
+    }
+  }
+}
+
+function checkForWin() {
+  if (JSON.stringify(emptyGrid) === JSON.stringify(grid)) {
+    ctx.font = '80px Comic Sans MS'
+    ctx.fillStyle = 'red'
+    ctx.textAlign = 'center'
+    ctx.fillText('You win!', canvas.width/2, canvas.height/2)
+  }
+}
+
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  drawBricks()
+  drawHints()
+  checkForWin()
+  requestAnimationFrame(draw)
+}
+
+draw()
+</script>
+
+</body>
+</html>

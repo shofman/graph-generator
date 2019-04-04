@@ -2,3 +2,14 @@ types of puzzles
 ----------------
 
 Go through Breath of the Wild Shrine Walkthroughs for ideas
+
+
+Cover an area of terrain (by walking on blocks (sliding puzzle too))
+Get blocks to area - complexify by adding multiple blocks
+Move yourself across area by sliding (spinning ala pokemon) (see https://francoisvn.itch.io/streamline)
+Infinite spawning dungeon (a la https://ericflorio.itch.io/intricave)
+
+
+
+https://en.wikipedia.org/wiki/Rithmomachy
+https://en.wikipedia.org/wiki/Mathematical_game
