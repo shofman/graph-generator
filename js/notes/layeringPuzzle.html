@@ -12,6 +12,8 @@
 
 <canvas id="myCanvas" width="480" height="320"></canvas>
 
+<script type="text/javascript" src="./generateNewGridForLayerPuzzle.js"></script>
+
 <script>
 const AleaRandomizer = seed => {
   function Mash() {
@@ -51,22 +53,20 @@ const gridNumber = 6
 const gridYLength = gridNumber * gridSpace + gridNumber * gridSpace
 const gridXLength = gridNumber * gridSpace + gridNumber * gridSpace
 
-canvas.height = gridYLength * pixelSize
-canvas.width = gridXLength * pixelSize
+canvas.height = gridYLength * pixelSize +  (gridNumber * gridSpace * pixelSize)
+canvas.width = gridXLength * pixelSize + (gridNumber * gridSpace * pixelSize)
 
-const obstacle = 3
-const targetBlock = 5
-const emptySpace = 0
+const generateKey = (x,y) => `${x},${y}`
 
 // Simple grid
 // Density = 0.07471264367816093
 
 let initialGrid = [
-  [0, 0, 3, 3, 0, 0],
-  [0, 3, 3, 3, 0, 0],
-  [3, 0, 0, 3, 0, 0],
-  [3, 3, 3, 3, 3, 0],
-  [5, 0, 0, 0, 0, 0],
+  // [0, 0, 3, 3, 0, 0],
+  // [0, 3, 3, 3, 0, 0],
+  // [3, 0, 0, 3, 0, 0],
+  // [3, 3, 3, 3, 3, 0],
+  // [5, 0, 0, 0, 0, 0],
 ]
 
 // Crisscrossing entries
@@ -103,67 +103,33 @@ for (let i=0; i<gridYLength; i++) {
   }))
 }
 
-const evaluateDensity = grid => {
-  let totalEmpty = 0
-  let totalFilled = 0
-
-  grid.forEach(row => {
-    row.forEach(columnEntry => {
-      if (columnEntry === obstacle || columnEntry === targetBlock) {
-        totalFilled++
-      } else if (columnEntry === emptySpace) {
-        totalEmpty++
-      }
-    })
-  })
-  return totalFilled / (totalFilled + totalEmpty)
-}
-
-// Helper function to check if previous row or previous col is a block (without exploding due to index issues)
-const checkPreviousEntry = () => {}
-
-const generateNewGrid = (initialGrid, randomizer) => {
-  return initialGrid
-  // Use probability to create clumps of blocks
-
-  let hasPlacedFirstBlock = false
-  let newGrid = initialGrid.map((row, rowPos) => {
-    const newRow = row.map((columnEntry, columnPos) => {
-      // Special rules for the first row - use only horizontal probability
-      if (!hasPlacedFirstBlock && randomizer()) {}
-
-      if (rowPos === 0) {
-
-      }
-
-      if (initialGrid[rowPos][columnPos]) {}
-    })
-    return newRow
-  })
-
-  // Connect the largest two blocks with a straight line
-
-  // Remove the empty islands
-
-  console.log(evaluateDensity(initialGrid))
-  return newGrid
-}
-
 const broken = 0.1889546082065121
 const solved = 0.9311797150098673
+
+const tiedLargest = 0.2996170901896136
+const breakThisDown =  0.949010289749602
+const howToHandle = 0.7210721903502999
+const badTargetPlacement = 0.27211505962386684
+const chunky = 0.6757205201354943
+const multipleTargetsWithEvenLengths = 0.33285831629572726
+const noTargets = 0.4598295234421774
 
 const seed = Math.random()
 console.log('seed', seed)
 const randomizer = AleaRandomizer(seed)
+console.log('randomizer', randomizer)
+const { grid, distanceVisitedGraph } = generateNewGrid(initialGrid, randomizer)
+initialGrid = grid
 
-initialGrid = generateNewGrid(initialGrid)
+console.log('distanceVisitedGraph', distanceVisitedGraph)
+
+console.log('initialGrid', initialGrid)
 
 const arrayCopy = array => JSON.parse(JSON.stringify(array))
 
 gridList.push(initialGrid)
 
 const gridPositions = {}
-const generateKey = (x,y) => `${x},${y}`
 
 initialGrid.forEach((row, rowPos) => {
   row.forEach((block, colPos) => {
@@ -212,6 +178,19 @@ canvas.addEventListener('click', (e) => {
   })
 })
 
+const drawBrick = (x, y, color) => {
+  ctx.beginPath()
+  ctx.rect(x, y, pixelSize, pixelSize)
+  ctx.fillStyle = color
+  ctx.fill()
+  ctx.closePath()
+}
+
+const colorGroups = ['green', 'yellow', 'orange', 'purple', 'cyan', 'red', 'white', 'black']
+const drawColors = false
+
+const drawDistances = true
+
 function drawBricks() {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   for(var c=0; c<gridYLength; c++) {
@@ -219,17 +198,22 @@ function drawBricks() {
       var brickX = (r*(pixelSize))+(pixelSize / 2)
       var brickY = (c*(pixelSize))+(pixelSize / 2)
 
-      if(currentGrid[c][r] === obstacle) {
-        ctx.beginPath()
-        ctx.rect(brickX, brickY, pixelSize, pixelSize)
-        ctx.fillStyle = '#0095DD'
-        ctx.fill()
-        ctx.closePath()
+      if (drawColors && visitedGraph[c][r].visited === true) {
+        const index = visitedGraph[c][r].searchGroup
+        drawBrick(brickX, brickY, colorGroups[index])
+      } else if(currentGrid[c][r] === obstacle) {
+        drawBrick(brickX, brickY, '#0095DD')
       } else if (currentGrid[c][r] === targetBlock) {
+        drawBrick(brickX, brickY, 'red')
+      }
+
+      if (drawDistances && distanceVisitedGraph && distanceVisitedGraph[c][r] && distanceVisitedGraph[c][r].visited === true) {
+        const distance = distanceVisitedGraph[c][r].distance
         ctx.beginPath()
-        ctx.rect(brickX, brickY, pixelSize, pixelSize)
-        ctx.fillStyle = 'red'
-        ctx.fill()
+        ctx.font = '8px Comic Sans MS'
+        ctx.strokeStyle = 'black'
+        ctx.strokeText(distance, r * pixelSize+(pixelSize - 3), c * pixelSize+(pixelSize))
+        ctx.stroke()
         ctx.closePath()
       }
     }
@@ -518,8 +502,8 @@ const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInf
 
 createLines()
 
-let targetRow = initialGrid.findIndex(row => row.some(block => block === targetBlock))
-let targetCol = initialGrid[targetRow].findIndex(block => block === targetBlock)
+// let targetRow = initialGrid.findIndex(row => row.some(block => block === targetBlock))
+// let targetCol = initialGrid[targetRow].findIndex(block => block === targetBlock)
 
 let results = {}
 // results = backtrackingUnzip(results, initialGrid, [], lineGrid, { targetRow, targetCol })
