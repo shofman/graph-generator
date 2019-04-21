@@ -494,7 +494,4 @@ const generateNewGrid = (initialGrid, randomizer) => {
 
   newGrid = createNewGridFilteredByKey(visitedGraph, keyToUse)
   return pickPossibleGoals(newGrid, visitedGraph)
-
-
-  return newGrid
 }

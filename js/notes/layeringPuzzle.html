@@ -197,6 +197,7 @@ const colorGroups = ['green', 'yellow', 'orange', 'purple', 'cyan', 'red', 'whit
 const drawColors = false
 let shouldDrawTarget = true
 const shouldPauseOnDraw = false
+const shouldPauseOnDebugDraw = true
 const shouldDrawGridLines = true
 const drawDistances = false
 
@@ -204,7 +205,9 @@ const canReachTargetWithSingleBlock = () => false
 const hasResultWithoutBlock = () => false
 const hasCreatedImpossibleWin = () => false
 
-const checkIfStateIsBroken = () => canReachTargetWithSingleBlock() && hasResultWithoutBlock() && hasCreatedImpossibleWin()
+// const hasBlock
+
+const checkIfStateIsBroken = () => canReachTargetWithSingleBlock() || hasResultWithoutBlock() || hasCreatedImpossibleWin()
 
 const checkGridForWin = (results, currentGrid) => {
   const totalRemainingBlocks = currentGrid.reduce((acc, current, rowIndex) => {
@@ -225,8 +228,15 @@ const checkGridForWin = (results, currentGrid) => {
 
 const getOtherDirection = currentDirection => currentDirection === 'horizontal' ? 'vertical' : 'horizontal'
 
-const getRemoval = index => index === 0 ? 'shift' : 'pop'
-const getOppositeRemoval = removalValue => removalValue === 'shift' ? 'pop' : 'shift'
+const getRemovalFunc = index => index === 0 ? 'shift' : 'pop'
+
+const getEndBlock = (currentLine, index) => {
+  if (index === 0) {
+    return currentLine[currentLine.length - 1]
+  } else {
+    return currentLine[0]
+  }
+}
 
 const stripOutCurrentEntry = currentEntry => line => {
   const removeEntry = (startIndex, endIndex) => line => {
@@ -251,25 +261,70 @@ const stripOutCurrentEntry = currentEntry => line => {
   return line
 }
 
-const getAllPossibleLineCases = ({ currentLine, currentDirection, endBlock, gridLineInfo }) => {
+const getAllPossibleLineCases = ({ currentLine, currentDirection, endBlock, gridLineInfo, currentGrid, currentResults, currentIntersectionPoints }) => {
   const currentLineLength = currentLine.length
-  const intersectingBlocks = currentLine.filter(point => doesPointIntersect(gridLineInfo, point))
 
-  const createInfoObject = ({ blockValue, emptySpaces, intersectionPoints }) => ({
+  const createLineCase = ({ blockValue, intersectionPoints }) => ({
+    currentLine: arrayCopy(currentLine),
     blockValue,
     direction: currentDirection,
-    emptySpaces,
     intersectionPoints,
     targetBlock: endBlock,
+    currentGrid: arrayCopy(currentGrid),
+    currentResults: arrayCopy(currentResults),
+    gridLineInfo: arrayCopy(gridLineInfo)
   })
 
+  const intersectingBlocks = currentLine.filter(point => doesPointIntersect(gridLineInfo, point) && point !== endBlock)
   const possibleCases = getAllSubsets(intersectingBlocks)
-  
-  // Add the empty case last (unshift due to our reversal below - start with the largest set of intersecting points and work downward from there)
-  possibleCases.unshift([])
 
   return possibleCases.reverse().map(intersectingCase => {
-    return createInfoObject({ blockValue: currentLineLength - intersectingCase.length, emptySpaces: 0, intersectionPoints: intersectingCase })
+    return createLineCase({
+      blockValue: currentLineLength - intersectingCase.length,
+      intersectionPoints: currentIntersectionPoints.concat(intersectingCase),
+    })
+  }).filter(newLineCase => newLineCase.blockValue > 0)
+}
+
+const modifyGridWithCurrentLine = (currentCase, removal, target, lineIndex) => {
+  let { intersectionPoints, gridLineInfo, currentLine, direction, blockValue, currentResults, currentGrid } = currentCase
+
+  const newCurrentLine = arrayCopy(currentLine)
+
+  while(newCurrentLine.length) {
+    const currentEntry = newCurrentLine[removal]()
+    if (!newCurrentLine.length) {
+      if (currentGrid[target.targetRow][target.targetCol] !== targetBlock) {
+        currentGrid[target.targetRow][target.targetCol] = emptySpace
+      }
+
+      currentResults[currentEntry] = {
+        value: blockValue,
+        direction,
+      }
+
+      // Remove lines that cannot be used due to being added in this particular direction
+      const otherDirection = getOtherDirection(direction)
+      const otherLinesToCheck = gridLineInfo[otherDirection]
+
+      if (otherLinesToCheck.some(line => line.includes(currentEntry))) {
+        const linesWithCurrentEntryRemoved = otherLinesToCheck.map(stripOutCurrentEntry(currentEntry))
+        gridLineInfo[otherDirection] = linesWithCurrentEntryRemoved
+      }
+    } else if (!doesPointIntersect(gridLineInfo, currentEntry)) {
+      if (!Object.keys(currentResults).includes(currentEntry)) {
+        const [removalCol, removalRow] = currentEntry.split(',')
+        currentGrid[removalRow][removalCol] = emptySpace
+      }
+    }
+  }
+  gridLineInfo[direction].splice(lineIndex, 1)
+
+  return Object.assign(currentCase, {
+    currentGrid,
+    currentResults,
+    gridLineInfo,
+    intersectionPoints,
   })
 }
 
@@ -288,21 +343,33 @@ const isEndBlockAlreadyUsed = (endBlock, results) => {
   return !!results[endBlock]
 }
 
-const getAllSubsets = arrayOfChildren => 
+const getAllSubsets = arrayOfChildren =>
   arrayOfChildren.reduce(
     (subsets, value) => subsets.concat(
       subsets.map(set => [value,...set])
     ),
     [[]]
-  ).filter(item => item.length !== 0)
+  )
+
+const debugDraw = (currentGrid, results, override = false) => {
+  drawBricks(currentGrid, ctx, false)
+  drawHints(results)
+  drawGridLines()
+  if (shouldPauseOnDebugDraw && !override) {
+    debugger // eslint-disable-line
+  }
+}
 
 let drawTarget = {}
 
 const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInfo, target) => {
+  debugDraw(currentGrid, results, true)
   const isBroken = checkIfStateIsBroken()
-  if (isBroken) return null
-  const isWinner = checkGridForWin(results, currentGrid)
-  if (isWinner) return results
+  if (isBroken) return {}
+  let isWinner = checkGridForWin(results, currentGrid)
+  if (isWinner) {
+    return { results, currentGrid }
+  }
 
   let { targetRow, targetCol } = target
   drawTarget = target
@@ -328,8 +395,8 @@ const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInf
   })
 
   if (validDirections.length > 1 || currentLineInfo.line === undefined) {
-    console.log('we are returning early', validDirections.length > 1, currentLineInfo.line === undefined)
-    return results
+    // console.log('we are returning early', validDirections.length > 1, currentLineInfo.line === undefined)
+    return { results, currentGrid }
   }
 
   let targetIndex = currentLineInfo.line.indexOf(key)
@@ -359,89 +426,68 @@ const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInf
     targetIndex = chunkToUse.indexOf(key)
   }
 
-  let blockValue = 0
+  const removal = getRemovalFunc(targetIndex)
 
-  draw()
-
-  const removal = getRemoval(targetIndex)
-  const oppositeRemoval = getOppositeRemoval(removal)
   // Remove targetblock that we used to come in here
   currentLineInfo.line[removal]()
 
-  const currentLineCopy = arrayCopy(currentLineInfo.line)
+  const endBlock = getEndBlock(currentLineInfo.line, targetIndex)
 
-  const endBlock = currentLineCopy[oppositeRemoval]()
-
-  const endBlockAlreadyUsed = isEndBlockAlreadyUsed(endBlock, results)
-
-  if (isEndBlockEmpty(endBlock, currentGrid) || endBlockAlreadyUsed) {
-    if (endBlockAlreadyUsed && results[endBlock].direction === currentLineInfo.direction) {
-      // check to see if the directions match and adjust - should never get in here
-      // debugger // eslint-disable-line
-    }
-    return results
+  if (isEndBlockEmpty(endBlock, currentGrid) || isEndBlockAlreadyUsed(endBlock, results)) {
+    // check to see if the directions match and adjust - should never get in here
+    // if (endBlockAlreadyUsed && results[endBlock].direction === currentLineInfo.direction) {}
+    return { results, currentGrid }
   }
 
-  const listOfPossibleStates = getAllPossibleLineCases({ currentLine: currentLineCopy, currentDirection, endBlock, gridLineInfo })
-  draw()
-  debugger
+  const listOfPossibleStates = getAllPossibleLineCases({ 
+    currentLine: arrayCopy(currentLineInfo.line),
+    currentDirection,
+    endBlock,
+    gridLineInfo,
+    currentGrid,
+    currentResults: arrayCopy(results),
+    currentIntersectionPoints: arrayCopy(intersectionPoints),
+  })
+
+  if (!listOfPossibleStates.length) {
+    return { results, currentGrid }
+  }
 
   let currentCase = listOfPossibleStates.shift()
+  currentCase = modifyGridWithCurrentLine(currentCase, removal, target, currentLineInfo.index)
 
-  while(currentLineInfo.line.length) {
-    const currentEntry = currentLineInfo.line[removal]()
-    if (!currentLineInfo.line.length) {
-      if (currentGrid[target.targetRow][target.targetCol] !== targetBlock) {
-        currentGrid[target.targetRow][target.targetCol] = emptySpace
-      }
-      // we are at the last entry - our currentTotal is the max it needs to be
-      blockValue += 1
-      results[currentEntry] = {
-        value: blockValue,
-        direction: currentDirection,
-      }
-
-      // Remove lines that cannot be used due to being added in this particular direction
-      const otherDirection = getOtherDirection(currentDirection)
-      if (gridLineInfo[otherDirection].some(line => line.includes(currentEntry))) {
-        const otherLinesToCheck = gridLineInfo[otherDirection]
-        const linesWithCurrentEntryRemoved = otherLinesToCheck.map(stripOutCurrentEntry(currentEntry))
-        gridLineInfo[otherDirection] = linesWithCurrentEntryRemoved
-      }
-
-    } else if (doesPointIntersect(gridLineInfo, currentEntry)) {
-      draw()
-      intersectionPoints.push(currentEntry)
-    } else {
-      if (!Object.keys(results).includes(currentEntry)) {
-        const [removalCol, removalRow] = currentEntry.split(',')
-        currentGrid[removalRow][removalCol] = emptySpace
-        blockValue += 1
-      }
-    }
+  if (checkGridForWin(currentCase.currentResults, currentCase.currentGrid)) {
+    return { results: currentCase.currentResults, currentGrid: currentCase.currentGrid }
   }
 
-  draw()
-  debugger // eslint-disable-line
-
-  // Remove processed line
-  gridLineInfo[currentLineInfo.direction].splice(currentLineInfo.index, 1)
+  // debugDraw(currentCase.currentGrid, currentCase.currentResults)
 
   while (currentCase.intersectionPoints.length) {
-    // results[currentCase.targetBlock]
     const currentPoint = currentCase.intersectionPoints.pop()
     const splitPoint = currentPoint.split(',')
     const newTarget = { targetCol: splitPoint[0], targetRow: splitPoint[1] }
 
-    results = backtrackingUnzip(results, currentGrid, arrayCopy(currentCase.intersectionPoints), arrayCopy(gridLineInfo), newTarget)
+    const response = backtrackingUnzip(
+      currentCase.currentResults,
+      arrayCopy(currentCase.currentGrid),
+      arrayCopy(currentCase.intersectionPoints),
+      arrayCopy(currentCase.gridLineInfo),
+      newTarget
+    )
+
+    if (checkGridForWin(response.results, response.currentGrid)) {
+      return response
+    }
 
     if (!currentCase.intersectionPoints.length && listOfPossibleStates.length) {
-      debugger
       currentCase = listOfPossibleStates.shift()
+      currentCase = modifyGridWithCurrentLine(currentCase, removal, target, currentLineInfo.index)
+      currentGrid = currentCase.currentGrid
+      results = currentCase.currentResults
     }
   }
 
-  return results
+  return { results, currentGrid }
 }
 
 const lineGrid = createLines(initialGrid)
@@ -452,7 +498,9 @@ let targetCol = initialGrid[targetRow].findIndex(block => block === targetBlock)
 let results = {}
 draw()
 
-results = backtrackingUnzip(results, initialGrid, [], lineGrid, { targetRow, targetCol })
+const cursiveResult = backtrackingUnzip(results, initialGrid, [], lineGrid, { targetRow, targetCol })
+results = cursiveResult.results
+currentGrid = cursiveResult.currentGrid
 shouldDrawTarget = false
 
 function drawBricks(currentGrid, ctx, drawColors) {
@@ -497,7 +545,7 @@ function drawBricks(currentGrid, ctx, drawColors) {
   }
 }
 
-function drawHints() {
+function drawHints(results) {
   if (results) {
     Object.keys(results).forEach(coordinate => {
       const value = results[coordinate].value
@@ -549,7 +597,7 @@ function checkForWin() {
 function draw() {
   drawBricks(currentGrid, ctx, false)
   drawBricks(otherGrid, ctx2, drawColors)
-  drawHints()
+  drawHints(results)
   if (shouldDrawGridLines) {
     drawGridLines()
   }
