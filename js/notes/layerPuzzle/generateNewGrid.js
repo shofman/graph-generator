@@ -1,16 +1,22 @@
-const obstacle = 3
-const targetBlock = 5
-const emptySpace = 0
+import { OBSTACLE, TARGET, EMPTY } from './blockTypes.js'
+import { generateKey } from './generateKey.js'
+import { createLines } from './createLinesOnGrid.js'
+import {
+  getGridYLength,
+  getGridXLength,
+  increaseGridYLength,
+  increaseGridXLength,
+} from './gridDimensions.js'
 
-const evaluateDensity = grid => {
+export const evaluateDensity = grid => {
   let totalEmpty = 0
   let totalFilled = 0
 
   grid.forEach(row => {
     row.forEach(columnEntry => {
-      if (columnEntry === obstacle || columnEntry === targetBlock) {
+      if (columnEntry === OBSTACLE || columnEntry === TARGET) {
         totalFilled++
-      } else if (columnEntry === emptySpace) {
+      } else if (columnEntry === EMPTY) {
         totalEmpty++
       }
     })
@@ -20,13 +26,12 @@ const evaluateDensity = grid => {
 
 // Calc score - avg distance / number of filled blocks
 const calcScore = (grid, distanceGraph) => {
-  
   let totalFilled = 0
   let totalDistance = 0
 
   grid.forEach((row, rowIndex) => {
     row.forEach((columnEntry, colIndex) => {
-      if (columnEntry === obstacle || columnEntry === targetBlock) {
+      if (columnEntry === OBSTACLE || columnEntry === TARGET) {
         totalDistance += distanceGraph[rowIndex][colIndex].distance
         totalFilled++
       }
@@ -38,9 +43,9 @@ const calcScore = (grid, distanceGraph) => {
 }
 
 const prepareVisitationGraph = grid => {
-  const newGrid = grid.map((row) => {
-    const newRows = row.map((block) => {
-      if (block === obstacle || block === targetBlock) {
+  const newGrid = grid.map(row => {
+    const newRows = row.map(block => {
+      if (block === OBSTACLE || block === TARGET) {
         return { visited: false, block: true, distance: 0 }
       } else {
         return { block: false }
@@ -51,8 +56,8 @@ const prepareVisitationGraph = grid => {
   return newGrid
 }
 
-const isWithinXGrid = coordinate => coordinate >= 0 && coordinate < gridXLength
-const isWithinYGrid = coordinate => coordinate >= 0 && coordinate < gridYLength
+const isWithinXGrid = coordinate => coordinate >= 0 && coordinate < getGridXLength()
+const isWithinYGrid = coordinate => coordinate >= 0 && coordinate < getGridYLength()
 
 const depthFirstSearch = (x, y, visitedGraph, searchGroup) => {
   if (!isWithinXGrid(x)) return 0
@@ -64,10 +69,10 @@ const depthFirstSearch = (x, y, visitedGraph, searchGroup) => {
   visitedGraph[y][x].visited = true
   visitedGraph[y][x].searchGroup = searchGroup
 
-  depthFirstSearch(x-1, y, visitedGraph, searchGroup)
-  depthFirstSearch(x, y-1, visitedGraph, searchGroup)
-  depthFirstSearch(x+1, y, visitedGraph, searchGroup)
-  depthFirstSearch(x, y+1, visitedGraph, searchGroup)
+  depthFirstSearch(x - 1, y, visitedGraph, searchGroup)
+  depthFirstSearch(x, y - 1, visitedGraph, searchGroup)
+  depthFirstSearch(x + 1, y, visitedGraph, searchGroup)
+  depthFirstSearch(x, y + 1, visitedGraph, searchGroup)
 }
 
 /*
@@ -88,25 +93,25 @@ const depthFirstSearch = (x, y, visitedGraph, searchGroup) => {
 const distanceSearch = (startNode, visitedGraph) => {
   const toVisitQueue = [startNode]
 
-  const createDistanceNode = (x,y, distance) => generateKey(x,y)+','+(distance)
+  const createDistanceNode = (x, y, distance) => generateKey(x, y) + ',' + distance
 
   const hasNextLeftBlock = (columnIndex, rowIndex) => {
-    if (!isWithinXGrid(columnIndex - 1)) { return false }
+    if (!isWithinXGrid(columnIndex - 1)) return false
     const potentialBlock = visitedGraph[rowIndex][columnIndex - 1]
     return potentialBlock && !potentialBlock.visited && potentialBlock.block
   }
   const hasNextRightBlock = (columnIndex, rowIndex) => {
-    if (!isWithinXGrid(columnIndex + 1)) { return false }
+    if (!isWithinXGrid(columnIndex + 1)) return false
     const potentialBlock = visitedGraph[rowIndex][columnIndex + 1]
     return potentialBlock && !potentialBlock.visited && potentialBlock.block
   }
   const hasNextTopBlock = (columnIndex, rowIndex) => {
-    if (!isWithinYGrid(rowIndex - 1)) { return false }
+    if (!isWithinYGrid(rowIndex - 1)) return false
     const potentialBlock = visitedGraph[rowIndex - 1][columnIndex]
     return potentialBlock && !potentialBlock.visited && potentialBlock.block
   }
   const hasNextBottomBlock = (columnIndex, rowIndex) => {
-    if (!isWithinYGrid(rowIndex + 1)) { return false }
+    if (!isWithinYGrid(rowIndex + 1)) return false
     const potentialBlock = visitedGraph[rowIndex + 1][columnIndex]
     return potentialBlock && !potentialBlock.visited && potentialBlock.block
   }
@@ -147,7 +152,7 @@ const findGroupsWithFlooding = visitedGraph => {
   let searchGroup = 0
   visitedGraph.forEach((row, rowPos) => {
     row.forEach((item, colPos) => {
-      if (item.block && !item.visited ) {
+      if (item.block && !item.visited) {
         depthFirstSearch(colPos, rowPos, visitedGraph, searchGroup)
         searchGroup++
       }
@@ -155,7 +160,7 @@ const findGroupsWithFlooding = visitedGraph => {
   })
 }
 
-const useIfExists = item => item ? item : 0
+const useIfExists = item => (item ? item : 0)
 
 const findLargestTotal = searchGroupResults => {
   let largestTotal = 0
@@ -172,12 +177,12 @@ const findLargestTotal = searchGroupResults => {
 }
 
 const createNewGridFilteredByKey = (grid, key) => {
-  const newGrid = grid.map((row) => {
-    const newRows = row.map((currentItem) => {
+  const newGrid = grid.map(row => {
+    const newRows = row.map(currentItem => {
       if (currentItem.block && currentItem.searchGroup === Number(key)) {
-        return obstacle
+        return OBSTACLE
       }
-      return emptySpace
+      return EMPTY
     })
     return newRows
   })
@@ -201,11 +206,11 @@ const shaveMaxDistanceFromGrid = (grid, visitedGraph) => {
 
   const newGrid = grid.map((row, rowIndex) => {
     return row.map((blockEntry, colIndex) => {
-      if (blockEntry === obstacle) {
+      if (blockEntry === OBSTACLE) {
         if (visitedGraph[rowIndex][colIndex].distance < maxDistance) {
-          return obstacle
+          return OBSTACLE
         } else {
-          return emptySpace
+          return EMPTY
         }
       }
       return blockEntry
@@ -214,21 +219,21 @@ const shaveMaxDistanceFromGrid = (grid, visitedGraph) => {
   return newGrid
 }
 
-const addNubToGraph = grid => {
-
-}
-
 const pickPossibleGoals = (grid, visitedGraph) => {
   const possibleGoals = []
 
-  const hasNextLeftBlock = (columnIndex, rowIndex) => isWithinXGrid(columnIndex - 1) && grid[rowIndex][columnIndex - 1] === obstacle
-  const hasNextRightBlock = (columnIndex, rowIndex) => isWithinXGrid(columnIndex + 1) && grid[rowIndex][columnIndex + 1] === obstacle
-  const hasNextTopBlock = (columnIndex, rowIndex) => isWithinYGrid(rowIndex - 1) && grid[rowIndex - 1][columnIndex] === obstacle
-  const hasNextBottomBlock = (columnIndex, rowIndex) => isWithinYGrid(rowIndex + 1) && grid[rowIndex + 1][columnIndex] === obstacle
+  const hasNextLeftBlock = (columnIndex, rowIndex) =>
+    isWithinXGrid(columnIndex - 1) && grid[rowIndex][columnIndex - 1] === OBSTACLE
+  const hasNextRightBlock = (columnIndex, rowIndex) =>
+    isWithinXGrid(columnIndex + 1) && grid[rowIndex][columnIndex + 1] === OBSTACLE
+  const hasNextTopBlock = (columnIndex, rowIndex) =>
+    isWithinYGrid(rowIndex - 1) && grid[rowIndex - 1][columnIndex] === OBSTACLE
+  const hasNextBottomBlock = (columnIndex, rowIndex) =>
+    isWithinYGrid(rowIndex + 1) && grid[rowIndex + 1][columnIndex] === OBSTACLE
 
   let newGrid = grid.map((row, rowIndex) => {
     return row.map((item, columnIndex) => {
-      if (item === obstacle) {
+      if (item === OBSTACLE) {
         let numberOfActiveSides = 0
         let direction = null
         let getNextBlockFunc = () => {}
@@ -259,7 +264,6 @@ const pickPossibleGoals = (grid, visitedGraph) => {
           direction = 'vertical'
           directionIncrementor = 1
           getNextBlockFunc = hasNextBottomBlock
-
         }
 
         if (numberOfActiveSides === 1) {
@@ -267,7 +271,7 @@ const pickPossibleGoals = (grid, visitedGraph) => {
           let currentRowIndex = rowIndex
           let currentLineLength = 1
 
-          while(getNextBlockFunc(currentColIndex, currentRowIndex)) {
+          while (getNextBlockFunc(currentColIndex, currentRowIndex)) {
             currentLineLength += 1
             if (direction === 'horizontal') {
               currentColIndex += directionIncrementor
@@ -289,7 +293,7 @@ const pickPossibleGoals = (grid, visitedGraph) => {
   })
 
   // TODO
-  // Determine best one - one with the largest 
+  // Determine best one - one with the largest
   // Handle only one, but its shitty
   // Maybe introduce corrections for lShaped entries into normal algorithm
   // Handle when there are no goals
@@ -309,7 +313,6 @@ const pickPossibleGoals = (grid, visitedGraph) => {
   })
 
   if (!actualGoal) {
-    // alert('handle me plz')
     const lineGrid = createLines(newGrid)
     let maxLength = 0
     let maxLine = undefined
@@ -329,33 +332,32 @@ const pickPossibleGoals = (grid, visitedGraph) => {
       return (hasNextLeftBlock(x, y) & 1)+ (hasNextRightBlock(x, y) & 1) + (hasNextTopBlock(x, y) & 1) + (hasNextBottomBlock(x, y) & 1) === 1
     }
 
-    let newEndpoints
     const currentLeftEndpoint = maxLine[0].split(',')
     const currentRightEndpoint = maxLine[maxLine.length - 1].split(',')
     if (maxLineDirection === 'horizontal') {
-
-      const newLeftEndpoint = [parseInt(currentLeftEndpoint[0]) - 1, currentLeftEndpoint[1]]
+      let newLeftEndpoint = [parseInt(currentLeftEndpoint[0]) - 1, currentLeftEndpoint[1]]
       const newRightEndpoint = [parseInt(currentRightEndpoint[0]) + 1, currentRightEndpoint[1]]
 
       if (hasOnlyOneNeighbor(newLeftEndpoint[0], newLeftEndpoint[1])) {
         if (newLeftEndpoint[0] < 0) {
           newGrid = newGrid.map(row => [0, ...row])
-          gridXLength += 1
+          increaseGridXLength()
+          newLeftEndpoint[0] = 0
         }
 
-        newGrid[newLeftEndpoint[1]][newLeftEndpoint[0]] = targetBlock
-        actualGoal = { key: generateKey(newLeftEndpoint[0], newLeftEndpoint[1])}
+        newGrid[newLeftEndpoint[1]][newLeftEndpoint[0]] = TARGET
+        actualGoal = { key: generateKey(newLeftEndpoint[0], newLeftEndpoint[1]) }
       } else if (hasOnlyOneNeighbor(newRightEndpoint[0], newRightEndpoint[1])) {
         if (newRightEndpoint[0] >= newGrid[0].length) {
           newGrid = newGrid.map(row => [...row, 0])
-          gridXLength += 1
+          alert('increasing x1')
+          increaseGridXLength()
         }
-        newGrid[newRightEndpoint[1]][newRightEndpoint[0]] = targetBlock
-        actualGoal = { key: generateKey(newRightEndpoint[0], newRightEndpoint[1])}
+        newGrid[newRightEndpoint[1]][newRightEndpoint[0]] = TARGET
+        actualGoal = { key: generateKey(newRightEndpoint[0], newRightEndpoint[1]) }
       } else {
         throw new Error('cannae do it')
       }
-
     } else {
       const newTopEndpoint = [currentLeftEndpoint[0], parseInt(currentLeftEndpoint[1]) - 1]
       const newBottomEndpoint = [currentRightEndpoint[0], parseInt(currentRightEndpoint[1]) + 1]
@@ -363,18 +365,20 @@ const pickPossibleGoals = (grid, visitedGraph) => {
       if (hasOnlyOneNeighbor(newTopEndpoint[0], newTopEndpoint[1])) {
         if (newTopEndpoint[0] < 0) {
           newGrid.unshift(new Array(newGrid[0].length).fill(0))
-          gridYLength += 1
+          alert('increasing y')
+          increaseGridYLength()
         }
 
-        newGrid[newTopEndpoint[1]][newTopEndpoint[0]] = targetBlock
-        actualGoal = { key: generateKey(newTopEndpoint[0], newTopEndpoint[1])}
+        newGrid[newTopEndpoint[1]][newTopEndpoint[0]] = TARGET
+        actualGoal = { key: generateKey(newTopEndpoint[0], newTopEndpoint[1]) }
       } else if (hasOnlyOneNeighbor(newBottomEndpoint[0], newBottomEndpoint[1])) {
         if (newBottomEndpoint[0] >= newGrid.length) {
           newGrid.push(new Array(newGrid[0].length).fill(0))
-          gridYLength += 1
+          alert('increasing y')
+          increaseGridYLength()
         }
-        newGrid[newBottomEndpoint[1]][newBottomEndpoint[0]] = targetBlock
-        actualGoal = { key: generateKey(newBottomEndpoint[0], newBottomEndpoint[1])}
+        newGrid[newBottomEndpoint[1]][newBottomEndpoint[0]] = TARGET
+        actualGoal = { key: generateKey(newBottomEndpoint[0], newBottomEndpoint[1]) }
       } else {
         throw new Error('cannae do it')
       }
@@ -382,7 +386,7 @@ const pickPossibleGoals = (grid, visitedGraph) => {
   }
 
   const [x, y] = actualGoal.key.split(',')
-  newGrid[y][x] = targetBlock
+  newGrid[y][x] = TARGET
 
   let distanceVisitedGraph = prepareVisitationGraph(newGrid)
   distanceSearch(actualGoal.key + ',0', distanceVisitedGraph)
@@ -404,65 +408,67 @@ const pickPossibleGoals = (grid, visitedGraph) => {
   // console.log('findMaxDistance', findMaxDistance(distanceVisitedGraph))
   // console.log('avg dist', calcScore(newGrid, distanceVisitedGraph))
 
-
   // Density should be low, but its not the greatest metric
   // Try having avg distance over total number of blocks?
 
   // Reject ones with too long of a tail (average of the entries should be consistent)
-  return { 
-    grid: newGrid, 
+  return {
+    grid: newGrid,
     shavedGrid,
     distanceVisitedGraph,
     floodGraph: visitedGraph,
   }
 }
 
-
-const generateNewGrid = (initialGrid, randomizer) => {
+export const generateNewGrid = (initialGrid, randomizer) => {
   const probabilities = {
-    addBlockWithoutHistory: .5,
-    addBlockRandomly: .2,
-    addBlockWithOneNext: .6,
+    addBlockWithoutHistory: 0.5,
+    addBlockRandomly: 0.2,
+    addBlockWithOneNext: 0.6,
   }
-
 
   let hasPlacedFirstBlock = false
   let newGrid = initialGrid.reduce((rowAccum, currentRow, rowPos) => {
     const newRow = currentRow.reduce((colAccum, _, colPos) => {
       let hasAdded = false
- 
-      const isPreviousItemOfType = (blockType) => {
-        const itemBeforeOnFirstRowIsOfBlockType = (rowPos === 0 && colPos !== 0 && colAccum[colPos - 1] === blockType)
-        const itemBeforeOrAboveIsOfBlockType = (rowPos > 0 && rowAccum[rowPos - 1][colPos] === blockType || colAccum[colPos - 1] === blockType)
- 
+
+      const isPreviousItemOfType = blockType => {
+        const itemBeforeOnFirstRowIsOfBlockType =
+          rowPos === 0 && colPos !== 0 && colAccum[colPos - 1] === blockType
+        const itemBeforeOrAboveIsOfBlockType =
+          (rowPos > 0 && rowAccum[rowPos - 1][colPos] === blockType || colAccum[colPos - 1] === blockType)
+
         return itemBeforeOnFirstRowIsOfBlockType || itemBeforeOrAboveIsOfBlockType
       }
- 
+
       if (!hasPlacedFirstBlock) {
         if (randomizer() < probabilities.addBlockWithoutHistory) {
           hasPlacedFirstBlock = true
           hasAdded = true
-          colAccum.push(obstacle)
+          colAccum.push(OBSTACLE)
         }
-      } else if (isPreviousItemOfType(obstacle) && randomizer() < probabilities.addBlockWithOneNext) {
+      } else if (
+        isPreviousItemOfType(OBSTACLE) &&
+        randomizer() < probabilities.addBlockWithOneNext
+      ) {
         hasAdded = true
-        colAccum.push(obstacle)
-      } else if (isPreviousItemOfType(emptySpace) && randomizer() < probabilities.addBlockWithOneNext) {
+        colAccum.push(OBSTACLE)
+      } else if (isPreviousItemOfType(EMPTY) && randomizer() < probabilities.addBlockWithOneNext) {
         hasAdded = true
-        colAccum.push(emptySpace)
+        colAccum.push(EMPTY)
       }
- 
+
       if (!hasAdded) {
         if (randomizer() < probabilities.addBlockRandomly) {
-          colAccum.push(obstacle)
+          colAccum.push(OBSTACLE)
         } else {
-          colAccum.push(emptySpace)
+          colAccum.push(EMPTY)
         }
       }
- 
+
       return colAccum
     }, [])
- 
+
     rowAccum.push(newRow)
     return rowAccum
   }, [])
@@ -477,7 +483,7 @@ const generateNewGrid = (initialGrid, randomizer) => {
       }
       return colAccum
     }, {})
-    
+
     Object.keys(colResults).forEach(key => {
       rowAccum[key] = useIfExists(rowAccum[key]) + colResults[key]
     })

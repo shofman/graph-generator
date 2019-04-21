@@ -1,5 +1,7 @@
+import { OBSTACLE, TARGET } from './blockTypes.js'
+import { generateKey } from './generateKey.js'
 
-const createLines = grid => {
+export const createLines = grid => {
   const gridPositions = {}
   const lineGrid = {
     horizontal: [],
@@ -8,9 +10,9 @@ const createLines = grid => {
 
   grid.forEach((row, rowPos) => {
     row.forEach((block, colPos) => {
-      if (block === obstacle || block === targetBlock) {
+      if (block === OBSTACLE || block === TARGET) {
         const key = generateKey(colPos, rowPos)
-        gridPositions[key] = obstacle
+        gridPositions[key] = OBSTACLE
       }
     })
   })
@@ -29,14 +31,16 @@ const createLines = grid => {
       newLine.push(currentEntry)
     }
 
-
     while (obstaclePositions.includes(horizontalNeighbor)) {
       newLine.push(horizontalNeighbor)
       xNeighbor = Number(xNeighbor) + 1
       horizontalNeighbor = generateKey(xNeighbor, hexY)
     }
-    
-    if (newLine.length > 1 && !lineGrid.horizontal.some(possibleArray => possibleArray.includes(currentEntry))) {
+
+    if (
+      newLine.length > 1 &&
+      !lineGrid.horizontal.some(possibleArray => possibleArray.includes(currentEntry))
+    ) {
       lineGrid.horizontal.push(newLine)
     }
   })
@@ -54,13 +58,16 @@ const createLines = grid => {
       newLine.push(currentEntry)
     }
 
-    while(obstaclePositions.includes(verticalNeighbor)) {
+    while (obstaclePositions.includes(verticalNeighbor)) {
       newLine.push(verticalNeighbor)
       yNeighbor = Number(yNeighbor) + 1
       verticalNeighbor = generateKey(hexX, yNeighbor)
     }
 
-    if (newLine.length > 1 && !lineGrid.vertical.some(possibleArray => possibleArray.includes(currentEntry))) {
+    if (
+      newLine.length > 1 &&
+      !lineGrid.vertical.some(possibleArray => possibleArray.includes(currentEntry))
+    ) {
       lineGrid.vertical.push(newLine)
     }
   })
