@@ -18,6 +18,25 @@ const evaluateDensity = grid => {
   return totalFilled / (totalFilled + totalEmpty)
 }
 
+// Calc score - avg distance / number of filled blocks
+const calcScore = (grid, distanceGraph) => {
+  
+  let totalFilled = 0
+  let totalDistance = 0
+
+  grid.forEach((row, rowIndex) => {
+    row.forEach((columnEntry, colIndex) => {
+      if (columnEntry === obstacle || columnEntry === targetBlock) {
+        totalDistance += distanceGraph[rowIndex][colIndex].distance
+        totalFilled++
+      }
+    })
+  })
+
+  const avgDistance = totalDistance / totalFilled
+  return avgDistance
+}
+
 const prepareVisitationGraph = grid => {
   const newGrid = grid.map((row) => {
     const newRows = row.map((block) => {
@@ -165,7 +184,41 @@ const createNewGridFilteredByKey = (grid, key) => {
   return newGrid
 }
 
-const pickPossibleGoals = grid => {
+const findMaxDistance = visitedGraph => {
+  let maxDistance = 0
+  visitedGraph.forEach(row => {
+    row.forEach(block => {
+      if (block.distance > maxDistance) {
+        maxDistance = block.distance
+      }
+    })
+  })
+  return maxDistance
+}
+
+const shaveMaxDistanceFromGrid = (grid, visitedGraph) => {
+  const maxDistance = findMaxDistance(visitedGraph)
+
+  const newGrid = grid.map((row, rowIndex) => {
+    return row.map((blockEntry, colIndex) => {
+      if (blockEntry === obstacle) {
+        if (visitedGraph[rowIndex][colIndex].distance < maxDistance) {
+          return obstacle
+        } else {
+          return emptySpace
+        }
+      }
+      return blockEntry
+    })
+  })
+  return newGrid
+}
+
+const addNubToGraph = grid => {
+
+}
+
+const pickPossibleGoals = (grid, visitedGraph) => {
   const possibleGoals = []
 
   const hasNextLeftBlock = (columnIndex, rowIndex) => isWithinXGrid(columnIndex - 1) && grid[rowIndex][columnIndex - 1] === obstacle
@@ -173,7 +226,7 @@ const pickPossibleGoals = grid => {
   const hasNextTopBlock = (columnIndex, rowIndex) => isWithinYGrid(rowIndex - 1) && grid[rowIndex - 1][columnIndex] === obstacle
   const hasNextBottomBlock = (columnIndex, rowIndex) => isWithinYGrid(rowIndex + 1) && grid[rowIndex + 1][columnIndex] === obstacle
 
-  const newGrid = grid.map((row, rowIndex) => {
+  let newGrid = grid.map((row, rowIndex) => {
     return row.map((item, columnIndex) => {
       if (item === obstacle) {
         let numberOfActiveSides = 0
@@ -255,24 +308,113 @@ const pickPossibleGoals = grid => {
     }
   })
 
-  if (actualGoal) {
-    const [x, y] = actualGoal.key.split(',')
-    newGrid[y][x] = targetBlock
+  if (!actualGoal) {
+    // alert('handle me plz')
+    const lineGrid = createLines(newGrid)
+    let maxLength = 0
+    let maxLine = undefined
+    let maxLineDirection = undefined
 
-    const distanceVisitedGraph = prepareVisitationGraph(newGrid)
-    console.log('distanceVisitedGraph', distanceVisitedGraph)
-    distanceSearch(actualGoal.key + ',0', distanceVisitedGraph)
-    console.log('density', evaluateDensity(newGrid))
-    return { 
-      grid: newGrid, 
-      distanceVisitedGraph,
+    Object.keys(lineGrid).forEach(direction => {
+      lineGrid[direction].forEach(line => {
+        if (line.length > maxLength) {
+          maxLength = line.length
+          maxLine = line
+          maxLineDirection = direction
+        }
+      })
+    })
+
+    const hasOnlyOneNeighbor = (x, y) => {
+      return (hasNextLeftBlock(x, y) & 1)+ (hasNextRightBlock(x, y) & 1) + (hasNextTopBlock(x, y) & 1) + (hasNextBottomBlock(x, y) & 1) === 1
     }
-    console.log('x, y', x, y)
-  } else {
-    alert('handle me plz')
+
+    let newEndpoints
+    const currentLeftEndpoint = maxLine[0].split(',')
+    const currentRightEndpoint = maxLine[maxLine.length - 1].split(',')
+    if (maxLineDirection === 'horizontal') {
+
+      const newLeftEndpoint = [parseInt(currentLeftEndpoint[0]) - 1, currentLeftEndpoint[1]]
+      const newRightEndpoint = [parseInt(currentRightEndpoint[0]) + 1, currentRightEndpoint[1]]
+
+      if (hasOnlyOneNeighbor(newLeftEndpoint[0], newLeftEndpoint[1])) {
+        if (newLeftEndpoint[0] < 0) {
+          newGrid = newGrid.map(row => [0, ...row])
+          gridXLength += 1
+        }
+
+        newGrid[newLeftEndpoint[1]][newLeftEndpoint[0]] = targetBlock
+        actualGoal = { key: generateKey(newLeftEndpoint[0], newLeftEndpoint[1])}
+      } else if (hasOnlyOneNeighbor(newRightEndpoint[0], newRightEndpoint[1])) {
+        if (newRightEndpoint[0] >= newGrid[0].length) {
+          newGrid = newGrid.map(row => [...row, 0])
+          gridXLength += 1
+        }
+        newGrid[newRightEndpoint[1]][newRightEndpoint[0]] = targetBlock
+        actualGoal = { key: generateKey(newRightEndpoint[0], newRightEndpoint[1])}
+      } else {
+        throw new Error('cannae do it')
+      }
+
+    } else {
+      const newTopEndpoint = [currentLeftEndpoint[0], parseInt(currentLeftEndpoint[1]) - 1]
+      const newBottomEndpoint = [currentRightEndpoint[0], parseInt(currentRightEndpoint[1]) + 1]
+
+      if (hasOnlyOneNeighbor(newTopEndpoint[0], newTopEndpoint[1])) {
+        if (newTopEndpoint[0] < 0) {
+          newGrid.unshift(new Array(newGrid[0].length).fill(0))
+          gridYLength += 1
+        }
+
+        newGrid[newTopEndpoint[1]][newTopEndpoint[0]] = targetBlock
+        actualGoal = { key: generateKey(newTopEndpoint[0], newTopEndpoint[1])}
+      } else if (hasOnlyOneNeighbor(newBottomEndpoint[0], newBottomEndpoint[1])) {
+        if (newBottomEndpoint[0] >= newGrid.length) {
+          newGrid.push(new Array(newGrid[0].length).fill(0))
+          gridYLength += 1
+        }
+        newGrid[newBottomEndpoint[1]][newBottomEndpoint[0]] = targetBlock
+        actualGoal = { key: generateKey(newBottomEndpoint[0], newBottomEndpoint[1])}
+      } else {
+        throw new Error('cannae do it')
+      }
+    }
   }
 
-  return newGrid
+  const [x, y] = actualGoal.key.split(',')
+  newGrid[y][x] = targetBlock
+
+  let distanceVisitedGraph = prepareVisitationGraph(newGrid)
+  distanceSearch(actualGoal.key + ',0', distanceVisitedGraph)
+  let shavedGrid = newGrid
+  let currentScore = calcScore(shavedGrid, distanceVisitedGraph)
+  while (currentScore > 9) {
+    shavedGrid = shaveMaxDistanceFromGrid(shavedGrid, distanceVisitedGraph)
+    distanceVisitedGraph = prepareVisitationGraph(shavedGrid)
+    distanceSearch(actualGoal.key + ',0', distanceVisitedGraph)
+    currentScore = calcScore(shavedGrid, distanceVisitedGraph)
+  }
+
+  let oldDistanceVisitedGraph = prepareVisitationGraph(newGrid)
+  distanceSearch(actualGoal.key + ',0', oldDistanceVisitedGraph)
+
+  // distanceVisitedGraph = prepareVisitationGraph(newGrid)
+  // console.log('density', evaluateDensity(newGrid))
+  // console.log('distanceVisitedGraph', distanceVisitedGraph)
+  // console.log('findMaxDistance', findMaxDistance(distanceVisitedGraph))
+  // console.log('avg dist', calcScore(newGrid, distanceVisitedGraph))
+
+
+  // Density should be low, but its not the greatest metric
+  // Try having avg distance over total number of blocks?
+
+  // Reject ones with too long of a tail (average of the entries should be consistent)
+  return { 
+    grid: newGrid, 
+    shavedGrid,
+    distanceVisitedGraph,
+    floodGraph: visitedGraph,
+  }
 }
 
 
@@ -351,7 +493,7 @@ const generateNewGrid = (initialGrid, randomizer) => {
   }
 
   newGrid = createNewGridFilteredByKey(visitedGraph, keyToUse)
-  return pickPossibleGoals(newGrid)
+  return pickPossibleGoals(newGrid, visitedGraph)
 
 
   return newGrid

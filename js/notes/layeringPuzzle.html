@@ -4,14 +4,16 @@
     <title>Puzzle Generator</title>
     <style>
       * { padding: 0; margin: 0; }
-      canvas { background: #eee; display: block; margin: 0 auto; padding-top: 30; }
+      canvas { background: #eee; display: block; margin: 0 auto; margin-top: 30; }
       button { width: 20px; height: 20px; }
     </style>
 </head>
 <body>
 
 <canvas id="myCanvas" width="480" height="320"></canvas>
+<canvas id="myCanvas2" width="480" height="320"></canvas>
 
+<script type="text/javascript" src="./createLinesOnGrid.js"></script>
 <script type="text/javascript" src="./generateNewGridForLayerPuzzle.js"></script>
 
 <script>
@@ -43,15 +45,17 @@ const AleaRandomizer = seed => {
 }
 
 const canvas = document.getElementById('myCanvas')
+const canvas2 = document.getElementById('myCanvas2')
 const ctx = canvas.getContext('2d')
+const ctx2 = canvas2.getContext('2d')
 let gridList = []
 const pixelSize = 20
 
 const gridSpace = 1
 const gridNumber = 6
 
-const gridYLength = gridNumber * gridSpace + gridNumber * gridSpace
-const gridXLength = gridNumber * gridSpace + gridNumber * gridSpace
+let gridYLength = gridNumber * gridSpace + gridNumber * gridSpace
+let gridXLength = gridNumber * gridSpace + gridNumber * gridSpace
 
 canvas.height = gridYLength * pixelSize +  (gridNumber * gridSpace * pixelSize)
 canvas.width = gridXLength * pixelSize + (gridNumber * gridSpace * pixelSize)
@@ -72,16 +76,16 @@ let initialGrid = [
 // Crisscrossing entries
 // Density = 0.09895833333333333
 
-// initialGrid = [
-//   [0, 3, 0, 0, 0, 0],
-//   [0, 3, 3, 0, 0, 0],
-//   [3, 3, 3, 0, 0, 0],
-//   [0, 3, 3, 3, 5, 0],
-//   [0, 0, 3, 3, 0, 0],
-//   [0, 0, 3, 3, 3, 0],
-//   [0, 0, 0, 3, 3, 3],
-//   [0, 0, 0, 3, 0, 0],
-// ]
+initialGrid = [
+  [0, 3, 0, 0, 0, 0],
+  [0, 3, 3, 0, 0, 0],
+  [3, 3, 3, 0, 0, 0],
+  [0, 3, 3, 3, 5, 0],
+  [0, 0, 3, 3, 0, 0],
+  [0, 0, 3, 3, 3, 0],
+  [0, 0, 0, 3, 3, 3],
+  [0, 0, 0, 3, 0, 0],
+]
 
 // Starting points from within grid
 // Density = 0.1346153846153846
@@ -103,8 +107,18 @@ for (let i=0; i<gridYLength; i++) {
   }))
 }
 
-const broken = 0.1889546082065121
+// Second grid seeds
+const broken = 0.13211651171095662
+const weird = 0.8814176675958372
+const huh = 0.9414135727191293
 const solved = 0.9311797150098673
+const needToFixBacktracking = 0.7037516700656562
+
+// Third grid seeds
+const infinite = 0.8270123205982178
+const infinite2 = 0.5020871473412547
+const fucked = 0.45286728697492507
+
 
 const tiedLargest = 0.2996170901896136
 const breakThisDown =  0.949010289749602
@@ -113,34 +127,35 @@ const badTargetPlacement = 0.27211505962386684
 const chunky = 0.6757205201354943
 const multipleTargetsWithEvenLengths = 0.33285831629572726
 const noTargets = 0.4598295234421774
+const reallyLongTail = 0.8742797946667888
+const handle = 0.16586225158162837
+const brokenAgain =  0.8807449728181744
+const reallyDense = 0.006649334400887774
+const goodSeed = 0.16134528824178074
+const fuckingUseless = 0.6013755322878005
 
-const seed = Math.random()
+const seed = needToFixBacktracking//Math.random()
 console.log('seed', seed)
 const randomizer = AleaRandomizer(seed)
-console.log('randomizer', randomizer)
-const { grid, distanceVisitedGraph } = generateNewGrid(initialGrid, randomizer)
-initialGrid = grid
+// const distanceVisitedGraph = undefined
 
-console.log('distanceVisitedGraph', distanceVisitedGraph)
+const shouldGenerateNew = false
 
-console.log('initialGrid', initialGrid)
+const { grid, shavedGrid, distanceVisitedGraph, floodGraph } = generateNewGrid(initialGrid, randomizer)
+
+let otherGrid
+
+if (shouldGenerateNew) {
+  initialGrid = shavedGrid
+  otherGrid = grid
+}
+
+let currentGrid = initialGrid
 
 const arrayCopy = array => JSON.parse(JSON.stringify(array))
 
 gridList.push(initialGrid)
 
-const gridPositions = {}
-
-initialGrid.forEach((row, rowPos) => {
-  row.forEach((block, colPos) => {
-    if (block === obstacle || block === targetBlock) {
-      const key = generateKey(colPos, rowPos)
-      gridPositions[key] = obstacle
-    }
-  })
-})
-
-let currentGrid = initialGrid
 
 const buttonPositions = []
 
@@ -178,118 +193,12 @@ canvas.addEventListener('click', (e) => {
   })
 })
 
-const drawBrick = (x, y, color) => {
-  ctx.beginPath()
-  ctx.rect(x, y, pixelSize, pixelSize)
-  ctx.fillStyle = color
-  ctx.fill()
-  ctx.closePath()
-}
-
 const colorGroups = ['green', 'yellow', 'orange', 'purple', 'cyan', 'red', 'white', 'black']
 const drawColors = false
-
-const drawDistances = true
-
-function drawBricks() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  for(var c=0; c<gridYLength; c++) {
-    for(var r=0; r<gridXLength; r++) {
-      var brickX = (r*(pixelSize))+(pixelSize / 2)
-      var brickY = (c*(pixelSize))+(pixelSize / 2)
-
-      if (drawColors && visitedGraph[c][r].visited === true) {
-        const index = visitedGraph[c][r].searchGroup
-        drawBrick(brickX, brickY, colorGroups[index])
-      } else if(currentGrid[c][r] === obstacle) {
-        drawBrick(brickX, brickY, '#0095DD')
-      } else if (currentGrid[c][r] === targetBlock) {
-        drawBrick(brickX, brickY, 'red')
-      }
-
-      if (drawDistances && distanceVisitedGraph && distanceVisitedGraph[c][r] && distanceVisitedGraph[c][r].visited === true) {
-        const distance = distanceVisitedGraph[c][r].distance
-        ctx.beginPath()
-        ctx.font = '8px Comic Sans MS'
-        ctx.strokeStyle = 'black'
-        ctx.strokeText(distance, r * pixelSize+(pixelSize - 3), c * pixelSize+(pixelSize))
-        ctx.stroke()
-        ctx.closePath()
-      }
-    }
-  }
-}
-
-const lineGrid = {
-  horizontal: [],
-  vertical: [],
-}
-
-const createLines = () => {
-  // Horizontal lines
-  const obstaclePositions = Object.keys(gridPositions)
-
-  obstaclePositions.forEach(hexEntry => {
-    const newLine = []
-    const currentEntry = hexEntry
-    const [hexX, hexY] = currentEntry.split(',')
-    let xNeighbor = Number(hexX) + 1
-    let horizontalNeighbor = generateKey(xNeighbor, hexY)
-
-    if (obstaclePositions.includes(horizontalNeighbor)) {
-      newLine.push(currentEntry)
-    }
-
-
-    while (obstaclePositions.includes(horizontalNeighbor)) {
-      newLine.push(horizontalNeighbor)
-      xNeighbor = Number(xNeighbor) + 1
-      horizontalNeighbor = generateKey(xNeighbor, hexY)
-    }
-    
-    if (newLine.length > 1 && !lineGrid.horizontal.some(possibleArray => possibleArray.includes(currentEntry))) {
-      lineGrid.horizontal.push(newLine)
-    }
-  })
-
-  // Vertical lines
-  obstaclePositions.forEach(hexEntry => {
-    const newLine = []
-    const currentEntry = hexEntry
-    const [hexX, hexY] = currentEntry.split(',')
-
-    let yNeighbor = Number(hexY) + 1
-    let verticalNeighbor = generateKey(hexX, yNeighbor)
-
-    if (obstaclePositions.includes(verticalNeighbor)) {
-      newLine.push(currentEntry)
-    }
-
-    while(obstaclePositions.includes(verticalNeighbor)) {
-      newLine.push(verticalNeighbor)
-      yNeighbor = Number(yNeighbor) + 1
-      verticalNeighbor = generateKey(hexX, yNeighbor)
-    }
-
-    if (newLine.length > 1 && !lineGrid.vertical.some(possibleArray => possibleArray.includes(currentEntry))) {
-      lineGrid.vertical.push(newLine)
-    }
-  })
-
-  // console.log('lineGrid', lineGrid)
-}
-
-/*
-procedure bt(c)
-  if reject(P,c) then return
-  if accept(P,c) then output(P,c)
-  s ← first(P,c)
-  while s ≠ NULL do
-    bt(s)
-    s ← next(P,s)
-*/
-
+let shouldDrawTarget = true
 const shouldPauseOnDraw = false
+const shouldDrawGridLines = true
+const drawDistances = false
 
 const canReachTargetWithSingleBlock = () => false
 const hasResultWithoutBlock = () => false
@@ -297,7 +206,22 @@ const hasCreatedImpossibleWin = () => false
 
 const checkIfStateIsBroken = () => canReachTargetWithSingleBlock() && hasResultWithoutBlock() && hasCreatedImpossibleWin()
 
-const checkGridForWin = () => false
+const checkGridForWin = (results, currentGrid) => {
+  const totalRemainingBlocks = currentGrid.reduce((acc, current, rowIndex) => {
+    const results = current
+      .map((item, index) => item === obstacle ? index : -1)
+      .filter(colIndex => colIndex !== -1)
+      .map(colIndex => generateKey(colIndex, rowIndex))
+    return acc.concat(results)
+  }, [])
+
+  const totalBlocksWithHints = Object.keys(results)
+
+  const allRemainingBlocksHaveHints = totalRemainingBlocks.every(item => totalBlocksWithHints.includes(item))
+  const allHintsHaveBlocks = totalBlocksWithHints.every(item => totalRemainingBlocks.includes(item))
+
+  return allRemainingBlocksHaveHints && allHintsHaveBlocks
+}
 
 const getOtherDirection = currentDirection => currentDirection === 'horizontal' ? 'vertical' : 'horizontal'
 
@@ -327,10 +251,41 @@ const stripOutCurrentEntry = currentEntry => line => {
   return line
 }
 
+const getAllPossibleLineCases = ({ currentLine, currentDirection, endBlock, gridLineInfo }) => {
+  const currentLineLength = currentLine.length
+  const intersectingBlocks = currentLine.filter(point => doesPointIntersect(gridLineInfo, point))
+
+  const createInfoObject = ({ blockValue, emptySpaces, intersectionPoints }) => ({
+    blockValue,
+    direction: currentDirection,
+    emptySpaces,
+    intersectionPoints,
+    targetBlock: endBlock,
+  })
+
+  const possibleCases = getAllSubsets(intersectingBlocks)
+  
+  // Add the empty case last (unshift due to our reversal below - start with the largest set of intersecting points and work downward from there)
+  possibleCases.unshift([])
+
+  return possibleCases.reverse().map(intersectingCase => {
+    return createInfoObject({ blockValue: currentLineLength - intersectingCase.length, emptySpaces: 0, intersectionPoints: intersectingCase })
+  })
+}
+
 const doesPointIntersect = (gridLineInfo, currentEntry) => {
   return Object.keys(gridLineInfo).every(direction => {
     return gridLineInfo[direction].some(row => row.some(block => block === currentEntry))
   })
+}
+
+const isEndBlockEmpty = (endBlock, currentGrid) => {
+  const [column, row] = endBlock.split(',').map(x => parseInt(x))
+  return currentGrid[row][column] === emptySpace
+}
+
+const isEndBlockAlreadyUsed = (endBlock, results) => {
+  return !!results[endBlock]
 }
 
 const getAllSubsets = arrayOfChildren => 
@@ -341,13 +296,16 @@ const getAllSubsets = arrayOfChildren =>
     [[]]
   ).filter(item => item.length !== 0)
 
+let drawTarget = {}
+
 const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInfo, target) => {
   const isBroken = checkIfStateIsBroken()
   if (isBroken) return null
-  const isWinner = checkGridForWin()
+  const isWinner = checkGridForWin(results, currentGrid)
   if (isWinner) return results
 
   let { targetRow, targetCol } = target
+  drawTarget = target
   const key = generateKey(targetCol, targetRow)
 
   let currentLineInfo = {
@@ -382,6 +340,7 @@ const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInf
   if (targetIndex !== 0 && targetIndex !== currentLine.length - 1) {
     // If not, we need to split the current line into multiple sections
     const shiftValue = randomizer() > .5 ? 0 : 1
+
     const firstChunk = currentLine.slice(0, targetIndex + shiftValue)
     const secondChunk = currentLine.slice(targetIndex + shiftValue)
 
@@ -410,38 +369,30 @@ const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInf
   currentLineInfo.line[removal]()
 
   const currentLineCopy = arrayCopy(currentLineInfo.line)
-  const currentLineLength = currentLineCopy.length
+
   const endBlock = currentLineCopy[oppositeRemoval]()
 
-  const intersectingBlocks = currentLineCopy.filter(point => doesPointIntersect(gridLineInfo, point))
+  const endBlockAlreadyUsed = isEndBlockAlreadyUsed(endBlock, results)
 
-  const createInfoObject = ({blockValue, emptySpaces, intersectionPoints}) => ({
-    blockValue,
-    direction: currentDirection,
-    emptySpaces,
-    intersectionPoints,
-    targetBlock: endBlock,
-  })
+  if (isEndBlockEmpty(endBlock, currentGrid) || endBlockAlreadyUsed) {
+    if (endBlockAlreadyUsed && results[endBlock].direction === currentLineInfo.direction) {
+      // check to see if the directions match and adjust - should never get in here
+      // debugger // eslint-disable-line
+    }
+    return results
+  }
 
-  const possibleCases = getAllSubsets(intersectingBlocks)
-  
-  // Add the empty case last (unshift due to our reversal below - start with the largest set of intersecting points and work downward from there)
-  possibleCases.unshift([])
+  const listOfPossibleStates = getAllPossibleLineCases({ currentLine: currentLineCopy, currentDirection, endBlock, gridLineInfo })
+  draw()
+  debugger
 
-  const newInfo = possibleCases.reverse().map(intersectingCase => {
-    return createInfoObject({ blockValue: currentLineLength - intersectingCase.length, emptySpaces: 0, intersectionPoints: intersectingCase })
-  })
-
-  let currentCase = newInfo.shift()
-
-  const tempEmptySpaces = []
+  let currentCase = listOfPossibleStates.shift()
 
   while(currentLineInfo.line.length) {
     const currentEntry = currentLineInfo.line[removal]()
     if (!currentLineInfo.line.length) {
       if (currentGrid[target.targetRow][target.targetCol] !== targetBlock) {
         currentGrid[target.targetRow][target.targetCol] = emptySpace
-        tempEmptySpaces.push(generateKey(target.targetCol, target.targetRow))
       }
       // we are at the last entry - our currentTotal is the max it needs to be
       blockValue += 1
@@ -465,69 +416,143 @@ const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInf
       if (!Object.keys(results).includes(currentEntry)) {
         const [removalCol, removalRow] = currentEntry.split(',')
         currentGrid[removalRow][removalCol] = emptySpace
-        tempEmptySpaces.push(currentEntry)
         blockValue += 1
       }
     }
   }
 
-//   console.log('isCorrect', myTestBlock === currentCase.targetBlock && blockValue === currentCase.blockValue)
-//   console.log('difference', intersectionPoints, currentCase.intersectionPoints)
-// 
-//   console.log('myTestBlock', myTestBlock)
-//   console.log('blockValue', blockValue)
-//   console.log('direction', currentDirection)
-//   console.log('intersectionPoints', intersectionPoints)
-
-
-  // debugger
+  draw()
+  debugger // eslint-disable-line
 
   // Remove processed line
   gridLineInfo[currentLineInfo.direction].splice(currentLineInfo.index, 1)
 
   while (currentCase.intersectionPoints.length) {
-    results[currentCase.targetBlock]
+    // results[currentCase.targetBlock]
     const currentPoint = currentCase.intersectionPoints.pop()
     const splitPoint = currentPoint.split(',')
     const newTarget = { targetCol: splitPoint[0], targetRow: splitPoint[1] }
-    results = backtrackingUnzip(results, arrayCopy(currentGrid), arrayCopy(currentCase.intersectionPoints), arrayCopy(gridLineInfo), newTarget)
 
-    if (!currentCase.intersectionPoints.length && newInfo.length) {
-      currentCase = newInfo.shift()
+    results = backtrackingUnzip(results, currentGrid, arrayCopy(currentCase.intersectionPoints), arrayCopy(gridLineInfo), newTarget)
+
+    if (!currentCase.intersectionPoints.length && listOfPossibleStates.length) {
+      debugger
+      currentCase = listOfPossibleStates.shift()
     }
   }
 
   return results
 }
 
-createLines()
+const lineGrid = createLines(initialGrid)
 
-// let targetRow = initialGrid.findIndex(row => row.some(block => block === targetBlock))
-// let targetCol = initialGrid[targetRow].findIndex(block => block === targetBlock)
+let targetRow = initialGrid.findIndex(row => row.some(block => block === targetBlock))
+let targetCol = initialGrid[targetRow].findIndex(block => block === targetBlock)
 
 let results = {}
-// results = backtrackingUnzip(results, initialGrid, [], lineGrid, { targetRow, targetCol })
+draw()
+
+results = backtrackingUnzip(results, initialGrid, [], lineGrid, { targetRow, targetCol })
+shouldDrawTarget = false
+
+function drawBricks(currentGrid, ctx, drawColors) {
+  if (!currentGrid) return
+  const drawBrick = ctx => (x, y, color) => {
+    ctx.beginPath()
+    ctx.rect(x, y, pixelSize, pixelSize)
+    ctx.fillStyle = color
+    ctx.fill()
+    ctx.closePath()
+  }
+
+  const drawBrickFunc = drawBrick(ctx)
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  for(var row=0; row<gridYLength; row++) {
+    for(var column=0; column<gridXLength; column++) {
+      var brickX = (column*(pixelSize))+(pixelSize / 2)
+      var brickY = (row*(pixelSize))+(pixelSize / 2)
+
+      if (parseInt(drawTarget.targetRow) === row && parseInt(drawTarget.targetCol) === column && shouldDrawTarget) {
+        drawBrickFunc(brickX, brickY, 'green')
+      } else if (drawColors && floodGraph[row][column].visited === true) {
+        const index = floodGraph[row][column].searchGroup
+        drawBrickFunc(brickX, brickY, colorGroups[index])
+      } else if(currentGrid[row][column] === obstacle) {
+        drawBrickFunc(brickX, brickY, '#0095DD')
+      } else if (currentGrid[row][column] === targetBlock) {
+        drawBrickFunc(brickX, brickY, 'red')
+      }
+
+      if (drawDistances && distanceVisitedGraph && distanceVisitedGraph[row][column] && distanceVisitedGraph[row][column].visited === true) {
+        const distance = distanceVisitedGraph[row][column].distance
+        ctx.beginPath()
+        ctx.font = '8px Comic Sans MS'
+        ctx.strokeStyle = 'black'
+        ctx.strokeText(distance, column * pixelSize+(pixelSize - 3), row * pixelSize+(pixelSize))
+        ctx.stroke()
+        ctx.closePath()
+      }
+    }
+  }
+}
 
 function drawHints() {
-  Object.keys(results).forEach(coordinate => {
-    const value = results[coordinate].value
-    const [column, row] = coordinate.split(',')
+  if (results) {
+    Object.keys(results).forEach(coordinate => {
+      const value = results[coordinate].value
+      const [column, row] = coordinate.split(',')
+      ctx.beginPath()
+      ctx.font = '8px Comic Sans MS'
+      ctx.strokeStyle = 'black'
+      ctx.strokeText(value, column * pixelSize+(pixelSize - 3), row * pixelSize+(pixelSize))
+      ctx.stroke()
+      ctx.closePath()
+    })
+  }
+}
+
+function drawGridLines() {
+  for(var row=0; row<gridYLength; row++) {
+    for(var col=0; col<gridXLength; col++) {
+      if (row === 0) {
+        ctx.beginPath()
+        ctx.font = '8px Comic Sans MS'
+        ctx.strokeStyle = 'black'
+        ctx.strokeText(col, col * pixelSize+(pixelSize - 3), pixelSize / 3)
+        ctx.stroke()
+        ctx.closePath()
+      }
+
+      ctx.moveTo(col * pixelSize + (pixelSize / 2), row * pixelSize)
+      ctx.lineTo(col * pixelSize + (pixelSize / 2), (row * pixelSize)+ (pixelSize))
+      ctx.stroke()
+    }
+
     ctx.beginPath()
     ctx.font = '8px Comic Sans MS'
     ctx.strokeStyle = 'black'
-    ctx.strokeText(value, column * pixelSize+(pixelSize - 3), row * pixelSize+(pixelSize))
+    ctx.strokeText(row, 0, row * pixelSize+(pixelSize))
+    ctx.stroke()
+    ctx.moveTo(0, row * pixelSize + pixelSize / 2)
+    ctx.lineTo(gridXLength * pixelSize, (row * pixelSize) + pixelSize / 2)
     ctx.stroke()
     ctx.closePath()
-  })
+  }
 }
+
 
 function checkForWin() {
 
 }
 
 function draw() {
-  drawBricks()
+  drawBricks(currentGrid, ctx, false)
+  drawBricks(otherGrid, ctx2, drawColors)
   drawHints()
+  if (shouldDrawGridLines) {
+    drawGridLines()
+  }
   checkForWin()
   if (shouldPauseOnDraw) {
     debugger // eslint-disable-line
