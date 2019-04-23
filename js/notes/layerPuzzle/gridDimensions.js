@@ -22,3 +22,6 @@ export const increaseGridXLength = () => {
 
 export const getCanvasWidth = () => gridXLength * pixelSize + gridNumber * gridSpace * pixelSize
 export const getCanvasHeight = () => gridYLength * pixelSize + gridNumber * gridSpace * pixelSize
+
+export const isWithinXGrid = coordinate => coordinate >= 0 && coordinate < gridXLength
+export const isWithinYGrid = coordinate => coordinate >= 0 && coordinate < gridYLength

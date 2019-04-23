@@ -1,6 +1,8 @@
 import {
   getGridXLength,
   getGridYLength,
+  isWithinXGrid,
+  isWithinYGrid,
   pixelSize,
   getCanvasWidth,
   getCanvasHeight,
@@ -35,14 +37,14 @@ let initialGrid = [
 // Density = 0.09895833333333333
 
 initialGrid = [
-  [0, 3, 0, 0, 0, 0],
-  [0, 3, 3, 0, 0, 0],
-  [3, 3, 3, 0, 0, 0],
-  [0, 3, 3, 3, 5, 0],
-  [0, 0, 3, 3, 0, 0],
-  [0, 0, 3, 3, 3, 0],
-  [0, 0, 0, 3, 3, 3],
-  [0, 0, 0, 3, 0, 0],
+  // [0, 3, 0, 0, 0, 0],
+  // [0, 3, 3, 0, 0, 0],
+  // [3, 3, 3, 0, 0, 0],
+  // [0, 3, 3, 3, 5, 0],
+  // [0, 0, 3, 3, 0, 0],
+  // [0, 0, 3, 3, 3, 0],
+  // [0, 0, 0, 3, 3, 3],
+  // [0, 0, 0, 3, 0, 0],
 ]
 
 // Starting points from within grid
@@ -60,46 +62,21 @@ initialGrid = [
 // ]
 
 for (let i = 0; i < getGridYLength(); i++) {
-  initialGrid.push(Array.apply(null, Array(getGridXLength())).map(() => {
-    return 0
-  }))
+  initialGrid.push(
+    Array.apply(null, Array(getGridXLength())).map(() => {
+      return 0
+    })
+  )
 }
 
-// Second grid seeds
-const broken = 0.13211651171095662
-const weird = 0.8814176675958372
-const huh = 0.9414135727191293
-const solved = 0.9311797150098673
-const needToFixBacktracking = 0.7037516700656562
+let iterations = 0
 
-// Third grid seeds
-const infinite = 0.8270123205982178
-const infinite2 = 0.5020871473412547
-const fucked = 0.45286728697492507
-
-
-const tiedLargest = 0.2996170901896136
-const breakThisDown =  0.949010289749602
-const howToHandle = 0.7210721903502999
-const badTargetPlacement = 0.27211505962386684
-const chunky = 0.6757205201354943
-const multipleTargetsWithEvenLengths = 0.33285831629572726
-const noTargets = 0.4598295234421774
-const reallyLongTail = 0.8742797946667888
-const handle = 0.16586225158162837
-const brokenAgain =  0.8807449728181744
-const reallyDense = 0.006649334400887774
-const goodSeed = 0.16134528824178074
-const fuckingUseless = 0.6013755322878005
-const superBoring = 0.41802797071231046
-const generateLeftTargetNodeFromNothing = 0.1228821185565192
-
-const seed = solved//Math.random()
+const seed = Math.random()
 console.log('seed', seed)
 const randomizer = AleaRandomizer(seed)
 // const distanceVisitedGraph = undefined
 
-const shouldGenerateNew = false
+const shouldGenerateNew = true
 
 const { grid, shavedGrid, distanceVisitedGraph, floodGraph } = generateNewGrid(
   initialGrid,
@@ -116,6 +93,7 @@ if (shouldGenerateNew) {
 let currentGrid = initialGrid
 
 const arrayCopy = array => JSON.parse(JSON.stringify(array))
+const isObjectEmpty = obj => Object.entries(obj).length === 0 && obj.constructor === Object
 
 gridList.push(initialGrid)
 
@@ -157,8 +135,8 @@ canvas.addEventListener('click', e => {
 })
 
 const colorGroups = ['green', 'yellow', 'orange', 'purple', 'cyan', 'red', 'white', 'black']
-const drawColors = false
-let shouldDrawTarget = true
+const drawColors = true
+let shouldDrawTarget = false
 const shouldPauseOnDraw = false
 const shouldPauseOnDebugDraw = true
 const shouldDrawGridLines = true
@@ -167,8 +145,6 @@ const drawDistances = false
 const canReachTargetWithSingleBlock = () => false
 const hasResultWithoutBlock = () => false
 const hasCreatedImpossibleWin = () => false
-
-// const hasBlock
 
 const checkIfStateIsBroken = () =>
   canReachTargetWithSingleBlock() || hasResultWithoutBlock() || hasCreatedImpossibleWin()
@@ -192,6 +168,70 @@ const checkGridForWin = (results, currentGrid) => {
   return allRemainingBlocksHaveHints && allHintsHaveBlocks
 }
 
+let largestSequenceToWin = 0
+let partialWinGrid = {}
+let partialWinResults = {}
+
+// A partial win is a collection of blocks with hints that lead to the goal, with no blocks without hints in between
+const checkGridForPartialWin = (results, currentGrid) => {
+  const totalBlocksWithHintsByOrder = Object.keys(results)
+    .map(key => Object.assign(results[key], { key }))
+    .sort((a, b) => b.sortingOrderNumber - a.sortingOrderNumber)
+    .reverse()
+
+  let isPartialWin = true
+  totalBlocksWithHintsByOrder.forEach(result => {
+    if (isPartialWin === false) return
+    const { x, y } = result.lineDelta
+
+    const [resultCol, resultRow] = result.key.split(',').map(value => parseInt(value))
+
+    let currentCol = resultCol
+    let currentRow = resultRow
+    let totalCheckDistance = result.value
+
+    while (totalCheckDistance > 0 && isPartialWin) {
+      currentRow += y
+      currentCol += x
+      if (!isWithinXGrid(currentCol)) {
+        isPartialWin = false
+      }
+      if (!isWithinYGrid(currentRow)) {
+        isPartialWin = false
+      }
+
+      const newBlock = currentGrid[currentRow][currentCol]
+      if (newBlock === EMPTY) {
+        totalCheckDistance--
+      } else if (newBlock === OBSTACLE) {
+        const keyToValidate = generateKey(currentCol, currentRow)
+        if (!results[keyToValidate]) {
+          isPartialWin = false
+        }
+      }
+    }
+  })
+
+  if (isPartialWin && totalBlocksWithHintsByOrder.length > largestSequenceToWin) {
+    largestSequenceToWin = totalBlocksWithHintsByOrder.length
+    console.log('setting a partial result', largestSequenceToWin, iterations)
+    partialWinGrid = currentGrid
+    partialWinResults = results
+  }
+}
+
+const cleanPartialWinGrid = (currentGrid, results) => {
+  const newGrid = arrayCopy(currentGrid)
+  return newGrid.map((row, rowIndex) => {
+    return row.map((block, colIndex) => {
+      if (block === OBSTACLE && !results[generateKey(colIndex, rowIndex)]) {
+        return EMPTY
+      }
+      return block
+    })
+  })
+}
+
 const getOtherDirection = currentDirection =>
   currentDirection === 'horizontal' ? 'vertical' : 'horizontal'
 
@@ -205,7 +245,7 @@ const getEndBlock = (currentLine, index) => {
   }
 }
 
-const stripOutCurrentEntry = currentEntry => line => {
+const adjustLinesWithCurrentBlock = currentEntry => line => {
   const removeEntry = (startIndex, endIndex) => line => {
     return line.length > 2 ? line.slice(startIndex, endIndex) : []
   }
@@ -265,7 +305,13 @@ const getAllPossibleLineCases = ({
     .filter(newLineCase => newLineCase.blockValue > 0)
 }
 
-const modifyGridWithCurrentLine = (currentCase, removal, target, lineIndex) => {
+const modifyGridWithCurrentLine = ({
+  currentCase,
+  removal,
+  target,
+  lineIndex,
+  solutionOrderNumber,
+}) => {
   let {
     intersectionPoints,
     gridLineInfo,
@@ -275,6 +321,23 @@ const modifyGridWithCurrentLine = (currentCase, removal, target, lineIndex) => {
     currentResults,
     currentGrid,
   } = currentCase
+
+  const convertRemovalToMovementDirection = (direction, removal) => {
+    if (direction === 'horizontal') {
+      if (removal === 'shift') {
+        return { x: -1, y: 0 }
+      } else if (removal === 'pop') {
+        return { x: 1, y: 0 }
+      }
+    } else if (direction === 'vertical') {
+      if (removal === 'shift') {
+        return { x: 0, y: -1 }
+      } else if (removal === 'pop') {
+        return { x: 0, y: 1 }
+      }
+    }
+    return removal
+  }
 
   const newCurrentLine = arrayCopy(currentLine)
 
@@ -288,6 +351,8 @@ const modifyGridWithCurrentLine = (currentCase, removal, target, lineIndex) => {
       currentResults[currentEntry] = {
         value: blockValue,
         direction,
+        lineDelta: convertRemovalToMovementDirection(direction, removal),
+        solutionOrderNumber,
       }
 
       // Remove lines that cannot be used due to being added in this particular direction
@@ -295,9 +360,9 @@ const modifyGridWithCurrentLine = (currentCase, removal, target, lineIndex) => {
       const otherLinesToCheck = gridLineInfo[otherDirection]
 
       if (otherLinesToCheck.some(line => line.includes(currentEntry))) {
-        const linesWithCurrentEntryRemoved = otherLinesToCheck.map(
-          stripOutCurrentEntry(currentEntry)
-        )
+        const linesWithCurrentEntryRemoved = otherLinesToCheck
+          .map(adjustLinesWithCurrentBlock(currentEntry))
+          .filter(lines => lines.length > 0)
         gridLineInfo[otherDirection] = linesWithCurrentEntryRemoved
       }
     } else if (!doesPointIntersect(gridLineInfo, currentEntry)) {
@@ -308,6 +373,11 @@ const modifyGridWithCurrentLine = (currentCase, removal, target, lineIndex) => {
     }
   }
   gridLineInfo[direction].splice(lineIndex, 1)
+
+  // Remove 'lines' that are only length one or zero due to the splitting
+  Object.keys(gridLineInfo).forEach(direction => {
+    gridLineInfo[direction] = gridLineInfo[direction].filter(line => line.length > 1)
+  })
 
   return Object.assign(currentCase, {
     currentGrid,
@@ -337,19 +407,29 @@ const getAllSubsets = arrayOfChildren =>
     [],
   ])
 
-const debugDraw = (currentGrid, results, override = false) => {
+const debugDraw = (currentGrid, results, override = true) => {
   drawBricks(currentGrid, ctx, false)
   drawHints(results)
   drawGridLines()
-  if (shouldPauseOnDebugDraw && !override) {
-    debugger // eslint-disable-line
+  if (shouldPauseOnDebugDraw && override) {
+     debugger // eslint-disable-line
   }
 }
 
 let drawTarget = {}
 
-const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInfo, target) => {
-  debugDraw(currentGrid, results, true)
+const backtrackingUnzip = (
+  results,
+  currentGrid,
+  intersectionPoints,
+  gridLineInfo,
+  target,
+  solutionOrderNumber
+) => {
+  if (iterations++ > 20000) {
+    return { results, currentGrid }
+  }
+
   const isBroken = checkIfStateIsBroken()
   if (isBroken) return {}
   let isWinner = checkGridForWin(results, currentGrid)
@@ -383,7 +463,6 @@ const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInf
   })
 
   if (validDirections.length > 1 || currentLineInfo.line === undefined) {
-    // console.log('we are returning early', validDirections.length > 1, currentLineInfo.line === undefined)
     return { results, currentGrid }
   }
 
@@ -421,7 +500,11 @@ const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInf
 
   const endBlock = getEndBlock(currentLineInfo.line, targetIndex)
 
-  if (isEndBlockEmpty(endBlock, currentGrid) || isEndBlockAlreadyUsed(endBlock, results)) {
+  if (
+    !endBlock ||
+    isEndBlockEmpty(endBlock, currentGrid) ||
+    isEndBlockAlreadyUsed(endBlock, results)
+  ) {
     // check to see if the directions match and adjust - should never get in here
     // if (endBlockAlreadyUsed && results[endBlock].direction === currentLineInfo.direction) {}
     return { results, currentGrid }
@@ -442,13 +525,21 @@ const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInf
   }
 
   let currentCase = listOfPossibleStates.shift()
-  currentCase = modifyGridWithCurrentLine(currentCase, removal, target, currentLineInfo.index)
+  currentCase = modifyGridWithCurrentLine({
+    currentCase,
+    removal,
+    target,
+    lineIndex: currentLineInfo.index,
+    solutionOrderNumber,
+  })
 
   if (checkGridForWin(currentCase.currentResults, currentCase.currentGrid)) {
     return { results: currentCase.currentResults, currentGrid: currentCase.currentGrid }
   }
 
-  debugDraw(currentCase.currentGrid, currentCase.currentResults)
+  // debugDraw(currentCase.currentGrid, currentCase.currentResults, false)
+
+  checkGridForPartialWin(currentCase.currentResults, currentCase.currentGrid)
 
   while (currentCase.intersectionPoints.length) {
     const currentPoint = currentCase.intersectionPoints.pop()
@@ -460,7 +551,8 @@ const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInf
       arrayCopy(currentCase.currentGrid),
       arrayCopy(currentCase.intersectionPoints),
       arrayCopy(currentCase.gridLineInfo),
-      newTarget
+      newTarget,
+      solutionOrderNumber + 1
     )
 
     if (checkGridForWin(response.results, response.currentGrid)) {
@@ -469,7 +561,14 @@ const backtrackingUnzip = (results, currentGrid, intersectionPoints, gridLineInf
 
     if (!currentCase.intersectionPoints.length && listOfPossibleStates.length) {
       currentCase = listOfPossibleStates.shift()
-      currentCase = modifyGridWithCurrentLine(currentCase, removal, target, currentLineInfo.index)
+      currentCase = modifyGridWithCurrentLine({
+        currentCase,
+        removal,
+        target,
+        lineIndex: currentLineInfo.index,
+        solutionOrderNumber,
+      })
+      checkGridForPartialWin(currentCase.currentResults, currentCase.currentGrid)
       currentGrid = currentCase.currentGrid
       results = currentCase.currentResults
     }
@@ -489,11 +588,29 @@ const homeTarget = {
 }
 
 let results = {}
+const initialSolutionNumber = 1
 draw()
 
-const cursiveResult = backtrackingUnzip(results, initialGrid, [], lineGrid, homeTarget)
-results = cursiveResult.results
-currentGrid = cursiveResult.currentGrid
+const recursiveResult = backtrackingUnzip(
+  results,
+  initialGrid,
+  [],
+  lineGrid,
+  homeTarget,
+  initialSolutionNumber
+)
+
+results = recursiveResult.results
+currentGrid = recursiveResult.currentGrid
+
+if (!isObjectEmpty(partialWinGrid) && !isObjectEmpty(partialWinResults)) {
+  if (largestSequenceToWin > Object.keys(recursiveResult.results).length) {
+    console.log('using a partial result')
+    results = partialWinResults
+    currentGrid = cleanPartialWinGrid(partialWinGrid, partialWinResults)
+  }
+}
+
 shouldDrawTarget = false
 
 function drawBricks(currentGrid, ctx, drawColors) {

@@ -2,10 +2,10 @@ import { OBSTACLE, TARGET, EMPTY } from './blockTypes.js'
 import { generateKey } from './generateKey.js'
 import { createLines } from './createLinesOnGrid.js'
 import {
-  getGridYLength,
-  getGridXLength,
   increaseGridYLength,
   increaseGridXLength,
+  isWithinXGrid,
+  isWithinYGrid,
 } from './gridDimensions.js'
 
 export const evaluateDensity = grid => {
@@ -55,9 +55,6 @@ const prepareVisitationGraph = grid => {
   })
   return newGrid
 }
-
-const isWithinXGrid = coordinate => coordinate >= 0 && coordinate < getGridXLength()
-const isWithinYGrid = coordinate => coordinate >= 0 && coordinate < getGridYLength()
 
 const depthFirstSearch = (x, y, visitedGraph, searchGroup) => {
   if (!isWithinXGrid(x)) return 0
@@ -329,7 +326,12 @@ const pickPossibleGoals = (grid, visitedGraph) => {
     })
 
     const hasOnlyOneNeighbor = (x, y) => {
-      return (hasNextLeftBlock(x, y) & 1)+ (hasNextRightBlock(x, y) & 1) + (hasNextTopBlock(x, y) & 1) + (hasNextBottomBlock(x, y) & 1) === 1
+      const totalNeighbors =
+        (hasNextLeftBlock(x, y) & 1) +
+        (hasNextRightBlock(x, y) & 1) +
+        (hasNextTopBlock(x, y) & 1) +
+        (hasNextBottomBlock(x, y) & 1)
+      return totalNeighbors === 1
     }
 
     const currentLeftEndpoint = maxLine[0].split(',')
@@ -436,7 +438,8 @@ export const generateNewGrid = (initialGrid, randomizer) => {
         const itemBeforeOnFirstRowIsOfBlockType =
           rowPos === 0 && colPos !== 0 && colAccum[colPos - 1] === blockType
         const itemBeforeOrAboveIsOfBlockType =
-          (rowPos > 0 && rowAccum[rowPos - 1][colPos] === blockType || colAccum[colPos - 1] === blockType)
+          (rowPos > 0 && rowAccum[rowPos - 1][colPos] === blockType) ||
+          colAccum[colPos - 1] === blockType
 
         return itemBeforeOnFirstRowIsOfBlockType || itemBeforeOrAboveIsOfBlockType
       }
