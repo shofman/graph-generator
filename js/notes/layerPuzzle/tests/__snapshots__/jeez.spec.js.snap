@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Handles slow solution matches snapshot for jeez 1`] = `undefined`;
+
+exports[`Handles slow solution matches snapshot for jeez 2`] = `
+Object {
+  "0,11": Object {
+    "direction": "vertical",
+    "key": "0,11",
+    "lineDelta": Object {
+      "x": 0,
+      "y": -1,
+    },
+    "solutionOrderNumber": 1,
+    "value": 11,
+  },
+}
+`;

@@ -1,6 +1,7 @@
 import { OBSTACLE, TARGET, EMPTY } from './blockTypes.js'
-import { generateKey } from './generateKey.js'
+import { generateKey, getValuesFromKey } from './generateKey.js'
 import { createLines } from './createLinesOnGrid.js'
+import { getOtherDirection } from './helpers.js'
 import {
   increaseGridYLength,
   increaseGridXLength,
@@ -115,7 +116,7 @@ const distanceSearch = (startNode, visitedGraph) => {
 
   while (toVisitQueue.length) {
     const newNode = toVisitQueue.shift()
-    const [x, y, distance] = newNode.split(',').map(value => parseInt(value))
+    const [x, y, distance] = getValuesFromKey(newNode)
     const newDistance = distance + 1
 
     visitedGraph[y][x].visited = true
@@ -214,6 +215,61 @@ const shaveMaxDistanceFromGrid = (grid, visitedGraph) => {
     })
   })
   return newGrid
+}
+
+const removeRightAnglesFromGrid = (grid, targetKey) => {
+  const lineGridWithTarget = createLines(grid)
+
+  let matchingLine = undefined
+  let matchingDirection = undefined
+  Object.keys(lineGridWithTarget).forEach(direction => {
+    const result = lineGridWithTarget[direction].find(line => line.includes(targetKey))
+    if (result) {
+      matchingLine = result
+      matchingDirection = direction
+    }
+  })
+
+  const otherEndPoint =
+    matchingLine.indexOf(targetKey) === 0 ? matchingLine[matchingLine.length - 1] : matchingLine[0]
+
+  const otherDirection = getOtherDirection(matchingDirection)
+
+  const hasRightAngleEndpoint = lineGridWithTarget[otherDirection].filter(line => {
+    const isEndOfOtherLineAsWell =
+      line.indexOf(otherEndPoint) === 0 || line.indexOf(otherEndPoint) === line.length - 1
+    return line.includes(otherEndPoint) && isEndOfOtherLineAsWell
+  })
+
+  let hasModified = false
+
+  if (hasRightAngleEndpoint.length) {
+    const [targetX, targetY] = getValuesFromKey(targetKey)
+    const [endPointX, endPointY] = getValuesFromKey(otherEndPoint)
+    if (matchingDirection === 'horizontal') {
+      if (targetX > endPointX && isWithinXGrid(endPointX - 1)) {
+        grid[targetY][endPointX - 1] = OBSTACLE
+        hasModified = true
+      } else if (targetX < endPointX && isWithinXGrid(endPointX + 1)) {
+        grid[targetY][endPointX + 1] = OBSTACLE
+        hasModified = true
+      }
+    } else if (matchingDirection === 'vertical') {
+      if (targetY > endPointY && isWithinYGrid(endPointY - 1)) {
+        hasModified = true
+        grid[endPointY - 1][targetX] = OBSTACLE
+      } else if (targetY < endPointY && isWithinYGrid(endPointY + 1)) {
+        grid[endPointY + 1][targetX] = OBSTACLE
+        hasModified = true
+      }
+    }
+  }
+
+  if (hasModified) {
+    return removeRightAnglesFromGrid(grid, targetKey)
+  }
+
+  return grid
 }
 
 const pickPossibleGoals = (grid, visitedGraph) => {
@@ -334,11 +390,12 @@ const pickPossibleGoals = (grid, visitedGraph) => {
       return totalNeighbors === 1
     }
 
-    const currentLeftEndpoint = maxLine[0].split(',')
-    const currentRightEndpoint = maxLine[maxLine.length - 1].split(',')
+    const [leftCol, leftRow] = getValuesFromKey(maxLine[0])
+    const [rightCol, rightRow] = getValuesFromKey(maxLine[maxLine.length - 1])
+
     if (maxLineDirection === 'horizontal') {
-      let newLeftEndpoint = [parseInt(currentLeftEndpoint[0]) - 1, currentLeftEndpoint[1]]
-      const newRightEndpoint = [parseInt(currentRightEndpoint[0]) + 1, currentRightEndpoint[1]]
+      let newLeftEndpoint = [leftCol - 1, leftRow]
+      const newRightEndpoint = [rightCol + 1, rightRow]
 
       if (hasOnlyOneNeighbor(newLeftEndpoint[0], newLeftEndpoint[1])) {
         if (newLeftEndpoint[0] < 0) {
@@ -352,7 +409,6 @@ const pickPossibleGoals = (grid, visitedGraph) => {
       } else if (hasOnlyOneNeighbor(newRightEndpoint[0], newRightEndpoint[1])) {
         if (newRightEndpoint[0] >= newGrid[0].length) {
           newGrid = newGrid.map(row => [...row, 0])
-          alert('increasing x1')
           increaseGridXLength()
         }
         newGrid[newRightEndpoint[1]][newRightEndpoint[0]] = TARGET
@@ -361,13 +417,12 @@ const pickPossibleGoals = (grid, visitedGraph) => {
         throw new Error('cannae do it')
       }
     } else {
-      const newTopEndpoint = [currentLeftEndpoint[0], parseInt(currentLeftEndpoint[1]) - 1]
-      const newBottomEndpoint = [currentRightEndpoint[0], parseInt(currentRightEndpoint[1]) + 1]
+      const newTopEndpoint = [leftCol, leftRow - 1]
+      const newBottomEndpoint = [rightCol, rightRow + 1]
 
       if (hasOnlyOneNeighbor(newTopEndpoint[0], newTopEndpoint[1])) {
         if (newTopEndpoint[0] < 0) {
           newGrid.unshift(new Array(newGrid[0].length).fill(0))
-          alert('increasing y')
           increaseGridYLength()
         }
 
@@ -376,7 +431,6 @@ const pickPossibleGoals = (grid, visitedGraph) => {
       } else if (hasOnlyOneNeighbor(newBottomEndpoint[0], newBottomEndpoint[1])) {
         if (newBottomEndpoint[0] >= newGrid.length) {
           newGrid.push(new Array(newGrid[0].length).fill(0))
-          alert('increasing y')
           increaseGridYLength()
         }
         newGrid[newBottomEndpoint[1]][newBottomEndpoint[0]] = TARGET
@@ -387,8 +441,12 @@ const pickPossibleGoals = (grid, visitedGraph) => {
     }
   }
 
-  const [x, y] = actualGoal.key.split(',')
+  const [x, y] = getValuesFromKey(actualGoal.key)
   newGrid[y][x] = TARGET
+
+  newGrid = removeRightAnglesFromGrid(newGrid, actualGoal.key)
+
+  console.log('newGrid', newGrid)
 
   let distanceVisitedGraph = prepareVisitationGraph(newGrid)
   distanceSearch(actualGoal.key + ',0', distanceVisitedGraph)

@@ -7,7 +7,7 @@
     "parserOptions": {
         "sourceType": "module"
     },
-    "plugins": ["prettier"],
+    "plugins": ["prettier", "jest"],
     "rules": {
         "prettier/prettier": "error",
         "indent": [
@@ -27,5 +27,10 @@
             "error",
             "never"
         ]
+    },
+    "env": {
+        "jest/globals": true,
+        "browser": true,
+        "node": true
     }
 }

@@ -1,0 +1,228 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Handles slow solution matches snapshot for lotsOfComplexityButSimpleSolution 1`] = `undefined`;
+
+exports[`Handles slow solution matches snapshot for lotsOfComplexityButSimpleSolution 2`] = `
+Object {
+  "0,10": Object {
+    "direction": "horizontal",
+    "key": "0,10",
+    "lineDelta": Object {
+      "x": 1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 21,
+    "value": 2,
+  },
+  "2,11": Object {
+    "direction": "vertical",
+    "key": "2,11",
+    "lineDelta": Object {
+      "x": 0,
+      "y": -1,
+    },
+    "solutionOrderNumber": 22,
+    "value": 1,
+  },
+  "2,7": Object {
+    "direction": "horizontal",
+    "key": "2,7",
+    "lineDelta": Object {
+      "x": 1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 13,
+    "value": 1,
+  },
+  "3,11": Object {
+    "direction": "vertical",
+    "key": "3,11",
+    "lineDelta": Object {
+      "x": 0,
+      "y": -1,
+    },
+    "solutionOrderNumber": 14,
+    "value": 1,
+  },
+  "3,2": Object {
+    "direction": "horizontal",
+    "key": "3,2",
+    "lineDelta": Object {
+      "x": 1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 5,
+    "value": 1,
+  },
+  "3,4": Object {
+    "direction": "horizontal",
+    "key": "3,4",
+    "lineDelta": Object {
+      "x": 1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 10,
+    "value": 1,
+  },
+  "3,9": Object {
+    "direction": "horizontal",
+    "key": "3,9",
+    "lineDelta": Object {
+      "x": 1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 1,
+    "value": 1,
+  },
+  "4,1": Object {
+    "direction": "vertical",
+    "key": "4,1",
+    "lineDelta": Object {
+      "x": 0,
+      "y": 1,
+    },
+    "solutionOrderNumber": 6,
+    "value": 1,
+  },
+  "4,4": Object {
+    "direction": "vertical",
+    "key": "4,4",
+    "lineDelta": Object {
+      "x": 0,
+      "y": 1,
+    },
+    "solutionOrderNumber": 2,
+    "value": 1,
+  },
+  "5,1": Object {
+    "direction": "vertical",
+    "key": "5,1",
+    "lineDelta": Object {
+      "x": 0,
+      "y": 1,
+    },
+    "solutionOrderNumber": 4,
+    "value": 1,
+  },
+  "5,6": Object {
+    "direction": "horizontal",
+    "key": "5,6",
+    "lineDelta": Object {
+      "x": -1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 12,
+    "value": 1,
+  },
+  "5,9": Object {
+    "direction": "vertical",
+    "key": "5,9",
+    "lineDelta": Object {
+      "x": 0,
+      "y": -1,
+    },
+    "solutionOrderNumber": 16,
+    "value": 1,
+  },
+  "6,1": Object {
+    "direction": "vertical",
+    "key": "6,1",
+    "lineDelta": Object {
+      "x": 0,
+      "y": 1,
+    },
+    "solutionOrderNumber": 8,
+    "value": 1,
+  },
+  "6,11": Object {
+    "direction": "vertical",
+    "key": "6,11",
+    "lineDelta": Object {
+      "x": 0,
+      "y": -1,
+    },
+    "solutionOrderNumber": 17,
+    "value": 2,
+  },
+  "6,4": Object {
+    "direction": "vertical",
+    "key": "6,4",
+    "lineDelta": Object {
+      "x": 0,
+      "y": 1,
+    },
+    "solutionOrderNumber": 11,
+    "value": 1,
+  },
+  "7,11": Object {
+    "direction": "vertical",
+    "key": "7,11",
+    "lineDelta": Object {
+      "x": 0,
+      "y": -1,
+    },
+    "solutionOrderNumber": 19,
+    "value": 1,
+  },
+  "7,2": Object {
+    "direction": "horizontal",
+    "key": "7,2",
+    "lineDelta": Object {
+      "x": -1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 9,
+    "value": 1,
+  },
+  "7,3": Object {
+    "direction": "horizontal",
+    "key": "7,3",
+    "lineDelta": Object {
+      "x": -1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 7,
+    "value": 1,
+  },
+  "7,5": Object {
+    "direction": "horizontal",
+    "key": "7,5",
+    "lineDelta": Object {
+      "x": -1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 3,
+    "value": 1,
+  },
+  "7,9": Object {
+    "direction": "vertical",
+    "key": "7,9",
+    "lineDelta": Object {
+      "x": 0,
+      "y": -1,
+    },
+    "solutionOrderNumber": 20,
+    "value": 1,
+  },
+  "8,10": Object {
+    "direction": "horizontal",
+    "key": "8,10",
+    "lineDelta": Object {
+      "x": -1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 18,
+    "value": 1,
+  },
+  "8,8": Object {
+    "direction": "horizontal",
+    "key": "8,8",
+    "lineDelta": Object {
+      "x": -1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 15,
+    "value": 2,
+  },
+}
+`;
