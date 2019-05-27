@@ -50,3 +50,5 @@ export const jeez = 0.6491600633898411
 export const shouldHavePickedAnotherLength = 0.6784848248441435
 export const thingsGoBoom = 0.041486741019547635
 export const cannotReach = 0.625576660936364
+export const endsEarly = 0.5193740515176961
+export const endsEarly2 = 0.07753065389507863

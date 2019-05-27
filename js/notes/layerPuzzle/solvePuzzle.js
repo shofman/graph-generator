@@ -1,14 +1,28 @@
 import { isWithinXGrid, isWithinYGrid } from './gridDimensions.js'
 import { OBSTACLE, TARGET, EMPTY } from './blockTypes.js'
+import { slideBlock } from './gridMovement.js'
 import { generateKey, getValuesFromKey } from './generateKey.js'
 import { createLines } from './createLinesOnGrid.js'
-import { arrayCopy, isObjectEmpty, getOtherDirection, getAllSubsets } from './helpers.js'
+import {
+  arrayCopy,
+  isObjectEmpty,
+  getOtherDirection,
+  getAllSubsets,
+  convertLineDeltaToDirection,
+} from './helpers.js'
 import { debugDraw } from './draw.js'
 
 let iterations
 let largestSequenceToWin
 let partialWinGrid
 let partialWinResults
+
+const ITERATIONS_COUNT = 20000
+
+const LEFT = { x: -1, y: 0 }
+const RIGHT = { x: 1, y: 0 }
+const UP = { x: 0, y: -1 }
+const DOWN = { x: 0, y: 1 }
 
 const findTargetInGrid = currentGrid => {
   let targetRow = currentGrid.findIndex(row => row.some(block => block === TARGET))
@@ -78,9 +92,59 @@ const canReachTargetByOverlappingSingleRow = (results, target) => {
   )
 }
 
+const findIsolatedBlocks = (results, currentGrid) => {
+  return currentGrid.reduce((acc, row, rowIndex) => {
+    const isolatedBlocks = row.reduce((isolatedBlockAccumulator, block, colIndex) => {
+      if (block === OBSTACLE) {
+        const currentKey = generateKey(colIndex, rowIndex)
+        if (results[currentKey]) {
+          return isolatedBlockAccumulator
+        } else {
+          const hasEmptyHorizontalNeighbors = neighborIndex =>
+            !isWithinXGrid(neighborIndex) ||
+            (isWithinXGrid(neighborIndex) &&
+              (currentGrid[rowIndex][neighborIndex] === EMPTY ||
+                !!results[generateKey(neighborIndex, rowIndex)]))
+
+          const hasEmptyVerticalNeighbors = neighborIndex =>
+            !isWithinYGrid(neighborIndex) ||
+            (isWithinYGrid(neighborIndex) &&
+              (currentGrid[neighborIndex][colIndex] === EMPTY ||
+                !!results[generateKey(colIndex, neighborIndex)]))
+
+          const leftIsEmpty = hasEmptyHorizontalNeighbors(colIndex - 1)
+          const rightIsEmpty = hasEmptyHorizontalNeighbors(colIndex + 1)
+          const topIsEmpty = hasEmptyVerticalNeighbors(rowIndex - 1)
+          const bottomIsEmpty = hasEmptyVerticalNeighbors(rowIndex + 1)
+
+          if (leftIsEmpty && rightIsEmpty && topIsEmpty && bottomIsEmpty) {
+            return isolatedBlockAccumulator.concat([generateKey(colIndex, rowIndex)])
+          }
+        }
+      }
+      return isolatedBlockAccumulator
+    }, [])
+
+    return acc.concat(isolatedBlocks)
+  }, [])
+}
+
+// Solitary block (no possible lines around it) that another line in the result set has indicated that it will be handled
+// This is a broken case
+const checkForIsolatedBlocksInRequiredLines = (results, currentGrid) => {
+  const isolatedBlocks = findIsolatedBlocks(results, currentGrid)
+
+  const needsIsolatedBlock = block => isolatedBlocks.includes(block)
+  const neededBlockIsNotIsolated = result =>
+    result.blocksHandledByOthers.some(needsIsolatedBlock) === false
+
+  return !Object.values(results).every(neededBlockIsNotIsolated)
+}
+
 const checkIfStateIsBroken = (results, currentGrid) => {
   const target = findTargetInGrid(currentGrid)
-  return canReachTargetByOverlappingSingleRow(results, target)
+  const hasIsolatedBlocks = checkForIsolatedBlocksInRequiredLines(results, currentGrid)
+  return canReachTargetByOverlappingSingleRow(results, target) || hasIsolatedBlocks
 }
 
 const checkGridForWin = (results, currentGrid) => {
@@ -102,16 +166,19 @@ const checkGridForWin = (results, currentGrid) => {
   return allRemainingBlocksHaveHints && allHintsHaveBlocks
 }
 
-// const isSpaceCoveredByAnotherResult
+const isBlockHandledByAnotherLine = (totalBlocksWithHints, currentBlockKey, currentResult) => {
+  let isHandled = false
+  totalBlocksWithHints.forEach(result => {
+    if (result.key !== currentResult.key) {
+      if (result.blocksHandledByLine.includes(currentBlockKey)) {
+        isHandled = true
+      }
+    }
+  })
+  return isHandled
+}
 
-// A partial win is a collection of blocks with hints that lead to the goal, with no blocks without hints in between
-const checkGridForPartialWin = (results, currentGrid) => {
-  // debugDraw(results, currentGrid)
-  const totalBlocksWithHintsByOrder = Object.keys(results)
-    .map(key => Object.assign(results[key], { key }))
-    .sort((a, b) => b.sortingOrderNumber - a.sortingOrderNumber)
-    .reverse()
-
+const checkIsPartialWin = (results, currentGrid, totalBlocksWithHintsByOrder) => {
   let isPartialWin = true
   totalBlocksWithHintsByOrder.forEach(result => {
     if (isPartialWin === false) return
@@ -135,10 +202,22 @@ const checkGridForPartialWin = (results, currentGrid) => {
 
       if (isPartialWin) {
         const newBlock = currentGrid[currentRow][currentCol]
-        if (newBlock === EMPTY) {
+        const keyToValidate = generateKey(currentCol, currentRow)
+        if (newBlock === TARGET) {
+          isPartialWin = true
           totalCheckDistance--
+          return true
+        } else if (newBlock === EMPTY) {
+          const isHandledByAnotherLine = isBlockHandledByAnotherLine(
+            totalBlocksWithHintsByOrder,
+            keyToValidate,
+            result
+          )
+
+          if (!isHandledByAnotherLine) {
+            totalCheckDistance--
+          }
         } else if (newBlock === OBSTACLE) {
-          const keyToValidate = generateKey(currentCol, currentRow)
           if (!results[keyToValidate]) {
             isPartialWin = false
           }
@@ -146,6 +225,19 @@ const checkGridForPartialWin = (results, currentGrid) => {
       }
     }
   })
+
+  return isPartialWin
+}
+
+// A partial win is a collection of blocks with hints that lead to the goal, with no blocks without hints in between
+const checkGridForPartialWin = (results, currentGrid) => {
+  // debugDraw(results, currentGrid)
+  const totalBlocksWithHintsByOrder = Object.keys(results)
+    .map(key => Object.assign(results[key], { key }))
+    .sort((a, b) => b.sortingOrderNumber - a.sortingOrderNumber)
+    .reverse()
+
+  const isPartialWin = checkIsPartialWin(results, currentGrid, totalBlocksWithHintsByOrder)
 
   if (isPartialWin && totalBlocksWithHintsByOrder.length > largestSequenceToWin) {
     largestSequenceToWin = totalBlocksWithHintsByOrder.length
@@ -176,8 +268,11 @@ const backtrackingUnzip = (
   randomizer,
   solutionOrderNumber
 ) => {
-  if (iterations++ > 20000) {
-    console.log('too many iterations')
+  if (iterations++ > ITERATIONS_COUNT) {
+    if (isObjectEmpty(partialWinGrid) && isObjectEmpty(partialWinResults)) {
+      console.log('we are past iteration count')
+      // throw new Error('was not able to solve')
+    }
     return { results, currentGrid }
   }
 
@@ -249,34 +344,38 @@ const backtrackingUnzip = (
   const removalFunc = targetIndex === 0 ? 'shift' : 'pop'
 
   // Remove targetblock that we used to come in here
-  currentLineInfo.line[removalFunc]()
+  const targetBlock = currentLineInfo.line[removalFunc]()
 
-  const endBlock = getEndBlock(currentLineInfo.line, targetIndex)
+  const lineOriginBlock = getLineOriginBlock(currentLineInfo.line, targetIndex)
 
   if (
-    !endBlock ||
-    isEndBlockEmpty(endBlock, currentGrid) ||
-    isEndBlockAlreadyUsed(endBlock, results)
+    !lineOriginBlock ||
+    isLineOriginBlockEmpty(lineOriginBlock, currentGrid) ||
+    isLineOriginBlockAlreadyUsed(lineOriginBlock, results)
   ) {
     // check to see if the directions match and adjust - should never get in here
     return { results, currentGrid }
   }
 
-  const listOfPossibleStates = getAllPossibleLineCases({
+  const listOfPossibleCases = getAllPossibleLineCases({
     currentLine: arrayCopy(currentLineInfo.line),
     currentDirection,
-    endBlock,
+    lineOriginBlock,
+    targetBlock,
     gridLineInfo,
     currentGrid,
     currentResults: arrayCopy(results),
     currentIntersectionPoints: arrayCopy(intersectionPoints),
   })
 
-  if (!listOfPossibleStates.length) {
+  if (!listOfPossibleCases.length) {
     return { results, currentGrid }
   }
 
-  let currentCase = listOfPossibleStates.shift()
+  const caseRemovalFunc = 'shift'
+
+  let currentCase = listOfPossibleCases[caseRemovalFunc]()
+
   currentCase = modifyGridWithCurrentLine({
     currentCase,
     removalFunc,
@@ -284,8 +383,6 @@ const backtrackingUnzip = (
     lineIndex: currentLineInfo.index,
     solutionOrderNumber,
   })
-
-  // debugDraw(results, currentGrid)
 
   if (
     checkGridForWin(currentCase.currentResults, currentCase.currentGrid) ||
@@ -315,8 +412,9 @@ const backtrackingUnzip = (
       return response
     }
 
-    if (!currentCase.intersectionPoints.length && listOfPossibleStates.length) {
-      currentCase = listOfPossibleStates.shift()
+    if (!currentCase.intersectionPoints.length && listOfPossibleCases.length) {
+      currentCase = listOfPossibleCases[caseRemovalFunc]()
+
       currentCase = modifyGridWithCurrentLine({
         currentCase,
         removalFunc,
@@ -331,6 +429,23 @@ const backtrackingUnzip = (
   }
 
   return { results, currentGrid }
+}
+
+const convertRemovalToMovementDirection = (direction, removalFunc) => {
+  if (direction === 'horizontal') {
+    if (removalFunc === 'shift') {
+      return LEFT
+    } else if (removalFunc === 'pop') {
+      return RIGHT
+    }
+  } else if (direction === 'vertical') {
+    if (removalFunc === 'shift') {
+      return UP
+    } else if (removalFunc === 'pop') {
+      return DOWN
+    }
+  }
+  return removalFunc
 }
 
 const modifyGridWithCurrentLine = ({
@@ -348,24 +463,9 @@ const modifyGridWithCurrentLine = ({
     blockValue,
     currentResults,
     currentGrid,
+    blocksHandledByLine,
+    blocksHandledByOthers,
   } = currentCase
-
-  const convertRemovalToMovementDirection = (direction, removalFunc) => {
-    if (direction === 'horizontal') {
-      if (removalFunc === 'shift') {
-        return { x: -1, y: 0 }
-      } else if (removalFunc === 'pop') {
-        return { x: 1, y: 0 }
-      }
-    } else if (direction === 'vertical') {
-      if (removalFunc === 'shift') {
-        return { x: 0, y: -1 }
-      } else if (removalFunc === 'pop') {
-        return { x: 0, y: 1 }
-      }
-    }
-    return removalFunc
-  }
 
   const newCurrentLine = arrayCopy(currentLine)
 
@@ -378,6 +478,8 @@ const modifyGridWithCurrentLine = ({
 
       currentResults[currentEntry] = {
         value: blockValue,
+        blocksHandledByLine,
+        blocksHandledByOthers,
         direction,
         lineDelta: convertRemovalToMovementDirection(direction, removalFunc),
         solutionOrderNumber,
@@ -393,7 +495,7 @@ const modifyGridWithCurrentLine = ({
           .filter(lines => lines.length > 0)
         gridLineInfo[otherDirection] = linesWithCurrentEntryRemoved
       }
-    } else if (!doesPointIntersect(gridLineInfo, currentEntry)) {
+    } else if (blocksHandledByLine.includes(currentEntry)) {
       if (!Object.keys(currentResults).includes(currentEntry)) {
         const [removalCol, removalRow] = currentEntry.split(',')
         currentGrid[removalRow][removalCol] = EMPTY
@@ -418,7 +520,8 @@ const modifyGridWithCurrentLine = ({
 const getAllPossibleLineCases = ({
   currentLine,
   currentDirection,
-  endBlock,
+  lineOriginBlock,
+  targetBlock,
   gridLineInfo,
   currentGrid,
   currentResults,
@@ -426,9 +529,16 @@ const getAllPossibleLineCases = ({
 }) => {
   const currentLineLength = currentLine.length
 
-  const createLineCase = ({ blockValue, intersectionPoints }) => ({
+  const createLineCase = ({
+    blockValue,
+    intersectionPoints,
+    blocksHandledByLine,
+    blocksHandledByOthers,
+  }) => ({
     currentLine: arrayCopy(currentLine),
     blockValue,
+    blocksHandledByLine,
+    blocksHandledByOthers,
     direction: currentDirection,
     intersectionPoints,
     currentGrid: arrayCopy(currentGrid),
@@ -437,19 +547,38 @@ const getAllPossibleLineCases = ({
   })
 
   const intersectingBlocks = currentLine.filter(
-    point => doesPointIntersect(gridLineInfo, point) && point !== endBlock
+    point => doesPointIntersect(gridLineInfo, point) && point !== lineOriginBlock
   )
+
   const possibleCases = getAllSubsets(intersectingBlocks)
 
-  return possibleCases
-    .reverse()
+  const sortingCalculator = possibleCase => {
+    return (
+      possibleCase.blocksHandledByLine.length * possibleCase.blocksHandledByLine.length +
+      possibleCase.blocksHandledByOthers.length * possibleCase.blocksHandledByOthers.length
+    )
+  }
+
+  const allCases = possibleCases
     .map(intersectingCase => {
+      const newBlocksHandledByLine = currentLine.filter(
+        point => point !== lineOriginBlock && !intersectingCase.includes(point)
+      )
+
       return createLineCase({
         blockValue: currentLineLength - intersectingCase.length,
         intersectionPoints: currentIntersectionPoints.concat(intersectingCase),
+        blocksHandledByLine: newBlocksHandledByLine.concat([targetBlock]),
+        blocksHandledByOthers: intersectingCase,
       })
     })
     .filter(newLineCase => newLineCase.blockValue > 0)
+    .sort((a, b) => {
+      return sortingCalculator(b) - sortingCalculator(a)
+    })
+    .reverse()
+
+  return allCases
 }
 
 const doesPointIntersect = (gridLineInfo, currentEntry) => {
@@ -458,16 +587,16 @@ const doesPointIntersect = (gridLineInfo, currentEntry) => {
   })
 }
 
-const isEndBlockEmpty = (endBlock, currentGrid) => {
-  const [column, row] = getValuesFromKey(endBlock)
+const isLineOriginBlockEmpty = (lineOriginBlock, currentGrid) => {
+  const [column, row] = getValuesFromKey(lineOriginBlock)
   return currentGrid[row][column] === EMPTY
 }
 
-const isEndBlockAlreadyUsed = (endBlock, results) => {
-  return !!results[endBlock]
+const isLineOriginBlockAlreadyUsed = (lineOriginBlock, results) => {
+  return !!results[lineOriginBlock]
 }
 
-const getEndBlock = (currentLine, index) =>
+const getLineOriginBlock = (currentLine, index) =>
   index === 0 ? currentLine[currentLine.length - 1] : currentLine[0]
 
 const adjustLinesWithCurrentBlock = currentEntry => line => {
@@ -491,6 +620,94 @@ const adjustLinesWithCurrentBlock = currentEntry => line => {
     }
   }
   return line
+}
+
+const distanceFromTarget = (target, point) => {
+  const [col, row] = getValuesFromKey(point)
+  const sqr = item => item * item
+  return Math.sqrt(sqr(col - target.targetCol) + sqr(row - target.targetRow))
+}
+
+const resultKeyWithDistance = (blockKey, depth) => [
+  { blockKey, depth, direction: RIGHT },
+  { blockKey, depth, direction: UP },
+  { blockKey, depth, direction: LEFT },
+  { blockKey, depth, direction: DOWN },
+]
+
+const recursiveSolver = (results, currentGrid, sortedResultsClosestToTarget, depth) => {
+  if (depth >= 6 || !sortedResultsClosestToTarget[depth]) {
+    return { results, currentGrid }
+  }
+
+  const searchSpace = resultKeyWithDistance(sortedResultsClosestToTarget[depth], depth)
+  while (searchSpace.length) {
+    const currentSlideInfo = searchSpace.pop()
+
+    let slideResults = slideBlock(
+      arrayCopy(results),
+      arrayCopy(currentGrid),
+      currentSlideInfo.blockKey,
+      currentSlideInfo.direction
+    )
+
+    if (slideResults.foundTarget) {
+      return Object.assign(slideResults, { slideInfo: [currentSlideInfo] })
+    }
+
+    slideResults = recursiveSolver(
+      slideResults.results,
+      slideResults.currentGrid,
+      sortedResultsClosestToTarget,
+      depth + 1
+    )
+
+    if (slideResults.foundTarget) {
+      slideResults.slideInfo.push(currentSlideInfo)
+      return slideResults
+    }
+  }
+  return { results, currentGrid }
+}
+
+const bruteForceSolver = (results, currentGrid, target) => {
+  const resultPoints = Object.keys(results)
+  const sortedResultsClosestToTarget = resultPoints.sort(
+    (a, b) => distanceFromTarget(target, a) - distanceFromTarget(target, b)
+  )
+
+  let currentIndex = 0
+
+  const bruteForce = recursiveSolver(
+    arrayCopy(results),
+    arrayCopy(currentGrid),
+    sortedResultsClosestToTarget,
+    currentIndex
+  )
+
+  if (bruteForce.foundTarget) {
+    console.log('using a simpler result')
+    const newResults = {}
+    const newResultInfo = {}
+    bruteForce.slideInfo.forEach(
+      item =>
+        (newResultInfo[item.blockKey] = {
+          lineDelta: item.direction,
+          direction: convertLineDeltaToDirection(item.direction),
+          solutionOrderNumber: item.depth,
+        })
+    )
+
+    Object.keys(bruteForce.results)
+      .filter(key => bruteForce.results[key].value === 0)
+      .forEach(key => {
+        newResults[key] = Object.assign(results[key], newResultInfo[key])
+      })
+
+    return { results: newResults, currentGrid: cleanPartialWinGrid(newResults, currentGrid) }
+  }
+
+  return { results, currentGrid }
 }
 
 export const generateSolvedPuzzle = (initialGrid, randomizer) => {
@@ -529,8 +746,15 @@ export const generateSolvedPuzzle = (initialGrid, randomizer) => {
     }
   }
 
-  return {
-    grid: createdGrid,
+  const { currentGrid: myGrid, results: myResults } = bruteForceSolver(
     results,
+    createdGrid,
+    mainTarget
+  )
+
+  return {
+    grid: myGrid,
+    results: myResults,
+    target: mainTarget,
   }
 }

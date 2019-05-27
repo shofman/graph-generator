@@ -5,6 +5,19 @@ exports[`Handles slow solution matches snapshot for blobBroken 1`] = `undefined`
 exports[`Handles slow solution matches snapshot for blobBroken 2`] = `
 Object {
   "0,0": Object {
+    "blocksHandledByLine": Array [
+      "0,2",
+      "0,4",
+      "0,5",
+      "0,6",
+      "0,9",
+    ],
+    "blocksHandledByOthers": Array [
+      "0,8",
+      "0,7",
+      "0,3",
+      "0,1",
+    ],
     "direction": "vertical",
     "key": "0,0",
     "lineDelta": Object {
@@ -12,7 +25,173 @@ Object {
       "y": 1,
     },
     "solutionOrderNumber": 1,
-    "value": 9,
+    "value": 5,
+  },
+  "0,3": Object {
+    "blocksHandledByLine": Array [
+      "3,3",
+    ],
+    "blocksHandledByOthers": Array [
+      "2,3",
+      "1,3",
+    ],
+    "direction": "horizontal",
+    "key": "0,3",
+    "lineDelta": Object {
+      "x": 1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 6,
+    "value": 1,
+  },
+  "1,0": Object {
+    "blocksHandledByLine": Array [
+      "1,1",
+    ],
+    "blocksHandledByOthers": Array [],
+    "direction": "vertical",
+    "key": "1,0",
+    "lineDelta": Object {
+      "x": 0,
+      "y": 1,
+    },
+    "solutionOrderNumber": 3,
+    "value": 1,
+  },
+  "1,2": Object {
+    "blocksHandledByLine": Array [
+      "1,3",
+    ],
+    "blocksHandledByOthers": Array [],
+    "direction": "vertical",
+    "key": "1,2",
+    "lineDelta": Object {
+      "x": 0,
+      "y": 1,
+    },
+    "solutionOrderNumber": 7,
+    "value": 1,
+  },
+  "1,7": Object {
+    "blocksHandledByLine": Array [
+      "0,7",
+    ],
+    "blocksHandledByOthers": Array [],
+    "direction": "horizontal",
+    "key": "1,7",
+    "lineDelta": Object {
+      "x": -1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 11,
+    "value": 1,
+  },
+  "1,8": Object {
+    "blocksHandledByLine": Array [
+      "0,8",
+    ],
+    "blocksHandledByOthers": Array [],
+    "direction": "horizontal",
+    "key": "1,8",
+    "lineDelta": Object {
+      "x": -1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 12,
+    "value": 1,
+  },
+  "2,0": Object {
+    "blocksHandledByLine": Array [
+      "2,1",
+    ],
+    "blocksHandledByOthers": Array [],
+    "direction": "vertical",
+    "key": "2,0",
+    "lineDelta": Object {
+      "x": 0,
+      "y": 1,
+    },
+    "solutionOrderNumber": 4,
+    "value": 1,
+  },
+  "2,2": Object {
+    "blocksHandledByLine": Array [
+      "2,3",
+    ],
+    "blocksHandledByOthers": Array [],
+    "direction": "vertical",
+    "key": "2,2",
+    "lineDelta": Object {
+      "x": 0,
+      "y": 1,
+    },
+    "solutionOrderNumber": 8,
+    "value": 1,
+  },
+  "2,4": Object {
+    "blocksHandledByLine": Array [
+      "3,4",
+    ],
+    "blocksHandledByOthers": Array [],
+    "direction": "horizontal",
+    "key": "2,4",
+    "lineDelta": Object {
+      "x": 1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 9,
+    "value": 1,
+  },
+  "3,6": Object {
+    "blocksHandledByLine": Array [
+      "3,2",
+      "3,1",
+    ],
+    "blocksHandledByOthers": Array [
+      "3,5",
+      "3,4",
+      "3,3",
+    ],
+    "direction": "vertical",
+    "key": "3,6",
+    "lineDelta": Object {
+      "x": 0,
+      "y": -1,
+    },
+    "solutionOrderNumber": 5,
+    "value": 2,
+  },
+  "4,1": Object {
+    "blocksHandledByLine": Array [
+      "0,1",
+    ],
+    "blocksHandledByOthers": Array [
+      "3,1",
+      "2,1",
+      "1,1",
+    ],
+    "direction": "horizontal",
+    "key": "4,1",
+    "lineDelta": Object {
+      "x": -1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 2,
+    "value": 1,
+  },
+  "4,5": Object {
+    "blocksHandledByLine": Array [
+      "3,5",
+    ],
+    "blocksHandledByOthers": Array [],
+    "direction": "horizontal",
+    "key": "4,5",
+    "lineDelta": Object {
+      "x": -1,
+      "y": 0,
+    },
+    "solutionOrderNumber": 10,
+    "value": 1,
   },
 }
 `;

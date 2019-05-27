@@ -6,6 +6,7 @@ import {
   somethingExplodesViolently,
   twoBroken,
   wayTooSimple,
+  endsEarly,
 } from '../seeds.js'
 import { runTest } from './puzzleSolver.js'
 
@@ -43,6 +44,10 @@ describe('Handles quick solutions', () => {
 
   it('handles the worksWell scenario', () => {
     seed = worksWell
+  })
+
+  it('handles the endsEarly scenario (by not ending early', () => {
+    seed = endsEarly
   })
 
   afterEach(() => {

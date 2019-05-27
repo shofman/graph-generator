@@ -446,8 +446,6 @@ const pickPossibleGoals = (grid, visitedGraph) => {
 
   newGrid = removeRightAnglesFromGrid(newGrid, actualGoal.key)
 
-  console.log('newGrid', newGrid)
-
   let distanceVisitedGraph = prepareVisitationGraph(newGrid)
   distanceSearch(actualGoal.key + ',0', distanceVisitedGraph)
   let shavedGrid = newGrid

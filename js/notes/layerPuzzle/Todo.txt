@@ -1,6 +1,7 @@
 Todo
 ----
 
-1) Prevent solutions where there is a target block next to the goal
 2) Build out ability to play
 3) Measure complexity - combination of space taken and number of steps needed
+4) Ensure grid can handle movement in any direction (recentering)
+5) Handle scenarios where the solution is obvious (brute force solver? Grab closest results and see if moving in any direction allows solution in next turn or two?)

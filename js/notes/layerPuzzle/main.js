@@ -2,9 +2,10 @@ import { getCanvasWidth, getCanvasHeight } from './gridDimensions.js'
 import { AleaRandomizer } from './AleaRandomizer.js'
 import { generateNewGrid } from './generateNewGrid.js'
 import { generateSolvedPuzzle } from './solvePuzzle.js'
-import { draw } from './draw.js'
-import { randomFive } from './seeds.js'
+import { drawCreationDetails } from './draw.js'
 import { createInitialGrid } from './createInitialGrid.js'
+import { play } from './play.js'
+// import { simpSimpSimple } from './seeds.js'
 
 const canvas = document.getElementById('myCanvas')
 canvas.height = getCanvasHeight()
@@ -16,10 +17,7 @@ const randomizer = AleaRandomizer(seed)
 
 let initialGrid = createInitialGrid()
 
-const { grid, shavedGrid, distanceVisitedGraph, floodGraph } = generateNewGrid(
-  initialGrid,
-  randomizer
-)
+const { grid, shavedGrid, floodGraph } = generateNewGrid(initialGrid, randomizer)
 
 initialGrid = shavedGrid
 const otherGrid = grid
@@ -28,9 +26,17 @@ let currentGrid = initialGrid
 
 const gridList = []
 gridList.push(initialGrid)
+let solvedResults = {}
+let results = {}
+let target = {}
+try {
+  solvedResults = generateSolvedPuzzle(initialGrid, randomizer)
+  currentGrid = solvedResults.grid
+  results = solvedResults.results
+  target = solvedResults.target
+} catch (e) {
+  console.log('could not solve', e)
+}
 
-const solvedResults = generateSolvedPuzzle(initialGrid, randomizer)
-currentGrid = solvedResults.grid
-let results = solvedResults.results
-
-draw(currentGrid, otherGrid, results, distanceVisitedGraph, floodGraph)()
+drawCreationDetails(otherGrid, floodGraph)()
+play(currentGrid, results, target)

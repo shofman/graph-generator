@@ -2,6 +2,7 @@ const gridSpace = 1
 const gridNumber = 6
 
 export const pixelSize = 20
+export const pixelOffset = pixelSize / 2
 
 let gridYLength = gridNumber * gridSpace + gridNumber * gridSpace
 let gridXLength = gridNumber * gridSpace + gridNumber * gridSpace
