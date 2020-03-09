@@ -1,0 +1,1 @@
+maze where the user can only enter the gates from center directions (and the movement is wonky) - see erasing movement puzzle

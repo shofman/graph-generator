@@ -1,0 +1,31 @@
+// Try as adult - fail
+// Come back as child
+// Crawlhole - available locked gate, light two fires, boomerang crystal
+// beat boomerang crystal
+// anubis fire puzzle
+// collect silver rupees - unlocks two light fires key
+// two light fires rewards small key
+// use small key on locked gate
+// Bombchu puzzle to light sun
+// Collect silver rupees
+// Light torches - small key
+// Light sun
+// Locked gate - use small key
+// Armoured dude
+// Silver gauntlets
+// Adult
+// Push block
+// Switch to unlock gates - compass, and small key available
+// Zeldas lullaby and longshot to get compass (wolfos room)
+// Collect 5 silver rupees (rolling boulders room) - small key
+// Four sun mirror puzzle (to open door) - locked gate, lullaby hand avaialbe
+// Lullaby on hand to get key
+// Use small key on locked gate
+// Anubis puzzle
+// Locked gate, mirror shield gate, statue puzzle
+// Statue puzzle - Armoured Dude 2 - mirror shield
+// Mirror shield gate - small key
+// Use small key on locked gate after anubis puzzle
+// Climbable wall - boss key + mirror puzzle 
+// Zelda lullaby + bombs + arrows + hookshot = boss key
+// Mirror puzzle - boss gate

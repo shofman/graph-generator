@@ -1,0 +1,22 @@
+Types of Zelda Puzzles
+----------------------
+1) Hidden wall "puzzles"
+2) Kill all enemies puzzles - can work if the enemies aren't killable until item
+3) Light all torches
+4) Light all torches in specific order
+5) Hit switches in
+6) Move block
+7) Shift rows using buttons to form particular pattern
+8) Rotational centerpiece needing to loop around
+9) Placing object on switch
+
+Switching puzzle, but the items that you are switching yourself with are destroyed after use - careful consideration of resources
+
+Puzzles - 
+  Three parts to each puzzle - 
+    1) The assumption - lead players down a false path. Misdirect them to a simple but wrong solution
+    2) The catch - a contradiction between two opposing goals (e.g. enter door but cannot because you need to be on the button. Solution is to use a block on the button). Changing sequence of events or rethinking the spatial element
+    3) The revelation - think outside the box
+
+  Puzzles can also emerge from full exploration of the mechanic (look into interesting game mechanics or play around with your own in prototyping)
+  No puzzle should be given in isolation - build up the complexity over a series of events

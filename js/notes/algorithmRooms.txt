@@ -1,0 +1,11 @@
+algorithm
+
+Calculate the maximum and minimum number of rooms per the dungeon tree. Rules are:
+  a) Puzzle locks and gates must be together and in a single room
+  b) Combat locks and gates must be together and in a single room
+  c) Miniboss locks and gates must be together and in a single room
+  d) A key can be by itself or inside another room (for max, itself. for min, inside another room)
+  e) 
+
+
+Generate and compare two types of maps - one with a single central room, and the other with a bunch of smaller types of rooms

@@ -1,0 +1,10 @@
+Cloud puzzle where you as a character cannot travel down. Only move upward. Gaps in lines allow you to fall down
+
+
+xxxxxxxxxxxxxxx xxxxxx
+xxxxx xxxxxxxxxxxxxxxx
+xxxxxxxxxx xxxxxxxxxxx
+xxxxxxxx  xxxxxxxxxxxx
+etc
+
+Obstacles are present that make it more difficult (plus the addition of enemies should force the player to think strategically)

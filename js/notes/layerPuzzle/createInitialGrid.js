@@ -50,5 +50,5 @@ export const createInitialGrid = () => {
     )
   }
 
-  return initialGrid  
+  return initialGrid
 }

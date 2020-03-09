@@ -1,0 +1,220 @@
+Oracle of Seasons
+-----------------
+
+Hero sword - maku. Gives key to first dungeon
+Gnarled Root - Ember seeds (light fires)
+Snake Remains - Power Bracelet (lift and push items)
+Poison Moth's Lair - Roc's Feather (jump)
+Dancing Dragon Dungeon - Slingshot (shoot seeds away from target)
+Unicorn's Cave - Magnetic Gloves
+Ancient Ruins - Magic Boomerang
+Explorer's Crypt - Roc's Cape
+Sword and Shield Maze - Hyper slingshot
+
+Gnarled Root
+------------
+# 1 gate, block puzzle (push to open gates)
+# Behind block puzzle, kill enemies puzzle, light torches gate 1
+# Behind kill enemies puzzle, 1 key
+# Behind 1 gate, light torches gate 2, minecart puzzle (hit switch to change track)
+# Behind minecart puzzle, bomb gate, bomb key (treasure chest with bombs), simple maze puzzle (hit switch after maze)
+# Behind simple maze puzzle, 1 key
+# Behind bomb gate (wall), enemy maze
+# Behind enemy maze, 2 gate
+# Behind 2 gate, miniboss
+# Behind miniboss, ember seeds
+# Behind light torches gate 2, boss key (kill enemies)
+# Behind light torces gate 1, boss gate 
+
+Snake Remains
+-------------
+# Torches, kill enemies puzzle
+# Behind kill enemies puzzle, 1 key
+# Behind torches, 1 gate, push block puzzle (match pattern)
+# Behind match pattern puzzle, 1 key, pushblock gate 1, pushblock gate 2 (both are push heavy rolling pins out of the way)
+# Behind 1 gate, kill enemy puzzle 2
+# Behind kill enemy puzzle 2, bomb puzzle (throw bombs across gap to kill enemies)
+# Behind bomb puzzle, power bracelet
+# Behind pushblock gate 1, bomb race puzzle (explode barriers before treasure chest disappears)
+# Behind bomb race puzzle, 1 key
+# Behind pushblock gate 2, pushblock puzzle 3 (rolling pins, but with collapsing floors)
+# Behind pushblock gate 3, 2 gate
+# Behind 2 gate, miniboss
+# Behind miniboss, bombable wall, 3 gate
+# Behind bombable wall, spin gate key 1, spin gate
+# Behind 3 gate, spin gate key 2, moving platform puzzle
+# Behind moving platform puzzle, boss key
+# Behind spin gate, boss gate
+
+Poison Moth's Lair
+------------------
+# Kill enemies puzzle (knock with shield)
+# Behind kill enemies puzzle, 1 jump puzzle, 2 jump puzzle, platform pushing puzzle (push pot onto switch, can only access from one angle)
+# Behind platform pushing puzzle, 3 jump puzzle (jump over switch that destroys bridge), bombable wall, rolling push block, push block puzzle (match colored blocks from above)
+# Behind bombable wall, map
+# Behind rolling push block, 1 key
+# Behind push block puzzle, 4 jump puzzle, 1 gate, 1 jump puzzle shortcut
+# Behind 1 gate, rocs feather
+# Behind jump puzzle 4, jump puzzle 5 (leaping across pillars and moving )
+#Behind jump puzzle 2, trampoline puzzle (push trampoline to position with blocks in the way), rolling push block puzzle 2 (with jumping over spikes while pushing the blocks)
+# Behind trampoline puzzle, 1 key
+#Behind rolling push block puzzle 2, shortcut 2
+#Behind jump puzzle 3, gate 2
+# Behind 2 gate, miniboss
+# Behind miniboss, boss gate, pushblock puzzle (push block into pit to jump across to chest)
+# Behind pushblock puzzle, boss key
+
+Dancing Dragon Dungeon
+----------------------
+# 1 gate, minecart switch, bombable wall, 
+# Behind bombable wall, push pot puzzle (nine pots, nine switches, need to destroy two pots to solve it (by standing on it))
+# Behind push pot puzzle, 1 key
+# Behind minecart switch, one puzzle switch (push block onto switch)
+# Behind puzzle switch, jumping platform puzzle (disappearing and appearing blocks)
+# Behind jumping platform puzzle, darkening room puzzle (light goes out, preventing path across pits from being seen)
+# Behind darkening room puzzle, 1 key
+# Behind 1 gate, bombable wall, rolling water pins (need to dive underneath to avoid)
+# Behind bombable wall, one compass
+# Behind rolling water pins, jump puzzle (jump across collapsing tiles)
+# Behind jump puzzle, minecart switch, 2 gate
+# Behind minecart switch, defeat enemy puzzle
+# Behind defeat enemy puzzle, 1 key (key falls into water)
+# Behind 2 gate, defeat enemy puzzle (makes stairs)
+# Behind defeat enemy puzzle, double jump (need speed seeds and rocs feather to jump across two tiles at once)
+# Behind double jump, minecart shooting puzzle 1 (light fires while riding minecart), 1 key, miniboss
+# Behind miniboss, minecart switch puzzle (need to block sliding spikes with block, then hit the switch with a shooter), minecart shooting puzzle 2, 3 gate, 
+# Behind 3 gate, running puzzle (push block onto switch, run across collapsing floor)
+# Behind running puzzle, slingshot
+# Behind minecart switch puzzle, defeat enemies puzzle 2
+# Behind defeat enemies puzzle 2, 4 gate
+# Behind 4 gate, slingshot puzzle (light fires across gap to make bridge)
+# Behind slingshot puzzle, boss gate
+# Behind minecart shooting puzzle 1, 1 key
+# Behind minecart shooting puzzle 2, running puzzle (jump across gaps while on pegasus seeds)
+# Behind running puzzle, 5 gate
+# Behind 5 gate, eye puzzle (hinted at earlier in the dungeon, dive into eye to retrieve key)
+# Behind eye puzzle, boss key
+
+Unicorn's Cave
+--------------
+Magnetic Gate 1 (push from stationary place), magnetic gate 2 (push from stationary place), magnetic gate 3 (ball blocking route), magnetic gate 4 (rotating switch to swivel Link around), minecart switch 1, minecart switch 2, fire jump puzzle (leap across gap with falling fires), defeat enemies gate
+Behind defeat enemies gate, moving path maze (narrow path with pushing blocks into the abyss)
+Behind moving path maze, compass
+# Behind fire jump puzzle, 1 gate, bombable stones
+Behind minecart switch 2, 1 key
+# Behind minecart switch 1, push block puzzle (move block)
+# Behind push block puzzle, magnetic gate 5 (magnetic ball falls from ceiling, push into switch)
+# Behind bombable stones, dodging puzzle (firing horizontal beams while jumping on moving platforms)
+# Behind dodging puzzle, pushing block puzzle (move statue that moves another one at the same time - statue onto switch to open gate)
+# Behind pushing block puzzle, kill enemy on narrow bridge
+# Behind kill enemy on narrow bridge, kill enemies, magnetic gate 3 shortcut
+# Behind kill enemies, stone enemy puzzle (remember the order in which you killed the statues that came to life by opening the treasure chests in the same order that you killed them in)
+# Behind stone enemy puzzle, 1 key
+# Behind 1 gate, magnetic gloves
+# Behind magnetic gate 2, 1 key, 2 gate
+# Behind magnetic gate 1, 1 key
+# Behind magnetic gate 4, 1 key 
+# Behind 2 gate, miniboss
+# Behind miniboss, gate 3, gate 4, defeat enemies puzzle 3 (magnetic enemies that run away)
+# Behind defeat enemies puzzle 3, Magnetic puzzle key 1 (need to move ball over to be accessible later)
+# Behind gate 3, magnetic puzzle 2 (move ball onto switch within confined area)
+# Behind magnetic puzzle 2, magnetic puzzle key 2 (ball accessible, needs to be a blocker to walk across shooting fire)
+# Behind magnetic puzzle key 1+2, gate 5
+# Behind gate 5, magnetic puzzle jumper (use magnetic gloves to leap from platform to platform (pull up))
+# Behind magnetic puzzle jumper, conveyer belt puzzle (conveyer belt tries to throw you onto spikes)
+# Behind conveyer belt puzzle, boss key
+# Behind gate 4, magnetic puzzle jumper 2 (use inverse polarity to raise yourself into the air to reach moving platforms)
+# Behind magnetic puzzle jumper 2, magnetic puzzle 3 (use pulling and pushing of gloves to reach platforms across pit (not located next to walls so harder))
+# Behind magnetic puzzle 3, boss gate 
+
+Ancient Ruins
+-------------
+Gate 1, Gate 2, Swivel gate, boomerang gate 1, magnetic gate puzzle (need to jump across platforms to pull ball out of maze, then push across gap to a switch)
+Behind magnetic gate puzzle, 1 key
+# Behind gate 2, swivel key (aka can head around to reach north gate)
+# Behind swivel gate, magnetic puzzle 2 (move ball onto switch through maze, create staircase)
+# Behind magnetic puzzle 2, 1 key (through enemy maze needing jumping over spinning enemies that chase)
+# Behind gate 1, jump puzzle (top down, moving platforms)
+# Behind jump puzzle, running puzzle (press switch, floor starts collapsing, run along narrow floor to next room)
+# Behind running puzzle, bombable wall
+# Behind bombable wall, magical boomerang
+#Behind boomerang gate 1, boomerang gate 2
+#Behind boomerang gate 2, seed shooter puzzle (moving platform, light torches speedy)
+# Behind seed shooter puzzle, run gauntlet (take treasure, walls collapse in, run through maze)
+# Behind run gauntlet, boss key, gate 3, 1 key
+# Behind gate 3, miniboss
+# Behind miniboss, dodging obstacle puzzle (leaping over arrows and rolling pins)
+# Behind dodging obstacle puzzle, boomerang puzzle 2 (three switches, each moving at different speeds)
+# Behind boomerang puzzle 2, jump puzzle (jump to second level to see area, move trampoline to reach hidden area, hit with boomerang to create stairs, walk up stairs and push block to reach...)
+# Behind jump puzzle, boss gate
+
+Explorer's Crypt
+----------------
+1 gate, 1 curse gate, 1 key (kill enemies)
+Behind 1 gate, 1 curse key (fight ghost and kill)
+# Behind 1 curse gate, bombable wall, trampoline puzzle (hit switch to create trampoline, move trampoline into place to see, trampoline to hit switch), magnetic ball key 1, magnetic ball gate (need switch and ball from later),  statue puzzle (one statue out of 9 is a movable statue onto switch to reveal gate)
+Behind bombable wall, compass
+# Behind trampoline puzzle, 1 key
+# Behind statue puzzle, 2 gate, magnetic puzzle (sit on moving platform until magnetic pole to push against across pit)
+# Behind magnetic puzzle, roc cape gate, sliding puzzle gate (four buttons to move statues into position - one time use for each switch)
+# Behind sliding puzzle gate, 1 key
+# Behind 2 gate, 3 gate, 2 curse gate
+# Behind 3 gate, curse puzzle (need to light torches while using speed boost)
+# Behind curse puzzle, 1 curse key (fight ghost and kill)
+# Behind curse gate 2, 4 gate, 
+# Behind 4 gate, kill enemies puzzle (need to pull enemies into pit using magnetic gloves), magnetic puzzle gate 1, 
+# Behind kill enemies puzzle, magnetic puzzle key (rotating items)
+# Behind magnetic puzzle gate 1, trampoline puzzle (two trampolines - one to level 1, one to level 2, kill enemies on level 1, go to level 2, fall to level 1 to enter gate that opens after killing enemies first)
+# Behind trampoline puzzle, jump puzzle (leap on moving platform that does not stop, leap to middle platform with spikes blocking all but one)
+# Behind jump puzzle, rocs cape
+# Behind rocs cape gate, kill enemies puzzle (creates trampoline)
+# Behind kill enemies puzzle, trampoline puzzle
+# Behind trampoline puzzle, magnetic ball key 2 (push ball to magnetic ball key 1)
+# Behind magnetic ball gate, 1 key
+# Behind 4 gate, jump puzzle (every ledge is a collapsible tile, and others are being thrown at you)
+# Behind jump puzzle, kill enemy puzzle (atop collapsible tiles)
+# Behind kill enemy puzzle, super jump switch (need speed tiles)
+# Behind super jump switch, miniboss
+# Behind miniboss, stair maze
+# Behind stair maze, boss gate, magnetic puzzle (spinning gates over pit), 5 gate
+# Behind magnetic puzzle, 1 key
+# Behind 5 gate, jump puzzle (hit switches in order, 2, 3, 1 (need speed boost))
+# Behind jump puzzle, boss key
+
+Sword and Shield Maze
+---------------------
+Hypershot gate, defeat enemies puzzle (kill enemies, but need to bomb magnetic ball behind blocks to kill squid), 1 gate, slingshot puzzle (shoot eye with slingshot)
+Behind defeat enemies puzzle, 1 key
+Behind slingshot puzzle, 1 key
+# Behind 1 gate, dodging enemies puzzle (not sure to include - several jumping obstacles, with falling pits and fire, sliders and )
+# Behind dodging enemies puzzle, 2 gate
+# Behind 2 gate, switch gate, magnetic puzzle (slide along magnetics over lava pit), magnetic puzzle 2 key 1 (ball over lava), hyper shooter, silent puzzle (sit and wait for statue to move), magnetic puzzle 2 gate
+Magnetic puzzle 2 key 2 (move onto switch)
+# Behind magnetic puzzle 2 gate, switch key
+# Behind switch gate, 1 key
+# Behind magnetic puzzle, hyper shot gate (reveal stairs), 3 gate
+# Behind hypershot gate, bombable maze
+# Behind bombable maze, 1 key
+# Behind 3 gate, miniboss
+# After miniboss, light torch puzzle (two hyper slingshots, and ember seeds needed to light 7 torches)
+# After light torch puzzle, 4 gate, pushblock puzzle (slide ice blocks into 3 slots)
+# After pushblock puzzle, ice 2d section (jumping along ice blocks, needing rocs cape to fly across gaps)
+# After ice 2d section, pot puzzle (slide pot onto switch on middle of sliding platforms)
+# After pot puzzle, boss key
+# After 4 gate, bombable wall, ice block drop 1, ice block drop 2, gate 5, gate 6, minecart switch, ice block key 1, ice block key 2, ice block key 3, 
+# Behind bombable wall, follow ghost path (ghost statue leads path - tracing it exactly leads to...)
+# Behind minecart switch, ice block drop 3
+# Behind follow ghost path, 1 key
+# Behind ice block drop 1, 1 key
+# Behind ice block drop 2, path to ice block drop 4
+# Behind ice block drop 3, path to 1 key
+# Behind ice block drop 4, 7 gate
+# Behind 7 gate, boss gate
+
+
+
+
+
+
+
+

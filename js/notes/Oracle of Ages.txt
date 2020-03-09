@@ -1,0 +1,230 @@
+Oracle of Ages
+--------------
+
+Maku Tree -> Seed Pouch (Hold seeds) and Ember Seeds (burn through obstacles)
+Spirits Grave -> Power Bracelet (lift obstacles)
+Power Bracelet -> Poe Clock (Trading sequence)
+Random map tile swapping (patterned, but non euclidean)
+Temple collapse triggers harp of ages
+Mystery Seeds -> (do random things)
+Gifted bombs (Blow up stuff)
+Wing Dungeon -> Rocs Feather (Jumping over stuff)
+Raft Quest -> Flippers (swim + dive) 
+  -> Need Rope -> Grave hint -> Save Mushu from ghosts (fly over large distances) -> enter grave -> pull and jump/run quest (beat closing gate) -> Flippers -> Rope
+  -> Need sea chart -> Ricky needs gloves -> Dig at beach -> Ricky (scale vertical ledges) -> Tingle map
+  -> Raft (visit deep sea tiles)
+Recover items quest 
+Moonlit Grotto -> Seed shooter (Hitting targets at distance)
+Seed shooter -> Tuni Nut -> Song to go from past to present
+Skull Dungeon -> Switch shot (reach and switch)
+Pegasus Seeds -> Move faster
+Crown Dungeon -> Cane of Somaria (create block to jump on/hold down switches)
+Mermaid's Cave -> Mermaid Suit (allow for diving / swimming in deep water)
+Jabu jabu's Belly -> Long switchshot (extended range on the switch shot)
+Ancient Tomb -> Power Gloves (lift heavier things)
+
+Spirits Grave
+-------------
+One locked key, one gate (zero keys), keyItemGate
+Two locked keys, one gate, one boss gate
+Behind one gate, Miniboss
+Behind miniboss, one locked gate
+Behind locked gate, fire seeds gate
+Behind Fire seeds gate - power bracelet
+Behind key item gate, boss key
+
+Wing Dungeon
+------------
+# One gate, color gate (three block colors, need to land on specific one)
+# Color gate -> one key (first gate)
+# First gate -> Second gate, bombable wall
+# Bombable wall -> Second key (second gate)
+# Behind second gate -> Miniboss (via minecart)
+# Behind miniboss -> One locked door, color jump gate, color jump gate, color jump gate, rocs feather
+# Behind first color jump gate (surrounded by collapsing tiles) -> Jump puzzle + optional minecart jump puzzle (shortcut) + bombable wall
+# Behind bomable wall -> small key
+# Behind second color jump gate (matching tiles to set pattern) -> Small key
+# Behind third color jump gate (change to allow minecart through)
+# Behind third gate -> minecart puzzle (based on third color-jump-gate)
+# Behind minecart puzzle -> roc feather and power bracelet puzzle (move item to button)
+# Behind puzzle -> two gates, color movement puzzle (match similar pattern, but can only move colors when color is active)
+# Color movement puzzle -> small key
+# Behind fourth gate -> camoflaguing enemies (need to jump on color to show) + boss key
+# Behind fifth gate -> boss gate
+
+Moonlit Grotto
+--------------
+One 1 gate, one crystal, block puzzle, one crystal, bomb push block
+Behind bomb push block -> map
+Behind block puzzle -> one key
+Use key on 1 gate -> one 2 gate, seed shooter gate 1, combat puzzle (bomb statues), bomb puzzle (throw across gaps), seed shooter gate 2
+# Behind seed shooter gate 2 -> one crystal 
+# Behind bomb statues -> small key
+# Behind bomb puzzle -> bomb switch puzzle, crystal
+# Behind bomb switch puzzle -> compass, block push puzzle (match existing pattern)
+# Behind block push puzzle -> Small key
+# Behind one 2 gate -> One 3 gate
+# Behind one 3 gate -> seed shooter gate (to leave), seed shooter (defeat enemies)
+# Behind seed shooter gate 1 -> One 4 gate 
+# Behind crystal gate -> (spin cycle falls down) Seed shooter puzzle (needs a push block to work), miniboss
+# Behind miniboss -> push block puzzle (make into square), seed shooter puzzle 2 (stand on switch to shoot gate)
+# Behind push block puzzle -> Small key
+# Behind seed shooter puzzle 2 -> Boss key
+# Behind one 4 gate -> seed shooter puzzle
+# Behind seed shooter puzzle -> Boss gate
+
+Skull Dungeon
+-------------
+# Jump puzzle, color puzzle (jump + push block onto space), 
+# Behind jump puzzle -> one 1 gate
+# Behind color puzzle -> one key
+# Behind 1 gate,  minecraft gate 1, minecraft gate 2, minecraft gate 3
+# Behind minecraft gate 1, one 2 gate
+# Behind minecraft gate 2, map
+# Behind minecraft gate 3, one bomb puzzle (kill creature)
+# Behind bomb puzzle, one seed shooter puzzle
+# Behind seed shooter puzzle, one key
+# Behind 2 gate, Jump gate 
+# Behind jump gate, lava race (power bracelet needed)
+# Behind lava race, jump puzzle (match pattern)
+# Behind jump puzzle, push block to unblock minecart (jumping needed)
+# Behind minecart push block, seed shooter jump puzzle (jump to moving target, hit target with seed shooter), blocked minecart gate, one 3 gate
+# Behind seed shooter jump puzzle, one key
+# Behind one 3 gate, unblock minecart gate
+# Behind minecart gate, minecart shooting puzzle (shoot targets while riding on minecart)
+# Behind minecart shooting puzzle, platform puzzle (moving platforms, jump between)
+# Behind platform puzzle, one 4 gate, one color jump puzzle (match color pattern)
+# Behind color jump puzzle, one key
+# Behind one 4 gate, miniboss, switchshot gate 1
+# Behind miniboss, one bombable wall
+# Behind bombable wall, cover tile puzzle
+# Behind cover tile puzzle, switch shot (key item)
+# Behind switchshot gate 1, switchshot puzzle (shift item atop switch)
+# Behind switchshot puzzle, switchshot puzzle 2 (shift, but need to use pot)
+# Behind switchshot puzzle 2, switchshot puzzle 3 (use pots as gates across lava)
+# Behind switchshot puzzle 3, color switching tile, jumping switchshot puzzle (moving platforms with jumping and switchshot)
+# Behind color switching tile, one key
+# Behind jumping switchshot puzzle, boss gate, jumping puzzle (platform section with switchshot pots)
+# Behind jumping puzzle (platform section), gate 5
+# Behind gate 5, lava race 2
+# Behind lava race 2, lava race 3 (more a puzzle - need to use switch shots to switch with pots)
+# Behind lava race 3, pot puzzle (need to push pots into position to switch gate)
+# Behind pot puzzle, boss key
+
+Crown Dungeon
+-------------
+# Jump and switchshot puzzle (move block to switch across gaps), 1 gate, boss gate, color switcher main room, color switch puzzle (three lines of alternating colors)
+# Behind color switcher main room, cane puzzle 1 (need to jump ontop block), one small key (also behind jump and switchshot puzzle (switch needs to be hit first)), color puzzle airlock (move within, switch to block path behind, continue), 2 gate
+# Behind color puzzle airlock, seedshooter and pouch puzzle (hit three switches at once -> bounce between two, and hit one with seed pouch)
+# Behind seedshooter and pouch puzzle, one small key
+# Behind color switch puzzle, cane puzzle 2 (need block to find invisible path)
+# Behind 1 gate, miniboss
+# Behind 2 gate, cane puzzle 3 (need block to hold switch down), seed shooter fire puzzle (fire at automatically advancing switches)
+# Behind seed shooter fire puzzle, matching puzzle (button to see pattern, move blocks to match it)
+# Behind matching puzzle, cane of somaria
+# Behind miniboss, cane puzzle 4 (block to hold down bridge switch)
+# Behind cane puzzle 3, one small key
+# Behind cane puzzle 2, one small key
+# Behind cane puzzle 1, seed shooter puzzle (hit switch from various positions)
+# Behind seed shooter puzzle, jump cane puzzle (jump across gap to reach puzzle, and use cane to prevent joint statues from moving (e.g. each statue moves with the other, need the block to prevent movement))
+# Behind jump cane puzzle, one small key
+# Behind cane puzzle 4, 3 gate, color switcher second main room
+# Behind 3 gate, color switcher puzzle (need to hit the switch first)
+# Behind color switcher puzzle, 4 gate
+# Behind 4 gate, second color switcher puzzle
+# Behnd second color switch puzzle, 5 gate
+# Behind 5 gate, third color switch puzzle (far away switch, need to hit with distance item)
+# Behind third color switch puzzle, block jumping puzzle (platform with block needed to jump over)
+# Behind block jumping puzzle, color pushing puzzle (three groups of connected blocks (three move at once). Bring them all into a pattern)
+# Behind color pushing puzzle, boss key
+
+Mermaid's Cave
+--------------
+# Past - Bombable wall time travel puzzle, gate 1, one jump puzzle (leap over and defeat enemies)
+# Behind wall time travel puzzle past, light fire puzzle (light the torches in a correct order)
+# Behind light fire puzzle, wall moves and mermaid suit barrier 1
+# Behind one jump puzzle, 1 key
+# Behind 1 gate, cane puzzle (leave block on one switch, )
+# Behind cane puzzle, jump puzzle (jump to end)
+# Behind jump puzzle, second wall time travel puzzle (bombable wall)
+# Behind second wall time travel puzzle, 2 gate, mermaid suit barrier 2
+# Behind mermaid suit barrier 1, current puzzle (currents pulling link toward pits)
+# Behind current puzzle, one small key (defeat enemies)
+# Behind mermaid suit barrier 2, autoshooting enemies avoid and switchshot puzzle (bring several tiles into an area grid)
+# Behind switchshot puzzle, one small key
+# Behind 2 gate, 3 gate
+# Behind 3 gate, cane seed shooter puzzle (place cane on seedshooter gate, shoot switch)
+# Behind cane seed shooter puzzle, boss gate
+
+
+Present - Blocked wall, Seed shooter gate, bombable wall time travel puzzle (present)
+Seed shooter gate, bombable wall, snake puzzle (scented items to attract snakes to their death), and second wall time travel puzzle (invisible bombable wall, needs to be blown up in the past)
+# Behind bombable wall, switchshooter gate and second bombable wall, 
+# Behind second bombable wall, color puzzle (push blocks to cover colored tiles hard to reach areas)
+# Behind color puzzle, 1 key
+# Behind snake puzzle, 1 key
+# Behind bombable wall time travel puzzle (present), candle enemies puzzle
+# Behind candle enemies puzzle, 1 gate
+# Behind 1 gate, switchshot gate
+# Behind switchshot gate, jump platform puzzle
+# Behind jump puzzle platform, 2 gate
+# Behind 2 gate, boss key
+# Behind second wall time travel puzzle, 1 key, 3 gate
+# Behind 3 gate, miniboss
+# Behind miniboss, bomb throwing puzzle (throw bomb to destroy barrier surrounded by pits, then switchshot to middle)
+# Behind bomb throwing puzzle, mermaid suit
+
+Jabu Jabu's Belly
+-----------------
+# Switchshot moving puzzle (move switchshots into position), longshot gate 1, 1 gate, 
+# Behind switchshot moving puzzle, one key
+# Behind 1 gate, drain water switch
+# Behind drain water switch, one key (block puzzle), cane puzzle
+# Behind cane puzzle, switchshot puzzle (moving across spikes)
+# Behind switchshot puzzle, 2 gate, longshot gate 2
+# Behind 2 gate, raise water switch
+# Behind raise water switch, 1 key (kill enemies to get), longshot gate 3, miniboss
+# Behind miniboss, 3 gate
+# Behind 3 gate, longshot
+# Behind longshot gate 1, 1 key
+# Behind longshot gate 3, 4 gate
+# Behind 4 gate, 5 gate, raise water switch 2
+# Behind longshot gate 2, 1 key
+# Behind raise water switch 2, 1 key, top switchshot puzzle (being able to reach gate), boss gate
+# Behind top switchshot puzzle, 1 key
+# Behind 5 gate, 6 gate
+# Behind 6 gate, 7 gate
+# Behind 7 gate, boss key
+
+Ancient Tomb
+------------
+# Hidden bomable wall, bomb puzzle (maze with bombable walls)
+# Behind bomb puzzle, 1 gate, 1 key
+# Behind 1 gate, multiswitch puzzle (four switches - light fire (seedshooter) switch, cane switch, switchshot switch, and stand on the last)
+# Behind multiswitch puzzle, 2 gate, pushblock puzzle, 1 key, colorswitch gate
+Behind pushblock puzzle, map
+# Behind 2 gate, colorswitch key, bombable wall, powerglove statue 1
+# Behind powerglove statue 1, goodie chest (geisha seed)
+# Behind bombable wall, 1 key
+# Behind colorswitch gate, 1 key, 3 gate, 4 gate
+# Behind 4 gate, fill color puzzle (walk around area, filling in all colors)
+# Behind fill color puzzle, power gloves
+# Behind 3 gate, powerglove statue 2
+# Behind powerglove statue 2, jump puzzle (raise red steps and run along the top to another area)
+# Behind jump puzzle, miniboss
+# Behind miniboss, switchshot gate, sarcophogus gate (multiple stone tablets needed to open), 5 gate, power glove puzzle (hidden stairs beneath multiple statues), jump puzzle (leap across ledge)
+# Behind jump puzzle, minecart puzzle gate, ice puzzle (kill several enemies on ice) 
+# Behind switchshot gate, another switchshot puzzle (reach across gap)
+# Behind switchshot puzzle, 1 key (within maze of enemies), 1 sarcophogus key
+# Behind power glove puzzle, switchshot puzzle 2 (push blocks out of way, switchshot across gap), minecart puzzle key
+# Behind switchshot puzzle 2, boss key
+# Behind minecart puzzle gate, enemy killing (floor tiles)
+# Behind enemy killing, 1 moving wall gate, 1 moving wall key (switch on floor within maze)
+# Behind moving wall gate, 2 sarcophogus key
+# Behind ice puzzle, waterfall puzzle (maze of water tiles pushing into pits)
+# Behind waterfall puzzle, 3 sarcophogus key
+# Behind gate 5, lava run puzzle 1 (blocked by gate5), lava run puzzle 2 (through the gate)
+# Behind lava run puzzle 2, 4 sarcophogus key
+# Behind lava run puzzle 1, nothing (shortcut to the top)
+# Behind sarcophogus gate, light fire puzzle (destroy bombable wall, shoot fire into gate to reveal bridge, lift statue away)
+# Behind light fire puzzle, boss gate

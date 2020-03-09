@@ -678,34 +678,75 @@ const bruteForceSolver = (results, currentGrid, target) => {
 
   let currentIndex = 0
 
-  const bruteForce = recursiveSolver(
-    arrayCopy(results),
-    arrayCopy(currentGrid),
-    sortedResultsClosestToTarget,
-    currentIndex
-  )
+  // const bruteForce = recursiveSolver(
+  //   arrayCopy(results),
+  //   arrayCopy(currentGrid),
+  //   sortedResultsClosestToTarget,
+  //   currentIndex
+  // )
 
-  if (bruteForce.foundTarget) {
-    console.log('using a simpler result')
-    const newResults = {}
-    const newResultInfo = {}
-    bruteForce.slideInfo.forEach(
-      item =>
-        (newResultInfo[item.blockKey] = {
-          lineDelta: item.direction,
-          direction: convertLineDeltaToDirection(item.direction),
-          solutionOrderNumber: item.depth,
-        })
+  const assignBruteForceSolutionToObj = newResult => item =>
+    (newResult[item.blockKey] = {
+      lineDelta: item.direction,
+      direction: convertLineDeltaToDirection(item.direction),
+      solutionOrderNumber: item.depth,
+    })
+
+  //   if (bruteForce.foundTarget) {
+  //     console.log('using a simpler result')
+  //     const newResults = {}
+  //     const newResultInfo = {}
+  //     bruteForce.slideInfo.forEach(assignBruteForceSolutionToObj(newResultInfo))
+  //
+  //     Object.keys(bruteForce.results)
+  //       .filter(key => bruteForce.results[key].value === 0)
+  //       .forEach(key => {
+  //         newResults[key] = Object.assign(results[key], newResultInfo[key])
+  //       })
+  //
+  //     return { results: newResults, currentGrid: cleanPartialWinGrid(newResults, currentGrid) }
+  //   } else {
+  currentIndex = 0
+
+  const allPermutations = getAllSubsets(Object.keys(results)).filter(subset => subset.length === 4)
+
+  // TODO - we assert that "9,2", "10,3" is the same as "10,3", "9,2" in this, but this is not the case. Generate these for completeness?
+  // Can also filter out entries that do not have a solution in the crosshair (one of the items must be a target)
+  console.log('allPermutations', allPermutations)
+
+  let bestResults = arrayCopy(results)
+
+  allPermutations.forEach(subset => {
+    const subsetBruteForce = recursiveSolver(
+      arrayCopy(results),
+      arrayCopy(currentGrid),
+      subset,
+      currentIndex
     )
 
-    Object.keys(bruteForce.results)
-      .filter(key => bruteForce.results[key].value === 0)
-      .forEach(key => {
-        newResults[key] = Object.assign(results[key], newResultInfo[key])
-      })
+    if (subsetBruteForce.foundTarget) {
+      console.log('we are using a brute force result', subsetBruteForce)
+      const newSubsetResults = {}
+      const newSubsetResultInfo = {}
+      subsetBruteForce.slideInfo.forEach(assignBruteForceSolutionToObj(newSubsetResults))
 
-    return { results: newResults, currentGrid: cleanPartialWinGrid(newResults, currentGrid) }
+      Object.keys(subsetBruteForce.results)
+        .filter(key => subsetBruteForce.results[key].value === 0)
+        .forEach(key => {
+          newSubsetResults[key] = Object.assign(results[key], newSubsetResultInfo[key])
+        })
+
+      if (Object.keys(bestResults).length > Object.keys(newSubsetResults).length) {
+        console.log('smaller result set')
+        bestResults = newSubsetResults
+      }
+    }
+  })
+
+  if (Object.keys(bestResults).length) {
+    return { results: bestResults, currentGrid: cleanPartialWinGrid(bestResults, currentGrid) }
   }
+  // }
 
   return { results, currentGrid }
 }

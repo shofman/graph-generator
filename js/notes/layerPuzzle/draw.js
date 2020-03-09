@@ -153,7 +153,6 @@ function drawBlockLines() {
 }
 
 function checkForWin(currentGrid) {
-  console.log('we are here', currentGrid.some(row => row.some(block => block === SUCCESS_TARGET)))
   if (currentGrid.some(row => row.some(block => block === SUCCESS_TARGET))) {
     drawText('You win!', getGridYLength() + 1, 0)
   }

@@ -1,0 +1,38 @@
+Fortress of winds
+createExternalLock('arrow'), defeatEnemies0, digGate0, minishGate (heartPiece), pullGatePuzzle (pull switch to open door, but need to pull another switch first), 
+Behind arrowGate, defeatEnemies
+Behind defeatEnemies, digGate, platformPuzzle1, platformPuzzle2 (shoot eye gates while riding on platform)
+Behind platformPuzzle1, clonePuzzle (stand on platform, create duplicate to use)
+Behind clonePuzzle, defeatEnemies2
+Behind defeatEnemies2, compass
+Behind platformPuzzle2, clonePuzzle2 (stand on platform, push block out of way, can only push if clone is standing directly beside you. Pull switch to reveal key)
+Behind clonePuzzle2, key
+
+Behind defeatEnemies0, map, 1 gate, 2 gate
+#Behind 1 gate, platform puzzle3 (dodging blocks)
+#Behind platformpuzzle3, eye puzzle (long distance eye shooting)
+#Behind eye puzzle, miniboss
+#Behind miniboss, dodge enemies switch (run around area with sliding enemies, hit switch to open door)
+#Behind dodge enemies, bombable wall1, shortcut to front 
+#Behind bombable wall1, mole mitts (dig - key item)
+
+#Behind pullGatePuzzle, defeatEnemies3, minishGate1
+#Behind defeatEnemies3, clonePuzzle3 (clone self at weird distance to stand on switches)
+#Behind clonePuzzle3, minishKey
+#Behind minishGate, defeatEnemies4
+#Behind defeatEnemies4, key
+
+#Behind 2 gate, sprintGate (external lock)
+#Behind sprintGate, defeatEnemies5, spinningLogs, 3 gate
+#Behind spinningLogs, clonePuzzle4 (cover switches, need pillars to hold down two while you duplicate yourself to 2)
+#Behind cloenPUzzle4, 1 key
+#Behind defeatEnemies5, minishKey2
+
+#Behind 3 gate, minishGate2, digGate4
+#Behind minishGate2, digGate5
+#Behind digGate5, 1 key 
+
+#Behind digGate4, 4 gate
+#Behind 4 gate, boss key
+
+#Behind digGate0, boss gate

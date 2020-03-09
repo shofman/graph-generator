@@ -1,0 +1,38 @@
+// Water temple comments
+// Entrance with hookshot
+// Available at start - Locked gate 1 (toward dark link), hookshot gate (toward boss), pull block puzzle 1 (arrow+longshot one), compass puzzle, bottom of temple hookshot gate, map combat room, waterToOneSwitch
+// Level1Water switch hit (need zelda lullaby) - fire puzzle (need arrows or magic), second locked gate (into central tower), bomb gate, push block until falls in water
+// Bomb gate contains spin attack skulltula
+// Fire puzzle contains small key
+// Push block into water - jump along water spout puzzle
+// Water spout puzzle - whirlpool room with key in dragon mouth
+// Beating whirlpool room gets small key
+// Use first key - hookshot to second level/waterKey2
+// Raise water to level 2 - bottom of central tower, 3rd locked gate (to water elevator), bombable Ruto 2nd floor, longshot gate
+// Bottom of central tower - combat puzzle with dropping enemies
+// Dropping enemies - small key
+// Bombing door (need bombs) - small key
+// Use small key on 3rd locked gate
+// Water elevator puzzle
+// Uaw small key on Locked gate 1
+// Water Level 3 - falling hookshot platforms
+// Locked Gate 4 - use small key on this (out of small keys)
+// Raising statues 
+// Likelike puzzle ?
+// Dark link
+// Receive hookshot
+// Song of time to the basement
+// whirlpool maze
+// eye puzzle at end of whirlpool maze - small key
+// Lower water to level1 again
+// Raise water to level2 again
+// Longshot to complete pull block puzzle 1 - small key
+// Longshot puzzle gate at bottom of farside temple (use key)
+// Rolling boulder maze
+// Double bombable wall puzzle (block to fall to bottom button)
+// Second water spout puzzle
+// Locked door - use final key - boss key
+// Raise water level 3
+// Longshot to final boss
+// Ramp of sliding enemies
+// Morpha

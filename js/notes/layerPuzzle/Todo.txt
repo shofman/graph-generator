@@ -1,7 +1,9 @@
 Todo
 ----
 
-2) Build out ability to play
-3) Measure complexity - combination of space taken and number of steps needed
-4) Ensure grid can handle movement in any direction (recentering)
-5) Handle scenarios where the solution is obvious (brute force solver? Grab closest results and see if moving in any direction allows solution in next turn or two?)
+1) Measure complexity - combination of space taken and number of steps needed
+2) Ensure grid can handle movement in any direction (recentering)
+  - Cannot handle scenario where there is an item that is partial available to go off the edge
+    - Handle by either expanding the grid or preventing the action
+3) Using complexity and timeouts, ensure that the created puzzle matches a certain value (either passed or hardcoded)
+4) Improve brute force algorithm by generating all sets of four/five from remaining results, and applying depth first solution

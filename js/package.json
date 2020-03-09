@@ -5,7 +5,9 @@
     "vis": "^4.21.0"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "sokoban": "node_modules/http-server/bin/http-server -c-1 notes/sokobanPuzzle/",
+    "layer": "node_modules/http-server/bin/http-server -c-1 notes/layerPuzzle/"
   },
   "devDependencies": {
     "@babel/core": "^7.4.5",
