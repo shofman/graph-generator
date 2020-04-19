@@ -424,17 +424,12 @@ const findTarget = grid => {
   }
 }
 
-const stateIncludesBothTargetAndBlock = state => {
-  const stateHasTarget = state.some(row => row.includes(SUCCESS_TARGET))
-  const stateHasBlock = state.some(row => row.includes(PUSH_BLOCK))
-  return stateHasBlock && stateHasTarget
-}
-
 // Expand goal takes the content of the grid and returns the states that the player would previously have had to be in to achieve said state
-const expandGoal = ({ grid, pastStates, difficulty }) => {
+const expandGoal = ({ grid, pastStates, pastStates2, difficulty }) => {
   const { targetColIndex, targetRowIndex } = findTarget(grid)
 
   let possibleStates = []
+  let possibleStates2 = []
 
   // Check all the spaces around the player
   for (let y = -1; y < 2; y++) {
@@ -462,14 +457,19 @@ const expandGoal = ({ grid, pastStates, difficulty }) => {
 
             newGrid[newY][newX] = SUCCESS_TARGET
             possibleStates.push(newGrid)
+            possibleStates2.push({
+              grid: newGrid,
+              directionY: newY - previousPlayerRow,
+              directionX: newX - previousPlayerCol,
+            })
           }
         }
       }
     }
   }
 
-  console.log('possibleStates', possibleStates)
-  console.log('pastStates', pastStates)
+  // console.log('possibleStates', possibleStates)
+  // console.log('pastStates', pastStates)
 
   possibleStates = possibleStates.filter(state => {
     const comparableState = JSON.stringify(state)
@@ -481,10 +481,21 @@ const expandGoal = ({ grid, pastStates, difficulty }) => {
     return !hasAlreadySeen
   })
 
+  possibleStates2 = possibleStates2.filter(state => {
+    const comparableState = JSON.stringify(state.grid)
+    const hasAlreadySeen = pastStates.includes(comparableState)
+    if (!hasAlreadySeen) {
+      pastStates2.push(comparableState)
+    }
+    return !hasAlreadySeen
+  })
+
   console.log('possibleStates after', possibleStates)
   return {
     possibleNextStates: possibleStates,
+    possibleStates2,
     pastStates,
+    pastStates2,
     difficulty: difficulty + 1,
   }
 }
@@ -494,6 +505,7 @@ const findFarthestSuccessState = ({ grid, finalGoal }) => {
   let difficulty = 0
   let MAX_ATTEMPTS_TO_FIND_FURTHEST_SUCCESS = 1000
   const visitedStates = []
+  const pastStates2 = []
 
   const storedStates = JSON.stringify(grid)
   visitedStates.push(storedStates)
@@ -501,27 +513,33 @@ const findFarthestSuccessState = ({ grid, finalGoal }) => {
   const expandGoalInfo = {
     grid: arrayCopy(grid),
     pastStates: visitedStates,
+    pastStates2,
     difficulty,
   }
 
   const allGoals = []
+  const allGoals2 = []
 
   let listOfStatesToCheck = [expandGoalInfo]
 
   while (listOfStatesToCheck.length && attempts < MAX_ATTEMPTS_TO_FIND_FURTHEST_SUCCESS) {
     const currentGoal = listOfStatesToCheck.shift()
+    console.log('currentGoal', currentGoal)
     const newState = expandGoal(currentGoal)
     newState.possibleNextStates.forEach(state => {
-      draw('myCanvas', arrayCopy(state), {})()
+      // draw('myCanvas', arrayCopy(state), {})()
+      // debugger
       const nextGoalToCheck = {
         grid: arrayCopy(state),
         pastStates: arrayCopy(newState.pastStates),
+        pastStates2: arrayCopy(newState.pastStates2),
         difficulty: newState.difficulty,
       }
-      // debugger
       allGoals.push(nextGoalToCheck)
       listOfStatesToCheck.push(nextGoalToCheck)
     })
+
+
     attempts += 1
   }
 
@@ -533,10 +551,8 @@ const findFarthestSuccessState = ({ grid, finalGoal }) => {
   const bestResult = allGoals.sort((goalA, goalB) => goalB.difficulty - goalA.difficulty)[0]
   console.log('bestResult', bestResult)
 
-  const returnState = bestResult.grid
-
+  const returnState = arrayCopy(bestResult.grid)
   const lastStateGoal = findTarget(returnState)
-
   console.log('lastStateGoal', lastStateGoal)
 
   if (!lastStateGoal.targetColIndex || !lastStateGoal.targetRowIndex) {
@@ -546,6 +562,50 @@ const findFarthestSuccessState = ({ grid, finalGoal }) => {
   }
   returnState[finalGoal.targetRowIndex][finalGoal.targetColIndex] = SUCCESS_TARGET
   returnState[lastStateGoal.targetRowIndex][lastStateGoal.targetColIndex] = PUSH_BLOCK
+
+  // Place player in grid in a random possible position
+  let playerPositionX
+  let playerPositionY
+
+  const secondToLastPosition = JSON.parse(bestResult.pastStates[bestResult.pastStates.length - 2])
+  console.log('secondLastPosition', secondToLastPosition)
+
+  let currentVerticalIndex = bestResult.grid.findIndex(row => row.includes(SUCCESS_TARGET))
+  secondToLastPosition.forEach((row, rowIndex) => {
+    const bestResultRow = bestResult.grid[rowIndex]
+    if (JSON.stringify(row) !== JSON.stringify(bestResultRow)) {
+      // Two cases - vertical and horizontal
+      // if both entries of the same rowIndex contain a SUCCESS_TARGET, then it was a horizontal movement
+      if (row.includes(SUCCESS_TARGET) && bestResultRow.includes(SUCCESS_TARGET)) {
+        const priorPos = row.indexOf(SUCCESS_TARGET)
+        const currentPos = bestResultRow.indexOf(SUCCESS_TARGET)
+        if (priorPos > currentPos) {
+          // Left movement - place player to left of target
+          playerPositionY = rowIndex
+          playerPositionX = currentPos - 1
+        } else {
+          // Right movement - place player to right of target
+          playerPositionY = rowIndex
+          playerPositionX = currentPos + 1
+        }
+      } else if (row.includes(SUCCESS_TARGET)) {
+        if (currentVerticalIndex > rowIndex) {
+          // Up movement
+          playerPositionY = currentVerticalIndex + 1
+          playerPositionX = row.indexOf(SUCCESS_TARGET)
+        } else {
+          // Down movement - place player above target
+          playerPositionY = currentVerticalIndex - 1
+          playerPositionX = row.indexOf(SUCCESS_TARGET)
+        }
+      }
+      console.log('row, bestResultRow', row, bestResultRow)
+    }
+  })
+  console.log('secondToLastPosition', secondToLastPosition)
+
+  returnState[playerPositionY][playerPositionX] = PLAYER
+
   return returnState
 }
 

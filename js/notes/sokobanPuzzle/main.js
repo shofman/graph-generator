@@ -22,8 +22,12 @@ let seed = Math.random()
 // seed = 0.7315915691519606 // gated by the block - needs to have the player checked to be on the inside
 // seed = 0.9514092773572342 // fake highest difficulty
 // seed = 0.033812763221873876 // broken generator
+// seed = 0.48370146363728916 // just a bad seed 
+// seed = 0.9778432610761867 // vertical difference - also fake highest difficulty
+// seed = 0.08922083204081921 // horizontal difference
 // seed = 0.4002330819117046 // another one gated by the block
 // seed = 0.4052290785457666 // broken 
+seed = 0.022411362391700607 // impossible to solve?
 console.log('seed', seed)
 const randomizer = AleaRandomizer(seed)
 
