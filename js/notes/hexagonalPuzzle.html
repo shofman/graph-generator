@@ -324,7 +324,7 @@ const drawHints = () => {
     currentDirection.forEach(line => {
       const total = initialHints[JSON.stringify(line)]
       const [endPositionX, endPositionY] = line[line.length - 1].split(',')
-     ;z
+
       if (index === 0) {
         ctx.strokeText(total, endPositionX * pixelSize+(pixelSize / 2) + pixelSize - 5, endPositionY * pixelSize+(pixelSize - 3))
       } else if (index === 1) {
@@ -334,7 +334,6 @@ const drawHints = () => {
       } else if (index === 3) {
         ctx.strokeText(total, endPositionX * pixelSize+(pixelSize / 2) + pixelSize - 10, endPositionY * pixelSize+(2 * pixelSize) - 5)
       }
-      ;z
     })
 
   })

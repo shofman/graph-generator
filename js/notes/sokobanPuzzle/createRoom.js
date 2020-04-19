@@ -1,71 +1,13 @@
 import { getGridXLength, getGridYLength, isWithinXGrid, isWithinYGrid } from './gridDimensions.js'
 import { hardcodedSubroomTemplates } from './subroomTemplates.js'
 import { arrayCopy } from './helpers.js'
+import { generateListOfRooms } from './generateListOfRooms.js'
+import { shuffleRooms } from './shuffleRooms.js'
 import { EMPTY, WALL, SPACE } from './blockTypes.js'
 import { debugDraw } from './draw.js'
 
 const pickRandomElement = (array, randomizer) => {
   return array[Math.floor(randomizer() * array.length)]
-}
-
-const shuffleRooms = (rooms, randomizer) => {
-  const shuffledRooms = []
-  while (rooms.length) {
-    const randomIndex = Math.floor(randomizer() * rooms.length)
-    const selectedItem = rooms.splice(randomIndex, 1)[0]
-    shuffledRooms.push(selectedItem)
-  }
-  return shuffledRooms
-}
-
-const flipRoom = (room, isVertical) => {
-  const newRoom = arrayCopy(room)
-  return isVertical ? newRoom.reverse() : newRoom.map(row => row.reverse())
-}
-
-const rotateBy90 = oldRoom => {
-  const newRoom = []
-  for (let i = 0; i < oldRoom.length; i++) {
-    newRoom.push([])
-  }
-
-  oldRoom.forEach(room => {
-    for (let i = 0; i < room.length; i++) {
-      newRoom[i].push(room[room.length - 1 - i])
-    }
-  })
-  return newRoom
-}
-
-const rotateRoom = (oldRoom, degreesToRotate) => {
-  if (degreesToRotate === 90) {
-    return rotateBy90(oldRoom)
-  } else if (degreesToRotate === 180) {
-    return rotateBy90(rotateBy90(oldRoom))
-  } else if (degreesToRotate === 270) {
-    return rotateBy90(rotateBy90(rotateBy90(oldRoom)))
-  }
-  return oldRoom
-}
-
-const generateListOfRooms = () => {
-  const roomlist = Object.keys(hardcodedSubroomTemplates)
-  let allPermutationsOfRooms = []
-  roomlist.forEach(roomKey => {
-    const oldRoom = hardcodedSubroomTemplates[roomKey]
-    allPermutationsOfRooms = allPermutationsOfRooms.concat([
-      oldRoom,
-      flipRoom(oldRoom, true),
-      flipRoom(oldRoom),
-      rotateRoom(oldRoom, 90),
-      flipRoom(rotateRoom(oldRoom, 90)),
-      rotateRoom(oldRoom, 180),
-      rotateRoom(oldRoom, 270),
-      flipRoom(rotateRoom(oldRoom, 270)),
-    ])
-  })
-
-  return allPermutationsOfRooms
 }
 
 const seedInitialGrid = (grid, randomizer) => {
@@ -282,13 +224,13 @@ const pickValidTemplateInGrid = (
 
     let canPlace = true
 
-     roomPositionsWithPotentialCollision.forEach(room => {
-       if (isWithinXGrid(room.i, false) && isWithinYGrid(room.j, false)) {
-         const roomIndex = getGridYLength(false) * room.j + room.i
-         const roomToCheck = previousRooms[roomIndex]
-         console.log('roomToCheck', roomToCheck)
-         // TODO - using roomToCheck somehow changes the seed...
-         let validator = isTemplateValidWithWestRoom
+    roomPositionsWithPotentialCollision.forEach(room => {
+      if (isWithinXGrid(room.i, false) && isWithinYGrid(room.j, false)) {
+        const roomIndex = getGridYLength(false) * room.j + room.i
+        const roomToCheck = previousRooms[roomIndex]
+        console.log('roomToCheck', roomToCheck)
+        // TODO - using roomToCheck somehow changes the seed...
+        let validator = isTemplateValidWithWestRoom
         if (room.type === 'north') {
           validator = isTemplateValidWithNorthRoom
         } else if (room.type === 'northwest') {
@@ -298,11 +240,11 @@ const pickValidTemplateInGrid = (
         }
         try {
           canPlace = canPlace && validator(arrayCopy(currentTemplate), arrayCopy(roomToCheck))
-        } catch(e) {
+        } catch (e) {
           console.log('e', e)
         }
-       }
-     })
+      }
+    })
 
     console.log('previousRooms.length', previousRooms.length)
 
@@ -659,5 +601,5 @@ export const createRoom = randomizer => {
       // console.log('could not place a room')
     }
   }
-  return grid
+  return { grid }
 }

@@ -7,7 +7,7 @@ export const pixelOffset = pixelSize / 2
 let gridYLength = gridNumber * gridSpace + gridNumber * gridSpace
 let gridXLength = gridNumber * gridSpace + gridNumber * gridSpace
 
-const width = 2
+const width = 3
 const height = 3
 const blockPartion = 3
 const spaceAround = 1

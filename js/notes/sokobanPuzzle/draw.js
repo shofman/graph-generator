@@ -6,7 +6,7 @@ import {
   getCanvasWidth,
   getCanvasHeight,
 } from './gridDimensions.js'
-import { SPACE, PUSH_BLOCK, WALL, SUCCESS_TARGET } from './blockTypes.js'
+import { SPACE, PUSH_BLOCK, WALL, SUCCESS_TARGET, PASSTHROUGH_SPACE, PLAYER } from './blockTypes.js'
 
 const colorGroups = ['green', 'yellow', 'orange', 'purple', 'cyan', 'red', 'white', 'black']
 const drawColors = true
@@ -17,7 +17,7 @@ const shouldDrawGridLines = true
 const drawDistances = false
 
 const canvas = document.getElementById('myCanvas')
-const ctx = canvas.getContext('2d')
+let ctx = canvas.getContext('2d')
 
 function drawText(text, column, row) {
   ctx.beginPath()
@@ -58,14 +58,19 @@ function drawBricks(currentGrid, ctx, drawColors, floodGraph = undefined) {
       } else if (drawColors && floodGraph && floodGraph[row][column].visited === true) {
         const index = floodGraph[row][column].searchGroup
         drawBrickFunc(brickX, brickY, colorGroups[index])
-      } else if (currentGrid[row][column] === SPACE) {
+      } else if (
+        currentGrid[row][column] === SPACE ||
+        currentGrid[row][column] === PASSTHROUGH_SPACE
+      ) {
         drawBrickFunc(brickX, brickY, 'red')
       } else if (currentGrid[row][column] === SUCCESS_TARGET) {
         drawBrickFunc(brickX, brickY, 'yellow')
       } else if (currentGrid[row][column] === WALL) {
         drawBrickFunc(brickX, brickY, '#0090FF')
       } else if (currentGrid[row][column] === PUSH_BLOCK) {
-        drawBrickFunc(brickX, brickY, 'grey')
+        drawBrickFunc(brickX, brickY, 'blue')
+      } else if (currentGrid[row][column] === PLAYER) {
+        drawBrickFunc(brickX, brickY, 'black')
       }
 
       if (
@@ -167,7 +172,9 @@ function drawGridLines() {
   }
 }
 
-export const draw = (currentGrid, results) => () => {
+export const draw = (canvasId, currentGrid, results) => () => {
+  const canvas = document.getElementById(canvasId)
+  ctx = canvas.getContext('2d')
   drawBricks(currentGrid, ctx, false)
   drawHints(results)
   if (shouldDrawGridLines) {
@@ -178,7 +185,7 @@ export const draw = (currentGrid, results) => () => {
   if (shouldPauseOnDraw) {
     debugger // eslint-disable-line
   }
-  requestAnimationFrame(draw(currentGrid, results))
+  requestAnimationFrame(draw(canvasId, currentGrid, results))
 }
 
 export const debugDraw = (results, currentGrid, override = true) => {
@@ -186,6 +193,6 @@ export const debugDraw = (results, currentGrid, override = true) => {
   drawHints(results)
   drawGridLines()
   if (shouldPauseOnDebugDraw && override) {
-     debugger // eslint-disable-line
+    debugger // eslint-disable-line
   }
 }
