@@ -1,0 +1,23 @@
+Water Pipe puzzle
+-----------------
+
+Take the generated dungeon and create a series of pipes that are interconnected between the rooms.
+Have certain rooms that require pipes to be switched / require pipes to be replaced with pieces from scattered through the dungeon
+Once the water can flow from one part of the dungeon to the next, the goal is achieved
+
+Text Rotation puzzle
+---------------------
+Sample puzzle:
+A 1 S 3 5 T 
+R 2 8 Z K 9
+
+Perform a series of rotations on either middle section, end section or beginning section
+
+E.g. rotation counterclockwise on first section would be:
+
+1 2 S 3 5 T 
+A R 8 Z K 9
+
+Perform a series of these steps, and then force the user to figure out the previous steps
+
+
