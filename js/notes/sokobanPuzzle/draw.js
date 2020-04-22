@@ -6,14 +6,7 @@ import {
   getCanvasWidth,
   getCanvasHeight,
 } from './gridDimensions.js'
-import {
-  SPACE,
-  PUSH_BLOCK,
-  WALL,
-  SUCCESS_TARGET,
-  PASSTHROUGH_SPACE,
-  PLAYER,
-} from './blockTypes.js'
+import { SPACE, PUSH_BLOCK, WALL, SUCCESS_TARGET, PASSTHROUGH_SPACE, PLAYER } from './blockTypes.js'
 
 const colorGroups = ['green', 'yellow', 'orange', 'purple', 'cyan', 'red', 'white', 'black']
 const drawColors = true
@@ -180,7 +173,7 @@ function drawGridLines() {
 }
 
 const canMoveDown = (playerYPos, playerXPos, playerMovementDistance, grid) => {
-  const maxGridHeight = getGridYLength(false) * 3 - 1
+  const maxGridHeight = getGridYLength(false) * 3
   const nextBlockDown = grid[playerYPos + 1][playerXPos]
 
   if (nextBlockDown === PUSH_BLOCK) {
@@ -212,7 +205,7 @@ const canMoveLeft = (playerYPos, playerXPos, playerMovementDistance, grid) => {
   return playerXPos > 0 && nextBlockLeft !== WALL
 }
 const canMoveRight = (playerYPos, playerXPos, playerMovementDistance, grid) => {
-  const maxGridWidth = getGridXLength(false) * 3 - 1
+  const maxGridWidth = getGridXLength(false) * 3
   const nextBlockLeft = grid[playerYPos][playerXPos + 1]
 
   if (nextBlockLeft === PUSH_BLOCK) {
@@ -333,8 +326,6 @@ export const draw = (canvasId, currentGrid, results) => () => {
     }
     requestAnimationFrame(draw(canvasId, currentGrid, results))
   }
-
-  
 }
 
 export const debugDraw = (results, currentGrid, override = true) => {
