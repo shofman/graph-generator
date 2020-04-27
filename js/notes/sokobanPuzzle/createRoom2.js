@@ -1,6 +1,15 @@
-import { getGridXLength, getGridYLength } from './gridDimensions.js'
+import {
+  getGridXLength,
+  getGridYLength,
+  isWithinYGrid,
+  isWithinXGrid,
+  TEMP_Y_SIZE,
+  TEMP_X_SIZE,
+} from './gridDimensions.js'
+import { prepareVisitationGraph, findGroupsWithFlooding } from './visitationGraph.js'
 import { generateListOfRooms } from './generateListOfRooms.js'
 import { shuffleRooms as shuffleList } from './shuffleRooms.js'
+import { findPermutations, combinePermutationsIntoGridState } from './findPermutations.js'
 import { arrayCopy } from './helpers.js'
 import {
   EMPTY,
@@ -12,17 +21,11 @@ import {
   PUSH_BLOCK,
 } from './blockTypes.js'
 import { draw } from './draw.js'
+import { findPlayerPosition as findPlayerPosition2 } from './findPlayerPosition.js'
 
 const getRow = (template, index) => arrayCopy(template[index])
 const getCol = (template, index) => arrayCopy(template.map(row => row[index]))
 const isEmpty = item => item === EMPTY
-
-const TEMP_X_SIZE = 3
-const TEMP_Y_SIZE = 3
-const BLOCK_SIZE = 3
-
-const isWithinXGrid = xPos => xPos >= 0 && xPos < TEMP_X_SIZE * BLOCK_SIZE
-const isWithinYGrid = yPos => yPos >= 0 && yPos < TEMP_Y_SIZE * BLOCK_SIZE
 
 const createRoomInfo = (room, xPos, yPos) => {
   const trimRow = row => {
@@ -206,42 +209,6 @@ const generateRandomRoomAndPlace = ({
   }
 }
 
-const prepareVisitationGraph = grid =>
-  grid.map(row =>
-    row.map(block =>
-      block === SPACE ? { visited: false, block: true, distance: 0 } : { block: false }
-    )
-  )
-
-const depthFirstSearch = (x, y, visitedGraph, searchGroup) => {
-  if (!isWithinXGrid(x)) return 0
-  if (!isWithinYGrid(y)) return 0
-  if (!visitedGraph[y] || !visitedGraph[y][x]) return 0
-  if (!visitedGraph[y][x].block) return 0
-  if (visitedGraph[y][x].visited) return 0
-
-  visitedGraph[y][x].visited = true
-  visitedGraph[y][x].searchGroup = searchGroup
-
-  depthFirstSearch(x - 1, y, visitedGraph, searchGroup)
-  depthFirstSearch(x, y - 1, visitedGraph, searchGroup)
-  depthFirstSearch(x + 1, y, visitedGraph, searchGroup)
-  depthFirstSearch(x, y + 1, visitedGraph, searchGroup)
-}
-
-const findGroupsWithFlooding = visitedGraph => {
-  let searchGroup = 0
-  visitedGraph.forEach((row, rowPos) => {
-    row.forEach((item, colPos) => {
-      if (item.block && !item.visited) {
-        depthFirstSearch(colPos, rowPos, visitedGraph, searchGroup)
-        searchGroup++
-      }
-    })
-  })
-  return visitedGraph
-}
-
 const findMaxAreaFromSingleArray = array => {
   let tempH
   let tempPos
@@ -326,7 +293,7 @@ const hasNoBlocksSurroundedByThreeWalls = grid =>
     })
   )
 
-const createEmptyRoom = (randomizer, attemptNumber) => {
+const createEmptyRoom = randomizer => {
   let initialGrid = []
   let storedRoomsGrid = []
   let storedRooms = []
@@ -411,30 +378,25 @@ const placeGoals = (grid, randomizer) => {
   }
 }
 
-const findTarget = grid => {
-  let targetRowIndex
-  let targetColIndex
+const findTargets = grid => {
+  const targets = []
 
   grid.forEach((row, rowIndex) => {
     row.forEach((col, colIndex) => {
       if (col === SUCCESS_TARGET) {
-        targetColIndex = colIndex
-        targetRowIndex = rowIndex
+        targets.push({
+          targetColIndex: colIndex,
+          targetRowIndex: rowIndex,
+        })
       }
     })
   })
 
-  return {
-    targetColIndex,
-    targetRowIndex,
-  }
+  return targets
 }
 
-// Expand goal takes the content of the grid and returns the states that the player would previously have had to be in to achieve said state
-const expandGoal = ({ grid, pastStates, pastStates2, difficulty }) => {
-  const { targetColIndex, targetRowIndex } = findTarget(grid)
-
-  let possibleStates = []
+const findPossibleStates = (grid, { targetColIndex, targetRowIndex }) => {
+  const possibleStates = []
 
   // Check all the spaces around the player
   for (let y = -1; y < 2; y++) {
@@ -476,64 +438,148 @@ const expandGoal = ({ grid, pastStates, pastStates2, difficulty }) => {
     }
   }
 
-  possibleStates = possibleStates.filter(state => {
-    const comparableState = JSON.stringify(state.grid)
+  return possibleStates
+}
+
+// Expand goal takes the content of the grid and returns the states that the player would previously have had to be in to achieve said state
+const expandGoal = ({ grid, pastStates, difficulty }) => {
+  const allTargets = findTargets(grid)
+
+  const possibleStates = []
+  if (allTargets.length !== 2) {
+    return {
+      possibleStates,
+      pastStates,
+      difficulty,
+    }
+  }
+
+  // TODO - Double check - do we include the situation where one state does not move, but the other does?
+
+  let possibleStates1 = findPossibleStates(grid, allTargets[0])
+  let possibleStates2 = findPossibleStates(grid, allTargets[1])
+
+  // How to handle when only one permutation is possible?
+
+  const allPermutations = findPermutations(possibleStates1, possibleStates2)
+
+  allPermutations.forEach(twoStates => {
+    const newGridState = combinePermutationsIntoGridState(twoStates)
+    const comparableState = JSON.stringify(newGridState.grid)
     const hasAlreadySeen = pastStates.includes(comparableState)
     if (!hasAlreadySeen) {
       pastStates.push(comparableState)
+      possibleStates.push(newGridState)
     }
-    return !hasAlreadySeen
   })
 
   return {
     possibleStates,
     pastStates,
-    pastStates2,
     difficulty: difficulty + 1,
   }
 }
 
-const checkBestResult = ({ gridHistory }) => {
-  const actionsInOrder = gridHistory.reverse()
+// eslint-disable-next-line no-unused-vars
+const debugDraw = grid => {
+  draw('myCanvas', grid, {})()
+}
+
+const isBlockWherePlayerNeedsToBe = (firstBlock, secondBlock) => {
+  return (
+    firstBlock.blockCol == secondBlock.previousPlayerCol &&
+    firstBlock.blockRow === secondBlock.previousPlayerRow
+  )
+}
+
+const checkBestResult2 = (bestResult, finalGoals) => {
+  const actionsInOrder = bestResult.gridHistory.reverse()
+
   const areAllActionsValid = actionsInOrder.every((currentAction, index) => {
     if (index + 1 > actionsInOrder.length - 1) return true
     const nextAction = actionsInOrder[index + 1]
 
-    const doActionsFollowPath =
-      currentAction.previousPlayerRow - currentAction.directionY === nextAction.previousPlayerRow &&
-      currentAction.previousPlayerCol - currentAction.directionX === nextAction.previousPlayerCol
+    const currentFirstBlock = currentAction.firstBlock
+    const currentSecondBlock = currentAction.secondBlock
+
+    if (
+      currentFirstBlock.blockCol === currentSecondBlock.blockCol &&
+      currentFirstBlock.blockRow === currentSecondBlock.blockRow
+    ) {
+      // The blocks are in the same position - cannot happen. Reject
+      return false
+    }
+
+    if (
+      isBlockWherePlayerNeedsToBe(currentFirstBlock, currentSecondBlock) ||
+      isBlockWherePlayerNeedsToBe(currentSecondBlock, currentFirstBlock)
+    ) {
+      return false
+    }
+
+    const nextFirstBlock = nextAction.firstBlock
+    const nextSecondBlock = nextAction.secondBlock
+
+    const doesActionFollow = (currentBlock, nextBlock) => {
+      return (
+        currentBlock.previousPlayerRow - currentBlock.directionY === nextBlock.previousPlayerRow &&
+        currentBlock.previousPlayerCol - currentBlock.directionX === nextBlock.previousPlayerCol
+      )
+    }
+
+    const doesBlockOneActionFollow = doesActionFollow(currentFirstBlock, nextFirstBlock)
+    const doesBlockTwoActionFollow = doesActionFollow(currentSecondBlock, nextSecondBlock)
+
+    const doActionsFollowPath = doesBlockOneActionFollow && doesBlockTwoActionFollow
 
     if (doActionsFollowPath) {
       return true
     } else {
-      // We have moved from a straight line - check to see that we can reach our destination without moving the block
+      const canBlockOneBeReached = doesBlockOneActionFollow
+        ? true
+        : canReachNextPosWithoutMovingBlock(currentFirstBlock, nextFirstBlock)
 
-      // Create a grid that we can verify on
-      const verificationGrid = arrayCopy(currentAction.grid)
-      // Pretend that the player has pushed the block - they are in the position of the current actions block
-      const newPlayerPosY = currentAction.blockRow
-      const newPlayerPosX = currentAction.blockCol
+      const canBlockTwoBeReached = doesBlockTwoActionFollow
+        ? true
+        : canReachNextPosWithoutMovingBlock(currentSecondBlock, nextSecondBlock)
 
-      // Next, set that the block in the next position is a wall, so that it cannot be moved
-      verificationGrid[nextAction.blockRow][nextAction.blockCol] = WALL
-      verificationGrid[newPlayerPosY][newPlayerPosX] = SPACE
-
-      const visitationGraph = prepareVisitationGraph(verificationGrid)
-      findGroupsWithFlooding(visitationGraph)
-
-      // Check that the nextAction's required player position is the same search group as the current player position
-      // (e.g. can I reach the next position without moving the block)
-
-      if (
-        visitationGraph[newPlayerPosY][newPlayerPosX].searchGroup !==
-        visitationGraph[nextAction.previousPlayerRow][nextAction.previousPlayerCol].searchGroup
-      ) {
-        return false
-      }
-      return true
+      return canBlockOneBeReached && canBlockTwoBeReached
     }
   })
-  return areAllActionsValid
+
+  const lastStateGoals = findTargets(bestResult.grid)
+
+  const finalStateStringArray = finalGoals.map(JSON.stringify)
+  const areEndStatesInvalid = lastStateGoals
+    .map(JSON.stringify)
+    .some(item => finalStateStringArray.includes(item))
+
+  return areAllActionsValid && !areEndStatesInvalid
+}
+
+const canReachNextPosWithoutMovingBlock = (currentAction, nextAction) => {
+  // Create a grid that we can verify on
+  const verificationGrid = arrayCopy(currentAction.grid)
+  // Pretend that the player has pushed the block - they are in the position of the current actions block
+  const newPlayerPosY = currentAction.blockRow
+  const newPlayerPosX = currentAction.blockCol
+
+  // Next, set that the block in the next position is a wall, so that it cannot be moved
+  verificationGrid[nextAction.blockRow][nextAction.blockCol] = WALL
+  verificationGrid[newPlayerPosY][newPlayerPosX] = SPACE
+
+  const visitationGraph = prepareVisitationGraph(verificationGrid)
+  findGroupsWithFlooding(visitationGraph)
+
+  // Check that the nextAction's required player position is the same search group as the current player position
+  // (e.g. can I reach the next position without moving the block)
+  if (
+    visitationGraph[newPlayerPosY][newPlayerPosX].searchGroup !==
+    visitationGraph[nextAction.previousPlayerRow][nextAction.previousPlayerCol].searchGroup
+  ) {
+    return false
+  }
+  return true
 }
 
 const calculateDifficulty = bestResult => (totalDifficulty, currentHistory, currentIndex) => {
@@ -548,80 +594,14 @@ const calculateDifficulty = bestResult => (totalDifficulty, currentHistory, curr
   return totalDifficulty
 }
 
-const findPlayerPosition = (bestResult, randomizer) => {
-  // Place player in grid in a random possible position
-  let playerPositionX
-  let playerPositionY
-
-  const secondToLastHistory = bestResult.gridHistory[bestResult.gridHistory.length - 2]
-
-  if (!secondToLastHistory) {
-    // This entry may not exist if there's only one in the history. Reject
-    return { playerPositionX: -1, playerPositionY: -1 }
-  }
-  const secondToLastGrid = secondToLastHistory.grid
-
-  let currentVerticalIndex = bestResult.grid.findIndex(row => row.includes(SUCCESS_TARGET))
-  secondToLastGrid.forEach((row, rowIndex) => {
-    const bestResultRow = bestResult.grid[rowIndex]
-    if (JSON.stringify(row) !== JSON.stringify(bestResultRow)) {
-      // Two cases - vertical and horizontal
-      // if both entries of the same rowIndex contain a SUCCESS_TARGET, then it was a horizontal movement
-      if (row.includes(SUCCESS_TARGET) && bestResultRow.includes(SUCCESS_TARGET)) {
-        const priorPos = row.indexOf(SUCCESS_TARGET)
-        const currentPos = bestResultRow.indexOf(SUCCESS_TARGET)
-        if (priorPos > currentPos) {
-          // Left movement - place player to left of target
-          playerPositionY = rowIndex
-          playerPositionX = currentPos - 1
-        } else {
-          // Right movement - place player to right of target
-          playerPositionY = rowIndex
-          playerPositionX = currentPos + 1
-        }
-      } else if (row.includes(SUCCESS_TARGET)) {
-        if (currentVerticalIndex > rowIndex) {
-          // Up movement
-          playerPositionY = currentVerticalIndex + 1
-          playerPositionX = row.indexOf(SUCCESS_TARGET)
-        } else {
-          // Down movement - place player above target
-          playerPositionY = currentVerticalIndex - 1
-          playerPositionX = row.indexOf(SUCCESS_TARGET)
-        }
-      }
-    }
-  })
-
-  const visitationGraph = prepareVisitationGraph(arrayCopy(bestResult.grid))
-  findGroupsWithFlooding(visitationGraph)
-
-  const playerSearchGroup = visitationGraph[playerPositionY][playerPositionX].searchGroup
-
-  const result = visitationGraph.reduce((accumulator, currentRow, rowIndex) => {
-    const rowSum = []
-    currentRow.forEach((column, colIndex) => {
-      if (column.block && column.searchGroup === playerSearchGroup) {
-        rowSum.push({ rowIndex, colIndex })
-      }
-    })
-    return accumulator.concat(rowSum)
-  }, [])
-
-  if (result.length) {
-    const shuffledResult = shuffleList(result, randomizer)
-    const { rowIndex, colIndex } = shuffledResult[0]
-    return { playerPositionX: colIndex, playerPositionY: rowIndex }
-  }
-
-  return { playerPositionX, playerPositionY }
-}
-
-const createFarthestSuccessState = ({ grid, finalGoal, randomizer }) => {
+const createFarthestSuccessState = ({ grid, finalGoals, randomizer }) => {
   const listOfStatesChecked = []
   const initialDifficulty = 1
   let attempts = 0
   const MAX_ATTEMPTS_TO_FIND_FURTHEST_SUCCESS = 1000
+
+  // debugDraw(grid)
+  // debugger
 
   const goalInfo = {
     grid: arrayCopy(grid),
@@ -638,7 +618,6 @@ const createFarthestSuccessState = ({ grid, finalGoal, randomizer }) => {
     const nextStates = expandGoal(newGoal)
 
     nextStates.possibleStates.forEach(state => {
-      listOfStatesChecked.push(arrayCopy(state.grid))
       const nextGoal = {
         grid: arrayCopy(state.grid),
         gridHistory: [...currentState.gridHistory, state],
@@ -650,39 +629,53 @@ const createFarthestSuccessState = ({ grid, finalGoal, randomizer }) => {
     })
   }
 
-  let bestResult
-  let isValidResult = false
-
   const goalsToCheck = arrayCopy(allGoals).sort(
     (goalA, goalB) => goalB.difficulty - goalA.difficulty
   )
 
+  let bestResult
+  let isValidResult = false
+
   while (!isValidResult && goalsToCheck.length) {
     bestResult = goalsToCheck.shift()
-    isValidResult = checkBestResult(arrayCopy(bestResult))
+    isValidResult = checkBestResult2(arrayCopy(bestResult), finalGoals)
   }
 
   if (!bestResult) {
     return { grid: {}, difficulty: 0 }
   }
-  const calculatedDifficulty = bestResult.gridHistory.reduce(calculateDifficulty(bestResult), 0)
+  let calculatedDifficulty = bestResult.gridHistory.reduce(calculateDifficulty(bestResult), 0)
+
+  calculatedDifficulty = 20
 
   const finalGrid = arrayCopy(bestResult.grid)
-  const lastStateGoal = findTarget(finalGrid)
+  const lastStateGoals = findTargets(finalGrid)
 
-  if (!lastStateGoal.targetColIndex || !lastStateGoal.targetRowIndex) {
-    return { grid: {}, difficulty: 0 }
-  }
+  // TODO - Add validation for last state goals - if the list is empty
 
-  finalGrid[finalGoal.targetRowIndex][finalGoal.targetColIndex] = SUCCESS_TARGET
-  finalGrid[lastStateGoal.targetRowIndex][lastStateGoal.targetColIndex] = PUSH_BLOCK
+  // if (!lastStateGoal.targetColIndex || !lastStateGoal.targetRowIndex) {
+  //   return { grid: {}, difficulty: 0 }
+  // }
 
-  const { playerPositionY, playerPositionX } = findPlayerPosition(bestResult, randomizer)
+  finalGoals.forEach(({ targetRowIndex, targetColIndex }) => {
+    finalGrid[targetRowIndex][targetColIndex] = SUCCESS_TARGET
+  })
+
+  lastStateGoals.forEach(({ targetRowIndex, targetColIndex }) => {
+    finalGrid[targetRowIndex][targetColIndex] = PUSH_BLOCK
+  })
+
+  const { playerPositionY, playerPositionX } = findPlayerPosition2(
+    bestResult,
+    finalGoals,
+    randomizer
+  )
   if (playerPositionY === -1 || playerPositionX === -1) return { grid: {}, difficulty: 0 }
   finalGrid[playerPositionY][playerPositionX] = PLAYER
 
   return {
     grid: finalGrid,
+    gridHistory: bestResult.gridHistory,
     difficulty: calculatedDifficulty,
   }
 }
@@ -700,8 +693,7 @@ export const createRoom = randomizer => {
   while (tries++ < MAX_TRIES && !success) {
     try {
       const { grid: newGrid, hasSucceeded, storedRoomsGrid: newStoredRoomsGrid } = createEmptyRoom(
-        randomizer,
-        tries
+        randomizer
       )
       if (hasSucceeded) {
         const { grid: cleanedGrid, shuffledGoals } = placeGoals(newGrid, randomizer)
@@ -709,27 +701,44 @@ export const createRoom = randomizer => {
         let internalTries = 0
 
         while (internalTries++ < MAX_INTERNAL_TRIES && !success) {
-          const currentGoal = shuffledGoals.shift()
-          if (!currentGoal) {
+          const firstGoal = shuffledGoals.shift()
+          const secondGoal = shuffledGoals.shift()
+          if (!firstGoal || !secondGoal) {
             success = false
           } else {
-            const { rowIndex, colIndex } = currentGoal
             const currentGrid = arrayCopy(cleanedGrid)
-            currentGrid[rowIndex][colIndex] = SUCCESS_TARGET
+            const { rowIndex: firstGoalRow, colIndex: firstGoalCol } = firstGoal
+            currentGrid[firstGoalRow][firstGoalCol] = SUCCESS_TARGET
 
-            const { grid: bestGrid, difficulty } = createFarthestSuccessState({
+            const { rowIndex: secondGoalRow, colIndex: secondGoalCol } = secondGoal
+            currentGrid[secondGoalRow][secondGoalCol] = SUCCESS_TARGET
+
+            const { grid: bestGrid, gridHistory, difficulty } = createFarthestSuccessState({
               grid: currentGrid,
-              finalGoal: {
-                targetColIndex: colIndex,
-                targetRowIndex: rowIndex,
-              },
+              finalGoals: [
+                {
+                  targetColIndex: firstGoalCol,
+                  targetRowIndex: firstGoalRow,
+                },
+                {
+                  targetColIndex: secondGoalCol,
+                  targetRowIndex: secondGoalRow,
+                },
+              ],
               randomizer,
             })
 
-            if (difficulty < 8) {
+            storedBestGrid = {
+              bestGrid,
+              gridHistory,
+              difficulty,
+            }
+
+            if (difficulty < 2) {
               if (!storedBestGrid || (storedBestGrid && storedBestGrid.difficulty < difficulty)) {
                 storedBestGrid = {
                   bestGrid,
+                  gridHistory,
                   difficulty,
                 }
               }
@@ -742,36 +751,36 @@ export const createRoom = randomizer => {
             storedRoomsGrid = newStoredRoomsGrid
           }
         }
-      } else {
-        // console.log('trying again')
       }
     } catch (e) {
       success = false
       console.log('e', e)
     }
   }
-  console.log('storedBestGrid', storedBestGrid)
 
   const outputGrid = success ? grid : storedBestGrid.bestGrid
 
-  outputGrid.forEach((row, rowIndex) => {
-    outputGrid.forEach((col, colIndex) => {
-      if (colIndex === 9 && rowIndex < 10) {
-        outputGrid[rowIndex][colIndex] = WALL
-      }
-      if (rowIndex === 9 && colIndex < 10) {
-        outputGrid[rowIndex][colIndex] = WALL
-      }
-    })
-    if (rowIndex < 10) {
-      row.unshift(WALL)
-    }
-  })
-  outputGrid.unshift(
-    Array.apply(null, Array(getGridXLength())).map((item, index) => (index < 11 ? WALL : EMPTY))
-  )
+  console.log('storedBestGrid', storedBestGrid)
+
+  // outputGrid.forEach((row, rowIndex) => {
+  //   outputGrid.forEach((col, colIndex) => {
+  //     if (colIndex === 9 && rowIndex < 10) {
+  //       outputGrid[rowIndex][colIndex] = WALL
+  //     }
+  //     if (rowIndex === 9 && colIndex < 10) {
+  //       outputGrid[rowIndex][colIndex] = WALL
+  //     }
+  //   })
+  //   if (rowIndex < 10) {
+  //     row.unshift(WALL)
+  //   }
+  // })
+  // outputGrid.unshift(
+  //   Array.apply(null, Array(getGridXLength())).map((item, index) => (index < 11 ? WALL : EMPTY))
+  // )
   return {
     grid: outputGrid,
     storedRoomsGrid,
+    storedBestGrid,
   }
 }

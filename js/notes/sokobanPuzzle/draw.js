@@ -9,7 +9,6 @@ import {
 import { SPACE, PUSH_BLOCK, WALL, SUCCESS_TARGET, PASSTHROUGH_SPACE, PLAYER } from './blockTypes.js'
 
 const colorGroups = ['green', 'yellow', 'orange', 'purple', 'cyan', 'red', 'white', 'black']
-const drawColors = true
 let shouldDrawTarget = false
 const shouldPauseOnDraw = false
 const shouldPauseOnDebugDraw = true
@@ -106,51 +105,7 @@ function drawHints(results) {
   }
 }
 
-function drawBlockLines() {
-  blockPositions &&
-    blockPositions.forEach(block => {
-      if (block.hasClicked) {
-        const middleOfBlockX = block.x * pixelSize + pixelSize
-        const middleOfBlockY = block.y * pixelSize + pixelSize
-
-        const spaceFromMiddle = pixelSize / 3
-
-        // Right
-        drawLine(
-          middleOfBlockX + spaceFromMiddle,
-          middleOfBlockY,
-          middleOfBlockX + pixelSize,
-          middleOfBlockY
-        )
-
-        // Left
-        drawLine(
-          middleOfBlockX - spaceFromMiddle,
-          middleOfBlockY,
-          middleOfBlockX - pixelSize,
-          middleOfBlockY
-        )
-
-        // Up
-        drawLine(
-          middleOfBlockX,
-          middleOfBlockY - spaceFromMiddle,
-          middleOfBlockX,
-          middleOfBlockY - pixelSize
-        )
-
-        // Down
-        drawLine(
-          middleOfBlockX,
-          middleOfBlockY + spaceFromMiddle,
-          middleOfBlockX,
-          middleOfBlockY + pixelSize
-        )
-      }
-    })
-}
-
-function checkForWin(currentGrid) {
+function checkForWin() {
   if (hasWon) {
     drawText('You win!', getGridYLength() + 1, 100, 100)
   }
@@ -178,8 +133,8 @@ const canMoveDown = (playerYPos, playerXPos, playerMovementDistance, grid) => {
 
   if (nextBlockDown === PUSH_BLOCK) {
     if (playerYPos + 2 > maxGridHeight) return false
-    const blockAfterNextBlockDown = grid[playerYPos + 2][playerXPos]
-    if (blockAfterNextBlockDown === WALL) return false
+    const blockAfterNextBlock = grid[playerYPos + 2][playerXPos]
+    if (blockAfterNextBlock === WALL || blockAfterNextBlock === PUSH_BLOCK) return false
   }
 
   return playerYPos < maxGridHeight && nextBlockDown !== WALL
@@ -189,7 +144,7 @@ const canMoveUp = (playerYPos, playerXPos, playerMovementDistance, grid) => {
   if (nextBlockUp === PUSH_BLOCK) {
     if (playerYPos - 2 < 0) return false
     const blockAfterNextBlock = grid[playerYPos - 2][playerXPos]
-    if (blockAfterNextBlock === WALL) return false
+    if (blockAfterNextBlock === WALL || blockAfterNextBlock === PUSH_BLOCK) return false
   }
 
   return playerYPos > 0 && nextBlockUp !== WALL
@@ -199,7 +154,7 @@ const canMoveLeft = (playerYPos, playerXPos, playerMovementDistance, grid) => {
   if (nextBlockLeft === PUSH_BLOCK) {
     if (playerXPos - 2 < 0) return false
     const blockAfterNextBlock = grid[playerYPos][playerXPos - 2]
-    if (blockAfterNextBlock === WALL) return false
+    if (blockAfterNextBlock === WALL || blockAfterNextBlock === PUSH_BLOCK) return false
   }
 
   return playerXPos > 0 && nextBlockLeft !== WALL
@@ -211,7 +166,7 @@ const canMoveRight = (playerYPos, playerXPos, playerMovementDistance, grid) => {
   if (nextBlockLeft === PUSH_BLOCK) {
     if (playerXPos + 2 < 0) return false
     const blockAfterNextBlock = grid[playerYPos][playerXPos + 2]
-    if (blockAfterNextBlock === WALL) return false
+    if (blockAfterNextBlock === WALL || blockAfterNextBlock === PUSH_BLOCK) return false
   }
 
   return playerXPos < maxGridWidth && nextBlockLeft !== WALL
@@ -255,19 +210,28 @@ function keyDownHandler(e) {
 
   if (hasMoved && !hasWon) {
     globalGrid[currentYPos][currentXPos] = SPACE
-    globalGrid[globalTargetY][globalTargetX] = SUCCESS_TARGET
+    globalTargets.forEach(({ targetX, targetY }) => {
+      if (globalGrid[targetY][targetX] !== PUSH_BLOCK) {
+        globalGrid[targetY][targetX] = SUCCESS_TARGET
+      }
+    })
     if (globalGrid[playerYPos][playerXPos] === PUSH_BLOCK) {
       // If we are going to move into a pushblock, move it in the direction too
       const nextPushBlockY = playerYPos + (playerYPos - currentYPos)
       const nextPushBlockX = playerXPos + (playerXPos - currentXPos)
       globalGrid[nextPushBlockY][nextPushBlockX] = PUSH_BLOCK
-
-      if (nextPushBlockY === globalTargetY && nextPushBlockX === globalTargetX) {
-        console.log('we have won')
-        hasWon = true
-      }
     }
+
     globalGrid[playerYPos][playerXPos] = PLAYER
+
+    const allBlocksInPosition = globalTargets.every(
+      ({ targetX, targetY }) => globalGrid[targetY][targetX] === PUSH_BLOCK
+    )
+
+    if (allBlocksInPosition) {
+      console.log('we have won')
+      hasWon = true
+    }
   }
 }
 
@@ -277,8 +241,8 @@ let playerXPos
 let playerYPos
 let unmodifiedGrid
 let shouldReset = false
-let globalTargetX
-let globalTargetY
+let shouldSetup = true
+const globalTargets = []
 let hasWon = false
 
 export const draw = (canvasId, currentGrid, results) => () => {
@@ -290,26 +254,32 @@ export const draw = (canvasId, currentGrid, results) => () => {
     globalGrid = currentGrid
     if (shouldReset) {
       shouldReset = false
+      shouldSetup = true
       globalGrid = JSON.parse(unmodifiedGrid)
     }
-    globalGrid.forEach((row, rowIndex) => {
-      if (row.includes(PLAYER)) {
-        playerXPos = row.indexOf(PLAYER)
-        playerYPos = rowIndex
-      }
-      if (row.includes(SUCCESS_TARGET)) {
-        globalTargetX = row.indexOf(SUCCESS_TARGET)
-        globalTargetY = rowIndex
-      }
-    })
+
+    if (shouldSetup) {
+      shouldSetup = false
+      globalGrid.forEach((row, rowIndex) => {
+        if (row.includes(PLAYER)) {
+          playerXPos = row.indexOf(PLAYER)
+          playerYPos = rowIndex
+        }
+        if (row.includes(SUCCESS_TARGET)) {
+          // console.log('we are here')
+          globalTargets.push({ targetX: row.indexOf(SUCCESS_TARGET), targetY: rowIndex })
+        }
+      })
+    }
+
     ctx = canvas.getContext('2d')
     drawBricks(globalGrid, ctx, false)
     drawHints(results)
     if (shouldDrawGridLines) {
       drawGridLines()
     }
-    // drawBlockLines()
-    checkForWin(globalGrid)
+    checkForWin()
+
     if (shouldPauseOnDraw) {
       debugger // eslint-disable-line
     }
@@ -321,6 +291,7 @@ export const draw = (canvasId, currentGrid, results) => () => {
     if (shouldDrawGridLines) {
       drawGridLines()
     }
+
     if (shouldPauseOnDraw) {
       debugger // eslint-disable-line
     }

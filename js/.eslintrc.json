@@ -1,11 +1,8 @@
 {
-    "env": {
-        "browser": true,
-        "es6": true
-    },
     "extends": ["prettier", "eslint:recommended"],
     "parserOptions": {
-        "sourceType": "module"
+        "sourceType": "module",
+        "ecmaVersion": 2018
     },
     "plugins": ["prettier", "jest"],
     "rules": {
@@ -15,6 +12,7 @@
             2
         ],
         "no-console": "off",
+        "no-debugger": "off",
         "linebreak-style": [
             "error",
             "unix"
@@ -30,6 +28,7 @@
     },
     "env": {
         "jest/globals": true,
+        "es6": true,
         "browser": true,
         "node": true
     }

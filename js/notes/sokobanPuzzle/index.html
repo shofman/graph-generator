@@ -4,15 +4,41 @@
     <title>Sokoban Puzzle Generator</title>
     <style>
       * { padding: 0; margin: 0; }
-      canvas { background: #eee; display: block; margin: 0 auto; margin-top: 30; }
+      canvas { background: #eee; display: block; margin: 30px; }
       button { width: 20px; height: 20px; }
       .button-wrapper { display: none; flex: 1; justify-content: center; }
+      .page-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .canvas-wrapper {
+        display: flex;
+        flex-direction: column;
+      }
+      .center-wrapper { justify-content: center; display: flex;   }
+      #debugHistory { justify-content: center; display: flex; }
     </style>
 </head>
 <body>
 
-<canvas id="myCanvas" width="480" height="320"></canvas>
-<canvas id="debugCanvas" width="480" height="320"></canvas>
+<div class=page-wrapper>
+  <div class=canvas-wrapper>
+    <canvas id="myCanvas" width="480" height="320"></canvas>
+    <div class="center-wrapper">
+      <p id="seed"></p>
+    </div>
+  </div>
+  <div class=canvas-wrapper>
+    <canvas id="debugCanvas" width="480" height="320"></canvas>
+    <div class="center-wrapper">
+      <button id="subtract">-</button>
+      <label for="debugHistory" id="debugLabel">4</label>
+      <input id="debugHistory" type="range" min="0" max="100" value="0" />
+      <button id="addition">+</button>
+    </div>
+  </div>
+</div>
 
 <script type="module" src="./main.js"></script>
 

@@ -27,7 +27,14 @@ export const increaseGridXLength = () => {
 export const getCanvasWidth = () => gridXLength * pixelSize + gridNumber * gridSpace * pixelSize
 export const getCanvasHeight = () => gridYLength * pixelSize + gridNumber * gridSpace * pixelSize
 
-export const isWithinXGrid = (coordinate, shouldScale = true) =>
+export const isWithinXGrid_deprecated = (coordinate, shouldScale = true) =>
   coordinate >= 0 && coordinate < width * (shouldScale ? blockPartion : 1)
-export const isWithinYGrid = (coordinate, shouldScale = true) =>
+export const isWithinYGrid_deprecated = (coordinate, shouldScale = true) =>
   coordinate >= 0 && coordinate < height * (shouldScale ? blockPartion : 1)
+
+export const TEMP_X_SIZE = 3
+export const TEMP_Y_SIZE = 3
+const BLOCK_SIZE = 3
+
+export const isWithinXGrid = xPos => xPos >= 0 && xPos < TEMP_X_SIZE * BLOCK_SIZE
+export const isWithinYGrid = yPos => yPos >= 0 && yPos < TEMP_Y_SIZE * BLOCK_SIZE
