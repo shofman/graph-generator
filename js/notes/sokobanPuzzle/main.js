@@ -22,12 +22,8 @@ const subtractButton = document.getElementById('subtract')
 let historyIndex = 0
 
 let seed = Math.random()
-// seed = 0.9130043821080835
-// seed = 0.40392888314189834 // only considering one target
+// seed = 0.5546359266872523 // only considering one target
 // seed = 0.3220532206180031 // solvable but should be impossible by grid history - impossible move in between - no longer considered valid
-// seed = 0.9387013373778292 // only considering one target
-// seed = 0.06788068832316085 // only considering one target
-// seed = 0.5765381591508767 // impossible by grid history
 
 seedOutput.innerHTML = `Seed: ${seed}`
 console.log('seed', seed)
