@@ -21,7 +21,7 @@ import {
   PUSH_BLOCK,
 } from './blockTypes.js'
 import { draw } from './draw.js'
-import { findPlayerPosition as findPlayerPosition2 } from './findPlayerPosition.js'
+import { findPlayerPosition } from './findPlayerPosition.js'
 
 const getRow = (template, index) => arrayCopy(template[index])
 const getCol = (template, index) => arrayCopy(template.map(row => row[index]))
@@ -425,12 +425,15 @@ const findPossibleStates = (grid, { targetColIndex, targetRowIndex }) => {
             newGrid[newY][newX] = SUCCESS_TARGET
             possibleStates.push({
               grid: newGrid,
-              directionY: previousPlayerRow - newY,
-              directionX: previousPlayerCol - newX,
+              directionY: y,
+              directionX: x,
               previousPlayerCol,
               previousPlayerRow,
               blockCol: newX,
               blockRow: newY,
+              // Next here because we are moving backwards
+              nextBlockCol: targetColIndex,
+              nextBlockRow: targetRowIndex,
             })
           }
         }
@@ -441,16 +444,57 @@ const findPossibleStates = (grid, { targetColIndex, targetRowIndex }) => {
   return possibleStates
 }
 
+const calculateDifficultyFromPastState = (pastState, currentState) => {
+  const areMovingSameBlock = (pastState, currentState) => {
+    return (
+      currentState.nextBlockCol === pastState.blockCol &&
+      currentState.nextBlockRow === pastState.blockRow
+    )
+  }
+
+  const areMovingInSameDirection = (pastState, currentState) => {
+    return (
+      pastState.directionX === currentState.directionX ||
+      pastState.directionY === currentState.directionY
+    )
+  }
+
+  const areReversingDirection = (pastState, currentState) => {
+    // Check added here to ensure that changing order of if statements is less impacted
+    if (areMovingInSameDirection(pastState, currentState)) return false
+    return (
+      Math.abs(currentState.directionX) === Math.abs(pastState.directionX) &&
+      Math.abs(currentState.directionY) == Math.abs(pastState.directionY)
+    )
+  }
+
+  // if we are switching between blocks, that counts as a better difficulty
+  if (!areMovingSameBlock(pastState, currentState)) {
+    // TODO - explore if checking the direction also effects difficulty here
+    return 6
+  } else {
+    // if we are continuing in the same direction, that counts as the same difficulty
+    if (areMovingInSameDirection(pastState, currentState)) {
+      return 0
+    } else if (areReversingDirection(pastState, currentState)) {
+      // if we are changing direction for the current axis of movement, that counts as better, but not as much
+      return 1
+    } else {
+      // if we are switching direction axis, that counts as a better difficulty
+      return 2
+    }
+  }
+}
+
 // Expand goal takes the content of the grid and returns the states that the player would previously have had to be in to achieve said state
-const expandGoal = ({ grid, pastStates, difficulty }) => {
+const expandGoal = ({ grid, gridHistory, pastStates, difficulty }) => {
   const allTargets = findTargets(grid)
 
-  const possibleStates = []
+  let possibleStates = []
   if (allTargets.length !== 2) {
     return {
       possibleStates,
       pastStates,
-      difficulty,
     }
   }
 
@@ -459,24 +503,49 @@ const expandGoal = ({ grid, pastStates, difficulty }) => {
   let possibleStates1 = findPossibleStates(grid, allTargets[0])
   let possibleStates2 = findPossibleStates(grid, allTargets[1])
 
-  // How to handle when only one permutation is possible?
+  possibleStates = possibleStates1.concat(possibleStates2)
 
-  const allPermutations = findPermutations(possibleStates1, possibleStates2)
-
-  allPermutations.forEach(twoStates => {
-    const newGridState = combinePermutationsIntoGridState(twoStates)
-    const comparableState = JSON.stringify(newGridState.grid)
+  possibleStates = possibleStates.filter(state => {
+    const comparableState = JSON.stringify(state.grid)
     const hasAlreadySeen = pastStates.includes(comparableState)
     if (!hasAlreadySeen) {
       pastStates.push(comparableState)
-      possibleStates.push(newGridState)
     }
+    return !hasAlreadySeen
   })
 
+  const lastHistory = gridHistory[0]
+  const possibleStatesWithCalculatedDifficulty = possibleStates
+    .map(state => {
+      const newState = { ...state }
+
+      if (!lastHistory) {
+        newState.difficulty = difficulty + 1
+      } else {
+        const newDifficulty = calculateDifficultyFromPastState(lastHistory, state)
+        newState.difficulty = difficulty + newDifficulty
+      }
+      return newState
+    })
+    .sort((item1, item2) => item2.difficulty - item1.difficulty)
+
+  // How to handle when only one permutation is possible?
+
+  // const allPermutations = findPermutations(possibleStates1, possibleStates2)
+
+  // allPermutations.forEach(twoStates => {
+  //   const newGridState = combinePermutationsIntoGridState(twoStates)
+  //   const comparableState = JSON.stringify(newGridState.grid)
+  //   const hasAlreadySeen = pastStates.includes(comparableState)
+  //   if (!hasAlreadySeen) {
+  //     pastStates.push(comparableState)
+  //     possibleStates.push(newGridState)
+  //   }
+  // })
+
   return {
-    possibleStates,
+    possibleStates: possibleStatesWithCalculatedDifficulty,
     pastStates,
-    difficulty: difficulty + 1,
   }
 }
 
@@ -492,58 +561,38 @@ const isBlockWherePlayerNeedsToBe = (firstBlock, secondBlock) => {
   )
 }
 
-const checkBestResult2 = (bestResult, finalGoals) => {
+const doesActionFollow = (currentBlock, nextBlock) => {
+  return (
+    currentBlock.previousPlayerRow - currentBlock.directionY === nextBlock.previousPlayerRow &&
+    currentBlock.previousPlayerCol - currentBlock.directionX === nextBlock.previousPlayerCol
+  )
+}
+
+const checkBestResult2 = (bestResult, finalGoals, shouldDebug = false) => {
   const actionsInOrder = bestResult.gridHistory.reverse()
+
+  // if (shouldDebug) console.log('actionsInOrder', actionsInOrder)
+  // if (shouldDebug) debugger
 
   const areAllActionsValid = actionsInOrder.every((currentAction, index) => {
     if (index + 1 > actionsInOrder.length - 1) return true
     const nextAction = actionsInOrder[index + 1]
+    // console.log('nextAction', nextAction)
 
-    const currentFirstBlock = currentAction.firstBlock
-    const currentSecondBlock = currentAction.secondBlock
+    // if (
+    //   currentFirstBlock.blockCol === currentSecondBlock.blockCol &&
+    //   currentFirstBlock.blockRow === currentSecondBlock.blockRow
+    // ) {
+    //   // The blocks are in the same position - cannot happen. Reject
+    //   return false
+    // }
 
-    if (
-      currentFirstBlock.blockCol === currentSecondBlock.blockCol &&
-      currentFirstBlock.blockRow === currentSecondBlock.blockRow
-    ) {
-      // The blocks are in the same position - cannot happen. Reject
-      return false
-    }
-
-    if (
-      isBlockWherePlayerNeedsToBe(currentFirstBlock, currentSecondBlock) ||
-      isBlockWherePlayerNeedsToBe(currentSecondBlock, currentFirstBlock)
-    ) {
-      return false
-    }
-
-    const nextFirstBlock = nextAction.firstBlock
-    const nextSecondBlock = nextAction.secondBlock
-
-    const doesActionFollow = (currentBlock, nextBlock) => {
-      return (
-        currentBlock.previousPlayerRow - currentBlock.directionY === nextBlock.previousPlayerRow &&
-        currentBlock.previousPlayerCol - currentBlock.directionX === nextBlock.previousPlayerCol
-      )
-    }
-
-    const doesBlockOneActionFollow = doesActionFollow(currentFirstBlock, nextFirstBlock)
-    const doesBlockTwoActionFollow = doesActionFollow(currentSecondBlock, nextSecondBlock)
-
-    const doActionsFollowPath = doesBlockOneActionFollow && doesBlockTwoActionFollow
+    const doActionsFollowPath = doesActionFollow(currentAction, nextAction)
 
     if (doActionsFollowPath) {
       return true
     } else {
-      const canBlockOneBeReached = doesBlockOneActionFollow
-        ? true
-        : canReachNextPosWithoutMovingBlock(currentFirstBlock, nextFirstBlock)
-
-      const canBlockTwoBeReached = doesBlockTwoActionFollow
-        ? true
-        : canReachNextPosWithoutMovingBlock(currentSecondBlock, nextSecondBlock)
-
-      return canBlockOneBeReached && canBlockTwoBeReached
+      return canReachNextPosWithoutMovingBlock(currentAction, nextAction)
     }
   })
 
@@ -596,9 +645,10 @@ const calculateDifficulty = bestResult => (totalDifficulty, currentHistory, curr
 
 const createFarthestSuccessState = ({ grid, finalGoals, randomizer }) => {
   const listOfStatesChecked = []
-  const initialDifficulty = 1
+  const initialDifficulty = 0
   let attempts = 0
   const MAX_ATTEMPTS_TO_FIND_FURTHEST_SUCCESS = 1000
+  // const MAX_ATTEMPTS_TO_FIND_FURTHEST_SUCCESS = 10
 
   // debugDraw(grid)
   // debugger
@@ -616,12 +666,13 @@ const createFarthestSuccessState = ({ grid, finalGoals, randomizer }) => {
     const currentState = listOfStatesToCheck.shift()
     const newGoal = { ...currentState, pastStates: listOfStatesChecked }
     const nextStates = expandGoal(newGoal)
+    // console.log('nextStates', nextStates)w
 
     nextStates.possibleStates.forEach(state => {
       const nextGoal = {
         grid: arrayCopy(state.grid),
         gridHistory: [...currentState.gridHistory, state],
-        difficulty: nextStates.difficulty,
+        difficulty: state.difficulty,
         stateInfo: state,
       }
       allGoals.push(nextGoal)
@@ -644,12 +695,13 @@ const createFarthestSuccessState = ({ grid, finalGoals, randomizer }) => {
   if (!bestResult) {
     return { grid: {}, difficulty: 0 }
   }
-  let calculatedDifficulty = bestResult.gridHistory.reduce(calculateDifficulty(bestResult), 0)
 
-  calculatedDifficulty = 20
+  // checkBestResult2(arrayCopy(bestResult), finalGoals, true)
 
   const finalGrid = arrayCopy(bestResult.grid)
   const lastStateGoals = findTargets(finalGrid)
+
+  console.log('bestResult', bestResult)
 
   // TODO - Add validation for last state goals - if the list is empty
 
@@ -665,7 +717,7 @@ const createFarthestSuccessState = ({ grid, finalGoals, randomizer }) => {
     finalGrid[targetRowIndex][targetColIndex] = PUSH_BLOCK
   })
 
-  const { playerPositionY, playerPositionX } = findPlayerPosition2(
+  const { playerPositionY, playerPositionX } = findPlayerPosition(
     bestResult,
     finalGoals,
     randomizer
@@ -676,7 +728,7 @@ const createFarthestSuccessState = ({ grid, finalGoals, randomizer }) => {
   return {
     grid: finalGrid,
     gridHistory: bestResult.gridHistory,
-    difficulty: calculatedDifficulty,
+    difficulty: bestResult.difficulty,
   }
 }
 
@@ -734,7 +786,7 @@ export const createRoom = randomizer => {
               difficulty,
             }
 
-            if (difficulty < 2) {
+            if (difficulty < 150) {
               if (!storedBestGrid || (storedBestGrid && storedBestGrid.difficulty < difficulty)) {
                 storedBestGrid = {
                   bestGrid,

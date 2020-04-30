@@ -22,10 +22,12 @@ const subtractButton = document.getElementById('subtract')
 let historyIndex = 0
 
 let seed = Math.random()
-seed = 0.14670173849482393 // only one target (appears as two, but only one considered)
-// seed = 0.254640563435675 // different player grids - broken still
-// seed = 0.49108854850552186 // unsolvable
-// seed = 0.3220532206180031 // solvable but should be impossible by grid history - impossible move in between
+// seed = 0.9130043821080835
+// seed = 0.40392888314189834 // only considering one target
+// seed = 0.3220532206180031 // solvable but should be impossible by grid history - impossible move in between - no longer considered valid
+// seed = 0.9387013373778292 // only considering one target
+// seed = 0.06788068832316085 // only considering one target
+// seed = 0.5765381591508767 // impossible by grid history
 
 seedOutput.innerHTML = `Seed: ${seed}`
 console.log('seed', seed)

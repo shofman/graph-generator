@@ -76,7 +76,7 @@ describe('combinePermutationsIntoGridState', () => {
         directionY: 0,
         previousPlayerCol: 2,
         previousPlayerRow: 4,
-      }
+      },
     })
   })
 })
