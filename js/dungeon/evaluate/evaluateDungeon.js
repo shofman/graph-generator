@@ -1,7 +1,7 @@
 import { getDistanceBetweenLeafs, getLockedDistanceBetweenLeafs } from './calculateLeafDistances.js'
-import { drawDungeonTree } from './ui.js'
+import { drawDungeonTree } from '../ui/drawGraph.js'
 import { verifyDungeons } from './verifyDungeon.js'
-import { KEY_TYPES } from './keyTypes.js'
+import { KEY_TYPES } from '../dungeonStructure/keyTypes.js'
 
 export const isMeaningfulBranch = node => {
   const nodeHasBranchingBinaryChildren = node => {

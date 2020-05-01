@@ -1,8 +1,8 @@
-import { drawDungeonTree } from './ui.js'
-import { KEY_TYPES } from './keyTypes.js' 
+import { drawDungeonTree } from '../ui/drawGraph.js'
+import { KEY_TYPES } from '../dungeonStructure/keyTypes.js'
 
-export const verify = (verifications=1) => {
-  for(let i=0; i<verifications; i++) {
+export const verify = (verifications = 1) => {
+  for (let i = 0; i < verifications; i++) {
     const newDungeons = drawDungeonTree(true)
     console.log(verifyDungeons(newDungeons))
   }
@@ -39,7 +39,7 @@ export const verifyDungeon = dungeon => {
 
   let tries = 0
 
-  while(blockedPaths.length && tries++ < 100) {
+  while (blockedPaths.length && tries++ < 100) {
     const newlyAdded = []
 
     blockedPaths = blockedPaths.filter(blockedPath => {
@@ -65,7 +65,7 @@ export const verifyDungeon = dungeon => {
   return { dungeon, visitedPath, keysGroupedByType }
 }
 
-export const verifyDungeons = (createdDungeons) => {
+export const verifyDungeons = createdDungeons => {
   if (createdDungeons && createdDungeons.length) {
     return createdDungeons.map(verifyDungeon)
   } else {

@@ -11,7 +11,7 @@ const canvas = document.getElementById('myCanvas')
 canvas.height = getCanvasHeight()
 canvas.width = getCanvasWidth()
 
-const seed = 0.5864508999144089//Math.random()
+const seed = Math.random()
 console.log('seed', seed)
 const randomizer = AleaRandomizer(seed)
 

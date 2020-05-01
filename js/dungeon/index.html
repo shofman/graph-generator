@@ -1,0 +1,46 @@
+<html lang="en">
+<head>
+    <script type="text/javascript" src="./ui/vis.js"></script>
+    <link href="./ui/vis.css" rel="stylesheet" type="text/css" />
+
+    <style type="text/css">
+        #generation, #mynetwork {
+            display: inline;
+            float: left;
+        }
+        #generation2 {
+            display: block;
+        }
+        #dungeonVisual, #dungeonRooms {
+            border: 1px solid black;
+            float: left;
+        }
+        .space-left {
+            margin-left: 18px;
+        }
+    </style>
+</head>
+<body>
+    
+<script type="module" src="./main.js"></script>
+
+<button id="rewind" onclick="rewind()">-</button>
+<input id="generation" type="range" min="0" range="1" onchange="drawDungeonTree()"/>
+<button id="advance" onclick="advance()">+</button>
+<input id="keys" type="checkbox" onchange="drawDungeonTree()"/>
+<button id="verify" onclick="verify()">Verify</button>
+<button id="evaluate" onclick="evaluateDungeon()">Evaluate</button>
+<span id="seed"></span>
+<button id="generation2" onclick="drawDungeonTree()" type="button">Refresh</button>
+
+<div id="mynetwork"></div>
+
+<div>
+    <label class="space-left" for="dungeonView">View rooms/groups</label>
+    <input id="dungeonView" type="checkbox" checked onchange="switchViews()">
+</div>
+<canvas class="space-left" id="dungeonVisual" width="650" height="800" style="display: none;"></canvas>
+<canvas class="space-left" id="dungeonRooms" width="650" height="800"></canvas>
+
+</body>
+</html>

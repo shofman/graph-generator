@@ -8,15 +8,14 @@ export const getDistanceBetweenLeafs = (leaf1, leaf2) => {
     distance: distanceValue,
     path1: leaf1Path,
     path2: leaf2Path,
-    criticalPath: [...new Set(leaf1Path.concat(leaf2Path.reverse()))]
+    criticalPath: [...new Set(leaf1Path.concat(leaf2Path.reverse()))],
   })
 
   if (leaf1 === leaf2) {
     return createDistance(0)
   }
 
-
-  while(leafPointer1.parent !== null && leafPointer2.parent !== null) {
+  while (leafPointer1.parent !== null && leafPointer2.parent !== null) {
     leaf1Path.push(leafPointer1)
     leaf2Path.push(leafPointer2)
 
@@ -50,7 +49,6 @@ export const getDistanceBetweenLeafs = (leaf1, leaf2) => {
       return createDistance(leaf2Path.indexOf(leaf1))
     } else if (leaf1Path.includes(leafPointer2)) {
       return createDistance(leaf2Path.indexOf(leafPointer2) + leaf1Path.indexOf(leafPointer2))
-
     }
     leafPointer2 = leafPointer2.parent
   }
@@ -78,7 +76,9 @@ export const getLockedDistanceBetweenLeafs = (leaf1, leaf2, withRecursion = fals
       // TODO - Assume the first key unlocks for now
       // Passing false might speed things up here to withRecursion
       const key = leaf.keys[0]
-      const addedDistance = withRecursion ? getLockedDistanceBetweenLeafs(key, leaf, true) : getDistanceBetweenLeafs(key, leaf)
+      const addedDistance = withRecursion
+        ? getLockedDistanceBetweenLeafs(key, leaf, true)
+        : getDistanceBetweenLeafs(key, leaf)
       totalDistance += withRecursion ? addedDistance : addedDistance.distance
     })
     return totalDistance

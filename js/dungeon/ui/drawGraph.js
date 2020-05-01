@@ -1,6 +1,6 @@
-import { createDungeons } from './generateDungeon.js'
+import { createDungeons } from '../generateDungeon.js'
 
-const createContainerNode = (totalNumberToCreate) => {
+const createContainerNode = totalNumberToCreate => {
   const containerNode = document.createElement('div')
   if (!containerNode) {
     return undefined
@@ -19,13 +19,13 @@ const createContainerNode = (totalNumberToCreate) => {
   return containerNode
 }
 
-const createTitleNode = (seedName) => {
+const createTitleNode = seedName => {
   const titleNode = document.createElement('span')
   titleNode.innerHTML = seedName
   return titleNode
 }
 
-const createVisualization = (dungeonInfo) => {
+const createVisualization = dungeonInfo => {
   const nodes = new vis.DataSet(dungeonInfo.nodes)
 
   // create an array with edges
@@ -61,7 +61,6 @@ export const drawDungeonTree = (useCachedDungeon = false) => {
   const parentWrapper = document.getElementById('mynetwork')
   parentWrapper.innerHTML = ''
 
-  
   const newDungeons = createDungeons(currentStep)
 
   const drawOptions = {
@@ -71,8 +70,8 @@ export const drawDungeonTree = (useCachedDungeon = false) => {
     layout: {
       hierarchical: {
         enabled: true,
-        sortMethod: 'directed'
-      }
+        sortMethod: 'directed',
+      },
     },
   }
 

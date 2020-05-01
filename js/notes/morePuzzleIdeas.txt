@@ -1,0 +1,12 @@
+idea => For each double movement of blocks, attempt to perform one a single entry,
+validate that everything is reachable, then attempt the other block.
+If that doesn't work, switch the order and validate. Only then do we perform a rejection
+
+
+Legend of Grimrock 2 puzzles
+
+
+
+
+Spider man servo motor minigame
+Spider man component minigame

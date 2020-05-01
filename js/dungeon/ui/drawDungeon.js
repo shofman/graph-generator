@@ -1,4 +1,4 @@
-import { KEY_TYPES } from './keyTypes.js'
+import { KEY_TYPES } from '../dungeonStructure/keyTypes.js'
 
 const getRandomIntInclusive = (randomizer, min, max) => {
   min = Math.ceil(min)
