@@ -38,12 +38,14 @@ Repeat for any “open” subtree.
 
 Example dungeon node - {id: 1, label: 'Node 1'},
 */
+// import { v4 } from 'uuid'
 import { KEY_TYPES } from './dungeonStructure/keyTypes.js'
 import { calculateDungeonScore } from './evaluate/evaluateDungeon.js'
 import { verifyDungeon } from './evaluate/verifyDungeon.js'
 import { createHardCodedDungeons } from './hardcodedDungeons/createHardcodedDungeons.js'
 import { resultFromProbability } from './utils/resultFromProbability.js'
 import { makeRandomDungeon } from './randomDungeons/createRandomDungeon.js'
+import { drawDungeonRooms } from './ui/drawDungeon.js'
 
 const createRoomsFromSteps = (steps, randomizer) => {
   console.log('steps', steps)
@@ -65,6 +67,7 @@ const createRoomsFromSteps = (steps, randomizer) => {
 
   const firstRoom = {
     nodesInRoom: [startNode, ...externalKeys],
+    index: 1,
     isFirstRoom: true,
   }
 
@@ -76,7 +79,7 @@ const createRoomsFromSteps = (steps, randomizer) => {
   const hasSingleChild = node => node.children && node.children.length === 1
 
   const hasMoreDescendents = node => {
-    if (node.children && node.children) {
+    if (node.children) {
       return node.children.some(child => child.children.length > 0)
     }
     return false
@@ -131,7 +134,7 @@ const createRoomsFromSteps = (steps, randomizer) => {
           )
 
           if (shouldAddToExistingRoom === 'true') {
-            console.log('we are adding to a new room', shouldAddToExistingRoom)
+            console.log('we are adding external to a new room', shouldAddToExistingRoom)
           } else {
             const newRoom = { nodesInRoom: [item] }
             arrayResult.singleRooms.push(newRoom)
@@ -164,7 +167,7 @@ const createRoomsFromSteps = (steps, randomizer) => {
           )
 
           if (shouldAddToExistingRoom === 'true') {
-            console.log('we are adding to a new room', shouldAddToExistingRoom)
+            console.log('we are adding normal to a new room', shouldAddToExistingRoom)
           } else {
             const newRoom = { nodesInRoom: [item] }
             arrayResult.singleRooms.push(newRoom)
@@ -179,6 +182,50 @@ const createRoomsFromSteps = (steps, randomizer) => {
 
     rooms = rooms.concat(result.singleRooms)
     remainingKeys = result.otherRooms
+  }
+
+  console.log('remainingKeys', remainingKeys)
+
+  const keyItemGateProbabilities = {
+    ['true']: 80,
+    ['false']: 50,
+  }
+
+  if (remainingKeys.some(item => item.type === KEY_TYPES.KEY_ITEM)) {
+    const result = remainingKeys.reduce(
+      (arrayResult, item) => {
+        if (item.type === KEY_TYPES.KEY_ITEM) {
+          const shouldAddToExistingRoom = resultFromProbability(
+            randomizer,
+            keyItemGateProbabilities,
+            false
+          )
+
+          if (shouldAddToExistingRoom === 'true') {
+            const addingRooms = rooms.filter(room => !room.isFirstRoom)
+            if (addingRooms.length > 3) {
+              addingRooms
+            }
+            console.log('addingRooms', addingRooms)
+            console.log('we are adding keyitem to a new room', shouldAddToExistingRoom)
+          } else {
+            const newRoom = { nodesInRoom: [item] }
+            arrayResult.singleRooms.push(newRoom)
+          }
+        } else {
+          arrayResult.otherRooms.push(item)
+        }
+        return arrayResult
+      },
+      { singleRooms: [], otherRooms: [] }
+    )
+
+    rooms = rooms.concat(result.singleRooms)
+    remainingKeys = result.otherRooms
+  }
+
+  if (remainingKeys.length) {
+    throw new Error('Still have rooms to place!')
   }
 
   return rooms
@@ -256,8 +303,6 @@ export const createDungeons = currentStep => {
     currentDungeon = makeRandomDungeon(currentStep, 1551628833378.7515)
     dungeonInfo = verifyDungeon(currentDungeon)
     newDungeons.push(currentDungeon)
-    const rooms = createRoomsFromSteps(dungeonInfo, currentDungeon.randomizer)
-    console.log('rooms', rooms)
   } else {
     let tries = 0
 
@@ -273,6 +318,8 @@ export const createDungeons = currentStep => {
   }
   const rooms = createRoomsFromSteps(dungeonInfo, currentDungeon.randomizer)
   console.log('rooms', rooms)
+  const groupingCanvas = document.getElementById('dungeonRooms')
+  drawDungeonRooms(groupingCanvas, rooms)
 
   return newDungeons
 }

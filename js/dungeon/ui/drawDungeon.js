@@ -97,9 +97,6 @@ export const drawDungeon = (canvas, dungeonToDraw) => {
       }
     }
   }
-  // console.log(dungeon[2][2])
-
-  // console.log('dungeon', dungeon)
 
   dungeon.forEach((row, yIndex) => {
     row.forEach((point, xIndex) => {
@@ -114,9 +111,25 @@ export const drawDungeon = (canvas, dungeonToDraw) => {
   ctx.stroke()
 }
 
-const LCG = seed => {
-  return function() {
-    seed = Math.imul(48271, seed) | 0 % 2147483647
-    return (seed & 2147483647) / 2147483648
-  }
+export const drawDungeonRooms = (canvas, rooms) => {
+  const ctx = canvas.getContext('2d')
+
+  let yIndex = 0
+
+  const HEIGHT_OF_LETTERS = 20
+  const GAP_BETWEEN_BOXES = 30
+  const LETTER_OFFSET = 13
+
+  rooms.forEach(groups => {
+    const boxHeight = groups.nodesInRoom.length * HEIGHT_OF_LETTERS
+    ctx.strokeStyle = 'red'
+    ctx.rect(0, yIndex, 150, boxHeight)
+    ctx.stroke()
+
+    groups.nodesInRoom.forEach((node, index) => {
+      ctx.fillText(node.name, 5, yIndex + LETTER_OFFSET + HEIGHT_OF_LETTERS * index)
+    })
+
+    yIndex += boxHeight + GAP_BETWEEN_BOXES
+  })
 }
