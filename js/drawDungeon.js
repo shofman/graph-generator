@@ -3,7 +3,7 @@ import { KEY_TYPES } from './keyTypes.js'
 const getRandomIntInclusive = (randomizer, min, max) => {
   min = Math.ceil(min)
   max = Math.floor(max)
-  //The maximum is inclusive and the minimum is inclusive 
+  //The maximum is inclusive and the minimum is inclusive
   return Math.floor(randomizer() * (max - min + 1)) + min
 }
 
@@ -41,31 +41,47 @@ export const drawDungeon = (canvas, dungeonToDraw) => {
 
   // Min evaluation should take into account surrounding elements
 
-  maxRooms = numberOfNormalLocks + numberOfStartingRooms + numberOfSingleRooms + numberOfSingleLockRooms + numberOfNormalLocks + numberOfExternalRooms
+  maxRooms =
+    numberOfNormalLocks +
+    numberOfStartingRooms +
+    numberOfSingleRooms +
+    numberOfSingleLockRooms +
+    numberOfNormalLocks +
+    numberOfExternalRooms
   // console.log(maxRooms)
 
   let dungeon = []
-  for (let i=0; i<DUNGEON_SIZE_Y; i++) {
+  for (let i = 0; i < DUNGEON_SIZE_Y; i++) {
     let setToOne = i === 0 || i === DUNGEON_SIZE_Y - 1
-    dungeon.push(Array.apply(null, Array(DUNGEON_SIZE_X)).map((j, index) => {
-      return index === 0 || index === DUNGEON_SIZE_X - 1 || setToOne ? 1 : 0
-    }))
+    dungeon.push(
+      Array.apply(null, Array(DUNGEON_SIZE_X)).map((j, index) => {
+        return index === 0 || index === DUNGEON_SIZE_X - 1 || setToOne ? 1 : 0
+      })
+    )
   }
 
   const MAX_ATTEMPTS = 600
 
-  for (let i=0; i<MAX_ATTEMPTS; i++) {
+  for (let i = 0; i < MAX_ATTEMPTS; i++) {
     const newRoomWidth = getRandomIntInclusive(dungeonToDraw.randomizer, 15, 35)
     const newRoomHeight = getRandomIntInclusive(dungeonToDraw.randomizer, 15, 35)
-    const randomX = getRandomIntInclusive(dungeonToDraw.randomizer, 1, DUNGEON_SIZE_X - newRoomWidth - 1)
-    const randomY = getRandomIntInclusive(dungeonToDraw.randomizer, 1, DUNGEON_SIZE_Y - newRoomHeight - 1)
+    const randomX = getRandomIntInclusive(
+      dungeonToDraw.randomizer,
+      1,
+      DUNGEON_SIZE_X - newRoomWidth - 1
+    )
+    const randomY = getRandomIntInclusive(
+      dungeonToDraw.randomizer,
+      1,
+      DUNGEON_SIZE_Y - newRoomHeight - 1
+    )
 
     let canPlace = true
-    for(let y=randomY - 1; y<randomY + newRoomHeight + 1; y++) {
-      for(let x=randomX - 1; x<randomX + newRoomWidth + 1; x++) {
+    for (let y = randomY - 1; y < randomY + newRoomHeight + 1; y++) {
+      for (let x = randomX - 1; x < randomX + newRoomWidth + 1; x++) {
         if (dungeon[y][x] === 1) {
           canPlace = false
-        } 
+        }
       }
     }
 
@@ -74,15 +90,15 @@ export const drawDungeon = (canvas, dungeonToDraw) => {
     }
 
     if (canPlace) {
-      for(let y=randomY; y<randomY + newRoomHeight; y++) {
-        for(let x=randomX; x<randomX + newRoomWidth; x++) {
+      for (let y = randomY; y < randomY + newRoomHeight; y++) {
+        for (let x = randomX; x < randomX + newRoomWidth; x++) {
           dungeon[y][x] = 1
         }
       }
     }
   }
   // console.log(dungeon[2][2])
- 
+
   // console.log('dungeon', dungeon)
 
   dungeon.forEach((row, yIndex) => {
@@ -92,13 +108,13 @@ export const drawDungeon = (canvas, dungeonToDraw) => {
       } else {
         ctx.fillStyle = '#FFFFFF'
       }
-      ctx.fillRect(xIndex*4, yIndex*4, 4, 4)
+      ctx.fillRect(xIndex * 4, yIndex * 4, 4, 4)
     })
   })
   ctx.stroke()
 }
 
-const LCG = (seed) =>  {
+const LCG = seed => {
   return function() {
     seed = Math.imul(48271, seed) | 0 % 2147483647
     return (seed & 2147483647) / 2147483648

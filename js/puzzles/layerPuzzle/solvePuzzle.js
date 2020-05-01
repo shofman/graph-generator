@@ -3,13 +3,9 @@ import { OBSTACLE, TARGET, EMPTY } from './blockTypes.js'
 import { slideBlock } from './gridMovement.js'
 import { generateKey, getValuesFromKey } from './generateKey.js'
 import { createLines } from './createLinesOnGrid.js'
-import {
-  arrayCopy,
-  isObjectEmpty,
-  getOtherDirection,
-  getAllSubsets,
-  convertLineDeltaToDirection,
-} from './helpers.js'
+import { isObjectEmpty, getOtherDirection, convertLineDeltaToDirection } from './helpers.js'
+import { arrayCopy } from '../../utils/arrayCopy.js'
+import { getAllSubsets } from '../../utils/getAllSubsets.js'
 import { debugDraw } from './draw.js'
 
 let iterations

@@ -1,5 +1,5 @@
 import { createInitialGrid } from '../createInitialGrid.js'
-import { AleaRandomizer } from '../AleaRandomizer.js'
+import { AleaRandomizer } from '../../../utils/AleaRandomizer.js'
 import { generateNewGrid } from '../generateNewGrid.js'
 import { generateSolvedPuzzle } from '../solvePuzzle.js'
 

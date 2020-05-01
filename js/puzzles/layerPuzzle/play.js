@@ -2,7 +2,7 @@ import { pixelSize, pixelOffset } from './gridDimensions.js'
 import { generateKey, getValuesFromKey } from './generateKey.js'
 import { slideBlock } from './gridMovement.js'
 import { draw } from './draw.js'
-import { arrayCopy } from './helpers.js'
+import { arrayCopy } from '../../utils/arrayCopy.js'
 
 const canvas = document.getElementById('myCanvas')
 const ctx = canvas.getContext('2d')

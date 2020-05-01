@@ -38,12 +38,12 @@ Repeat for any “open” subtree.
 
 Example dungeon node - {id: 1, label: 'Node 1'},
 */
-
+import { getAllSubsets } from './utils/getAllSubsets.js'
 import { KEY_TYPES } from './keyTypes.js'
 import { AleaRandomizer } from './AleaRandomizer.js'
 import { calculateDungeonScore } from './evaluateDungeon.js'
 import { verifyDungeon } from './verifyDungeon.js'
-import { 
+import {
   fortressOfWinds,
   fortressOfWinds2,
   // rocsFeather,
@@ -101,13 +101,10 @@ import {
   jabujabuOcarina,
 } from './hardcodedDungeons.js'
 
-const getAllSubsets = arrayOfChildren => 
-  arrayOfChildren.reduce(
-    (subsets, value) => subsets.concat(
-      subsets.map(set => [value,...set])
-    ),
-    [[]]
-  ).filter(item => item.length !== 0)
+// const getAllSubsets = arrayOfChildren =>
+//   arrayOfChildren
+//     .reduce((subsets, value) => subsets.concat(subsets.map(set => [value, ...set])), [[]])
+//     .filter(item => item.length !== 0)
 
 class Node {
   constructor(parent, value) {
@@ -236,7 +233,16 @@ class Node {
     })
   }
 
-  addObstacle({ name, numberOfLocks, numberOfKeys, type, color, childrenToLock, isPuzzle, isCombat }) {
+  addObstacle({
+    name,
+    numberOfLocks,
+    numberOfKeys,
+    type,
+    color,
+    childrenToLock,
+    isPuzzle,
+    isCombat,
+  }) {
     const addedLocks = []
     const addedKeys = []
 
@@ -297,10 +303,13 @@ class Node {
       } else if (child.type === KEY_TYPES.SINGLE_LOCK_KEY) {
         isLockingSpecialLock = true
       }
-      return (child.type !== KEY_TYPES.EXTERNAL_KEY) || (child.type === KEY_TYPES.EXTERNAL_KEY && child.locked)
+      return (
+        child.type !== KEY_TYPES.EXTERNAL_KEY ||
+        (child.type === KEY_TYPES.EXTERNAL_KEY && child.locked)
+      )
     })
 
-    let nodeSubsets = getAllSubsets(childrenToLock)
+    let nodeSubsets = getAllSubsets(childrenToLock).filter(item => item.length !== 0)
 
     if (isLockingSingleRoom) {
       nodeSubsets = nodeSubsets.filter(subsetArray => {
@@ -312,9 +321,7 @@ class Node {
     }
 
     if (isLockingSpecialLock) {
-      nodeSubsets = nodeSubsets.filter(subsetArray => {
-        
-      })
+      nodeSubsets = nodeSubsets.filter(subsetArray => {})
     }
 
     childrenToLock.forEach(child => {
@@ -332,9 +339,10 @@ class Node {
           this.insertLock(lockNode, [child])
         } else {
           const subsetToAdd = nodeSubsets[Math.floor(randomizer() * nodeSubsets.length)]
-          subsetToAdd && subsetToAdd.forEach(node => {
-            nodeSubsets = nodeSubsets.filter(nodeSubset => !nodeSubset.includes(node))
-          })
+          subsetToAdd &&
+            subsetToAdd.forEach(node => {
+              nodeSubsets = nodeSubsets.filter(nodeSubset => !nodeSubset.includes(node))
+            })
           this.insertLock(lockNode, subsetToAdd)
         }
         addedLocks.push(lockNode)
@@ -364,7 +372,7 @@ class Node {
       addedKeys.push(keyNode)
     } else {
       // Pick random number of keys
-      const numberOfKeys = [2,3,4,5]
+      const numberOfKeys = [2, 3, 4, 5]
       const keysToGen = numberOfKeys[Math.floor(randomizer() * numberOfKeys.length)]
 
       for (let i of Array(keysToGen).keys()) {
@@ -414,7 +422,9 @@ class Tree {
         const childrenNodes = childrenToDraw.map(item => {
           connections.push(createConnection(currentValue.getValue().id, item.getValue().id))
           if (item.keys.length) {
-            item.keys.forEach(key => keyLockConnections.push(createConnection(key.getValue().id, item.getValue().id)))
+            item.keys.forEach(key =>
+              keyLockConnections.push(createConnection(key.getValue().id, item.getValue().id))
+            )
           }
           drawQueue.push(item)
           return item.getValue()
@@ -447,7 +457,7 @@ class Tree {
       numberOfKeys: 1,
       numberOfLocks: 1,
       color: 'red',
-      getChildrenToLock: () => [endNode]
+      getChildrenToLock: () => [endNode],
     }
   }
 
@@ -480,9 +490,11 @@ class Tree {
 
   addDungeonObstacles(obstacles) {
     obstacles.forEach(obstacle => {
-      this.rootValue.addObstacle(Object.assign(obstacle, {
-        childrenToLock: obstacle.getChildrenToLock(this.rootValue)
-      }))
+      this.rootValue.addObstacle(
+        Object.assign(obstacle, {
+          childrenToLock: obstacle.getChildrenToLock(this.rootValue),
+        })
+      )
     })
   }
 
@@ -542,7 +554,7 @@ const createRandomLock = (name, type, color) => {
   }
 }
 
-const createRandomMiniboss = (name) => {
+const createRandomMiniboss = name => {
   return {
     name,
     type: KEY_TYPES.SINGLE_ROOM_PUZZLE,
@@ -589,20 +601,20 @@ const createRandomMultiKey = (name, color) => {
 const transposeStepsToRandom = arrayOfSteps => {
   return arrayOfSteps.map(step => {
     switch (step.type) {
-    case KEY_TYPES.NORMAL_KEY:
-    case KEY_TYPES.SINGLE_LOCK_KEY:
-    case KEY_TYPES.SINGLE_ROOM_PUZZLE:
-    case KEY_TYPES.EXTERNAL_KEY:
-      return createRandomLock(step.name, step.type, step.color)
-    case KEY_TYPES.KEY_ITEM:
-      return createRandomKeyItem(step.name, step.numberOfLocks)
-    case KEY_TYPES.MULTI_LOCK:
-      return createRandomMultiLock(step.name, step.color)
-    case KEY_TYPES.MULTI_KEY:
-      return createRandomMultiKey(step.name, step.color)
-    default:
-      console.log('we shouldnot be here')
-      return createRandomLock(step.name, step.type, step.color)
+      case KEY_TYPES.NORMAL_KEY:
+      case KEY_TYPES.SINGLE_LOCK_KEY:
+      case KEY_TYPES.SINGLE_ROOM_PUZZLE:
+      case KEY_TYPES.EXTERNAL_KEY:
+        return createRandomLock(step.name, step.type, step.color)
+      case KEY_TYPES.KEY_ITEM:
+        return createRandomKeyItem(step.name, step.numberOfLocks)
+      case KEY_TYPES.MULTI_LOCK:
+        return createRandomMultiLock(step.name, step.color)
+      case KEY_TYPES.MULTI_KEY:
+        return createRandomMultiKey(step.name, step.color)
+      default:
+        console.log('we shouldnot be here')
+        return createRandomLock(step.name, step.type, step.color)
     }
   })
 }
@@ -652,9 +664,8 @@ const createRandomSteps2 = (tree, currentStep, randomizer) => {
     4: 15,
   }
 
-  
   // Figure out key item gathering - should gather group based on the following probabilities
-  // Algorithm -> check number of available children to lock. If four -> 2/13 chance to add. 
+  // Algorithm -> check number of available children to lock. If four -> 2/13 chance to add.
   /*
     Total key: { 1: 3/13, 2: 3/13, 3: 5/13, 4: 2/13 }
  
@@ -672,7 +683,7 @@ const createRandomSteps2 = (tree, currentStep, randomizer) => {
     2-7:16
     2-9:15
   */
-  
+
   const randomObstacles = []
 
   let termination
@@ -680,13 +691,21 @@ const createRandomSteps2 = (tree, currentStep, randomizer) => {
   do {
     const randomProbability = randomizer()
     let newKey
-    if (randomProbability < .27) {
-      newKey = createRandomPuzzleLock('puzzleLock' + puzzleLockId++, KEY_TYPES.SINGLE_ROOM_PUZZLE, 'pink')
-    } else if (randomProbability < .27 + .23) {
-      newKey = createRandomLock('combatLock' + combatLockId++, KEY_TYPES.SINGLE_ROOM_PUZZLE, 'silver')
-    } else if (randomProbability < .27 + .23 + .27) {
+    if (randomProbability < 0.27) {
+      newKey = createRandomPuzzleLock(
+        'puzzleLock' + puzzleLockId++,
+        KEY_TYPES.SINGLE_ROOM_PUZZLE,
+        'pink'
+      )
+    } else if (randomProbability < 0.27 + 0.23) {
+      newKey = createRandomLock(
+        'combatLock' + combatLockId++,
+        KEY_TYPES.SINGLE_ROOM_PUZZLE,
+        'silver'
+      )
+    } else if (randomProbability < 0.27 + 0.23 + 0.27) {
       newKey = createRandomLock('normalLock' + normalLockId++, KEY_TYPES.NORMAL_KEY, 'lightblue')
-    } else if (randomProbability < .27 + .23 + .27 + .16) {
+    } else if (randomProbability < 0.27 + 0.23 + 0.27 + 0.16) {
       newKey = createRandomLock('externalLock' + externalLockId++, KEY_TYPES.EXTERNAL_KEY, 'green')
     } else {
       newKey = createRandomLock('singleLock' + singleLockId++, KEY_TYPES.SINGLE_LOCK_KEY, 'orange')
@@ -694,27 +713,27 @@ const createRandomSteps2 = (tree, currentStep, randomizer) => {
     termination = randomizer()
 
     randomObstacles.push(newKey)
-  } while (termination > randomObstacles.length/30 || randomObstacles.length < 15)
+  } while (termination > randomObstacles.length / 30 || randomObstacles.length < 15)
 
   const shouldAddMultiKeyProbability = randomizer()
   let insertionPoint
-  if (shouldAddMultiKeyProbability < 15/52) {
-    insertionPoint = Math.floor(randomizer()*randomObstacles.length)
+  if (shouldAddMultiKeyProbability < 15 / 52) {
+    insertionPoint = Math.floor(randomizer() * randomObstacles.length)
     randomObstacles.splice(insertionPoint, 0, createRandomMultiKey('multiKey', 'cyan'))
   }
 
-  insertionPoint = Math.floor(randomizer()*randomObstacles.length)
+  insertionPoint = Math.floor(randomizer() * randomObstacles.length)
   const numberOfLocks = resultFromProbability(randomizer, KEY_ITEM_PROBABILITIES, 2)
   randomObstacles.splice(insertionPoint, 0, createRandomKeyItem('keyItem', numberOfLocks))
 
-  insertionPoint = Math.floor(randomizer()*(randomObstacles.length / 2))
+  insertionPoint = Math.floor(randomizer() * (randomObstacles.length / 2))
   randomObstacles.splice(insertionPoint, 0, createRandomMiniboss('miniboss'))
 
   const newTreeLength = tree.createRandomDungeon(currentStep, randomizer, randomObstacles)
 
   return {
     newTreeLength,
-    obstacleSteps: randomObstacles
+    obstacleSteps: randomObstacles,
   }
 }
 
@@ -728,7 +747,7 @@ const createRoomsFromSteps = (steps, randomizer) => {
   const externalKeys = []
   let remainingKeys = []
 
-  startNode.children.forEach(child => { 
+  startNode.children.forEach(child => {
     if (child.type === KEY_TYPES.EXTERNAL_KEY && !child.locked) {
       externalKeys.push(child)
     } else {
@@ -737,13 +756,13 @@ const createRoomsFromSteps = (steps, randomizer) => {
   })
 
   const firstRoom = {
-    nodesInRoom: [ startNode, ...externalKeys ],
+    nodesInRoom: [startNode, ...externalKeys],
     isFirstRoom: true,
   }
 
   rooms.push(firstRoom)
 
-  const isKeyWithSharedGate = (otherKeys, item) => 
+  const isKeyWithSharedGate = (otherKeys, item) =>
     item.locked === false && item.locks.length === 1 && otherKeys.includes(item.locks[0])
 
   const hasSingleChild = node => node.children && node.children.length === 1
@@ -758,28 +777,31 @@ const createRoomsFromSteps = (steps, randomizer) => {
   const isPuzzleNode = node => node.isPuzzle === true
 
   if (remainingKeys.some(item => item.type === KEY_TYPES.SINGLE_ROOM_PUZZLE)) {
-    const result = remainingKeys.reduce((arrayResult, item) => {
-      if (item.type === KEY_TYPES.SINGLE_ROOM_PUZZLE) {
-        if (isKeyWithSharedGate(remainingKeys, item)) {
-          const correspondingGate = remainingKeys.find(lock => item.locks[0] === lock)
-          const newRoom = { nodesInRoom: [ item, correspondingGate ] }
+    const result = remainingKeys.reduce(
+      (arrayResult, item) => {
+        if (item.type === KEY_TYPES.SINGLE_ROOM_PUZZLE) {
+          if (isKeyWithSharedGate(remainingKeys, item)) {
+            const correspondingGate = remainingKeys.find(lock => item.locks[0] === lock)
+            const newRoom = { nodesInRoom: [item, correspondingGate] }
 
-          console.log('hasMoreDescendents', hasMoreDescendents(correspondingGate))
+            console.log('hasMoreDescendents', hasMoreDescendents(correspondingGate))
 
-          if (hasSingleChild(correspondingGate)) {
-            if (isPuzzleNode(correspondingGate) && !hasMoreDescendents(correspondingGate)) {
-              newRoom.nodesInRoom.push(correspondingGate.children[0])
+            if (hasSingleChild(correspondingGate)) {
+              if (isPuzzleNode(correspondingGate) && !hasMoreDescendents(correspondingGate)) {
+                newRoom.nodesInRoom.push(correspondingGate.children[0])
+              }
             }
-          }
 
-          // if (correspondingGate.childr)
-          arrayResult.singleRooms.push(newRoom)
+            // if (correspondingGate.childr)
+            arrayResult.singleRooms.push(newRoom)
+          }
+        } else {
+          arrayResult.otherRooms.push(item)
         }
-      } else {
-        arrayResult.otherRooms.push(item)
-      }
-      return arrayResult
-    }, { singleRooms: [], otherRooms: []})
+        return arrayResult
+      },
+      { singleRooms: [], otherRooms: [] }
+    )
 
     rooms = rooms.concat(result.singleRooms)
     remainingKeys = result.otherRooms
@@ -791,21 +813,28 @@ const createRoomsFromSteps = (steps, randomizer) => {
   }
 
   if (remainingKeys.some(item => item.type === KEY_TYPES.EXTERNAL_KEY)) {
-    const result = remainingKeys.reduce((arrayResult, item) => {
-      if (item.type === KEY_TYPES.EXTERNAL_KEY) {
-        const shouldAddToExistingRoom = resultFromProbability(randomizer, externalLockNewRoomProbabilities, false)
+    const result = remainingKeys.reduce(
+      (arrayResult, item) => {
+        if (item.type === KEY_TYPES.EXTERNAL_KEY) {
+          const shouldAddToExistingRoom = resultFromProbability(
+            randomizer,
+            externalLockNewRoomProbabilities,
+            false
+          )
 
-        if (shouldAddToExistingRoom === 'true') {
-          console.log('we are adding to a new room', shouldAddToExistingRoom)
+          if (shouldAddToExistingRoom === 'true') {
+            console.log('we are adding to a new room', shouldAddToExistingRoom)
+          } else {
+            const newRoom = { nodesInRoom: [item] }
+            arrayResult.singleRooms.push(newRoom)
+          }
         } else {
-          const newRoom = { nodesInRoom: [ item ]}
-          arrayResult.singleRooms.push(newRoom)
+          arrayResult.otherRooms.push(item)
         }
-      } else {
-        arrayResult.otherRooms.push(item)
-      }
-      return arrayResult
-    }, { singleRooms: [], otherRooms: []})
+        return arrayResult
+      },
+      { singleRooms: [], otherRooms: [] }
+    )
 
     rooms = rooms.concat(result.singleRooms)
     remainingKeys = result.otherRooms
@@ -817,21 +846,28 @@ const createRoomsFromSteps = (steps, randomizer) => {
   }
 
   if (remainingKeys.some(item => item.type === KEY_TYPES.NORMAL_KEY)) {
-    const result = remainingKeys.reduce((arrayResult, item) => {
-      if (item.type === KEY_TYPES.NORMAL_KEY) {
-        const shouldAddToExistingRoom = resultFromProbability(randomizer, normalGatesNewRoomProbabilities, false)
+    const result = remainingKeys.reduce(
+      (arrayResult, item) => {
+        if (item.type === KEY_TYPES.NORMAL_KEY) {
+          const shouldAddToExistingRoom = resultFromProbability(
+            randomizer,
+            normalGatesNewRoomProbabilities,
+            false
+          )
 
-        if (shouldAddToExistingRoom === 'true') {
-          console.log('we are adding to a new room', shouldAddToExistingRoom)
+          if (shouldAddToExistingRoom === 'true') {
+            console.log('we are adding to a new room', shouldAddToExistingRoom)
+          } else {
+            const newRoom = { nodesInRoom: [item] }
+            arrayResult.singleRooms.push(newRoom)
+          }
         } else {
-          const newRoom = { nodesInRoom: [ item ]}
-          arrayResult.singleRooms.push(newRoom)
+          arrayResult.otherRooms.push(item)
         }
-      } else {
-        arrayResult.otherRooms.push(item)
-      }
-      return arrayResult
-    }, { singleRooms: [], otherRooms: []})
+        return arrayResult
+      },
+      { singleRooms: [], otherRooms: [] }
+    )
 
     rooms = rooms.concat(result.singleRooms)
     remainingKeys = result.otherRooms
@@ -857,7 +893,7 @@ const makeRandomDungeon = (currentStep, seedName, arrayOfSteps) => {
     convertedSteps = result.obstacleSteps
     numberOfSteps = result.newTreeLength
   }
-  
+
   const dungeonNodes = tree.draw()
 
   return {
@@ -872,7 +908,7 @@ const makeRandomDungeon = (currentStep, seedName, arrayOfSteps) => {
   }
 }
 
-export const createDungeons = (currentStep) => {
+export const createDungeons = currentStep => {
   let newDungeons = []
   // newDungeons.push(makeDungeon(currentStep, 'apple'))
   // newDungeons.push(makeDungeon(currentStep, 'apples'))
@@ -884,7 +920,7 @@ export const createDungeons = (currentStep) => {
   // newDungeons.push(makeDungeon(currentStep, 'rocsFeather', rocsFeather))
   // newDungeons.push(makeDungeon(currentStep, 'windTemple', windTemple))
   newDungeons.push(makeDungeon(currentStep, 'sandShip', sandShip))
-  
+
   newDungeons.push(makeDungeon(currentStep, 'gnarledRoot', gnarledRoot))
   newDungeons.push(makeDungeon(currentStep, 'dancingDragon', dancingDragon))
   newDungeons.push(makeDungeon(currentStep, 'unicornsCave', unicornsCave))
@@ -894,7 +930,7 @@ export const createDungeons = (currentStep) => {
   newDungeons.push(makeDungeon(currentStep, 'moonlightGrotto', moonlightGrotto))
   newDungeons.push(makeDungeon(currentStep, 'mermaidsCave', mermaidsCave))
   newDungeons.push(makeDungeon(currentStep, 'jabujabuOracle', jabujabuOracle))
-  
+
   newDungeons.push(makeDungeon(currentStep, 'gnarledRoot2', gnarledRoot2))
   newDungeons.push(makeDungeon(currentStep, 'snakeRemains', snakeRemains))
   newDungeons.push(makeDungeon(currentStep, 'poisonMoth', poisonMoth))
@@ -903,7 +939,7 @@ export const createDungeons = (currentStep) => {
   newDungeons.push(makeDungeon(currentStep, 'ancientRuins', ancientRuins))
   newDungeons.push(makeDungeon(currentStep, 'explorersCrypt', explorersCrypt))
   newDungeons.push(makeDungeon(currentStep, 'swordAndShield2', swordAndShield2))
-  
+
   newDungeons.push(makeDungeon(currentStep, 'spiritsGrave2', spiritsGrave2))
   newDungeons.push(makeDungeon(currentStep, 'wingDungeon', wingDungeon))
   newDungeons.push(makeDungeon(currentStep, 'moonlitGrotto', moonlitGrotto))
@@ -912,8 +948,8 @@ export const createDungeons = (currentStep) => {
   newDungeons.push(makeDungeon(currentStep, 'mermaidsCave2', mermaidsCave2))
   newDungeons.push(makeDungeon(currentStep, 'jabujabuBelly', jabujabuBelly))
   newDungeons.push(makeDungeon(currentStep, 'ancientTomb', ancientTomb))
-  
-  newDungeons.push(makeDungeon(currentStep, 'jabujabuOcarina',jabujabuOcarina))
+
+  newDungeons.push(makeDungeon(currentStep, 'jabujabuOcarina', jabujabuOcarina))
   newDungeons.push(makeDungeon(currentStep, 'forestTemple', forestTemple))
   newDungeons.push(makeDungeon(currentStep, 'fireTemple', fireTemple))
   newDungeons.push(makeDungeon(currentStep, 'waterTemple', waterTemple))
@@ -921,7 +957,7 @@ export const createDungeons = (currentStep) => {
   newDungeons.push(makeDungeon(currentStep, 'shadowTemple', shadowTemple))
   newDungeons.push(makeDungeon(currentStep, 'shadowTemple2', shadowTemple2))
   newDungeons.push(makeDungeon(currentStep, 'spiritTemple', spiritTemple))
-  
+
   newDungeons.push(makeDungeon(currentStep, 'fortressOfWinds', fortressOfWinds))
   newDungeons.push(makeDungeon(currentStep, 'fortressOfWinds2', fortressOfWinds2))
   newDungeons.push(makeDungeon(currentStep, 'faceShrine', faceShrine))
@@ -1000,7 +1036,6 @@ export const createDungeons = (currentStep) => {
     console.log('leastAmountOfSteps', leastAmountOfSteps)
   }
 
-
   // newDungeons.push(makeRandomDungeon(currentStep, 'apples', swordAndShield))
   // newDungeons.push(makeRandomDungeon(currentStep, undefined, fortressOfWinds2))
   // newDungeons.push(makeRandomDungeon(currentStep, undefined, dancingDragon))
@@ -1010,7 +1045,7 @@ export const createDungeons = (currentStep) => {
   // newDungeons.push(makeRandomDungeon(currentStep, undefined, waterTemple2))
   // newDungeons.push(makeRandomDungeon(currentStep, 1550663388801.0613))
 
-  const fixed = true
+  const fixed = false
 
   if (fixed) {
     // const currentDungeon = makeRandomDungeon(currentStep, 1550962391952.9353)
@@ -1034,7 +1069,6 @@ export const createDungeons = (currentStep) => {
       }
     }
   }
-
 
   return newDungeons
 }

@@ -1,6 +1,5 @@
 import { getCanvasWidth, getCanvasHeight } from './gridDimensions.js'
-import { AleaRandomizer } from './AleaRandomizer.js'
-// import { createRoom } from './createRoom.js'
+import { AleaRandomizer } from '../../utils/AleaRandomizer.js'
 import { createRoom } from './createRoom2.js'
 import { draw } from './draw.js'
 
@@ -23,6 +22,7 @@ let historyIndex = 0
 
 let seed = Math.random()
 // seed = 0.5546359266872523 // only considering one target
+// seed = 0.1460515347403799 // only considering one target
 // seed = 0.3220532206180031 // solvable but should be impossible by grid history - impossible move in between - no longer considered valid
 
 seedOutput.innerHTML = `Seed: ${seed}`
