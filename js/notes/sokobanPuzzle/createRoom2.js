@@ -364,7 +364,7 @@ export const createRoom = randomizer => {
       )
       if (hasSucceeded) {
         const { grid: cleanedGrid, shuffledGoals } = placeGoals(newGrid, randomizer)
-        console.log('shuffledGoals.length', shuffledGoals.length)
+
         let internalTries = 0
 
         while (internalTries++ < MAX_INTERNAL_TRIES && !success) {
