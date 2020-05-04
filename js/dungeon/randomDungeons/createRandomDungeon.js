@@ -91,12 +91,14 @@ const createRandomSteps2 = (tree, currentStep, randomizer) => {
         KEY_TYPES.SINGLE_ROOM_PUZZLE,
         'pink'
       )
+      newKey.isPuzzle = true
     } else if (randomProbability < 0.27 + 0.23) {
       newKey = createRandomLock(
         'combatLock' + combatLockId++,
         KEY_TYPES.SINGLE_ROOM_PUZZLE,
         'silver'
       )
+      newKey.isCombat = true
     } else if (randomProbability < 0.27 + 0.23 + 0.27) {
       newKey = createRandomLock('normalLock' + normalLockId++, KEY_TYPES.NORMAL_KEY, 'lightblue')
     } else if (randomProbability < 0.27 + 0.23 + 0.27 + 0.16) {

@@ -80,6 +80,7 @@ export const drawDungeonTree = (useCachedDungeon = false) => {
       largestSteps = dungeonData.numberOfSteps
     }
     const containerNode = createContainerNode(newDungeons.length)
+
     const titleNode = createTitleNode(dungeonData.seedName)
 
     const wrapperNode = document.createElement('div')

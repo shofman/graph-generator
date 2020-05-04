@@ -23,6 +23,7 @@ export const createRandomMiniboss = name => {
     getChildrenToLock: rootValue => rootValue.getChildren(),
     isSingleKey: true,
     isSingleLock: true,
+    isMiniboss: true,
   }
 }
 

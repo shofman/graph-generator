@@ -9,4 +9,6 @@ export const KEY_TYPES = {
   EXTERNAL_KEY: 'externalLock',
   SINGLE_LOCK_KEY: 'singleKeyLock',
   UNKNOWN: 'unknown',
+  START: 'start',
+  END: 'end',
 }

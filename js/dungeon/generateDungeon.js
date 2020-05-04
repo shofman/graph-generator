@@ -38,197 +38,39 @@ Repeat for any “open” subtree.
 
 Example dungeon node - {id: 1, label: 'Node 1'},
 */
-// import { v4 } from 'uuid'
 import { KEY_TYPES } from './dungeonStructure/keyTypes.js'
 import { calculateDungeonScore } from './evaluate/evaluateDungeon.js'
 import { verifyDungeon } from './evaluate/verifyDungeon.js'
 import { createHardCodedDungeons } from './hardcodedDungeons/createHardcodedDungeons.js'
-import { resultFromProbability } from './utils/resultFromProbability.js'
 import { makeRandomDungeon } from './randomDungeons/createRandomDungeon.js'
 import { drawDungeonRooms } from './ui/drawDungeon.js'
+import { createRoomsFromSteps as createRoomsFromSteps2 } from './createRoomsFromSteps.js'
+import { generateSeedName } from './utils/seedName.js'
 
-const createRoomsFromSteps = (steps, randomizer) => {
-  console.log('steps', steps)
-  let rooms = []
+const showRoomsAdded = (dungeonData, roomData) => {
+  return dungeonData.map(dungeon => {
+    const roomsAdded = []
+    roomData.forEach(roomGroup => {
+      roomGroup.nodesInRoom.forEach(room => {
+        roomsAdded.push(room.name)
+      })
+    })
 
-  const allPotentialNodes = steps.visitedPath.slice()
+    console.log('roomsAdded', roomsAdded)
 
-  const startNode = allPotentialNodes[0]
-  const externalKeys = []
-  let remainingKeys = []
+    const nodes = dungeon.nodes.map(dungeonNodes => {
+      if (roomsAdded.includes(dungeonNodes.id)) {
+        return { ...dungeonNodes, shape: 'box', borderWidth: 2 }
+      }
+      return dungeonNodes
+    })
 
-  startNode.children.forEach(child => {
-    if (child.type === KEY_TYPES.EXTERNAL_KEY && !child.locked) {
-      externalKeys.push(child)
-    } else {
-      remainingKeys.push(child)
+    return {
+      ...dungeon,
+      nodes: nodes,
+      rooms: roomData,
     }
   })
-
-  const firstRoom = {
-    nodesInRoom: [startNode, ...externalKeys],
-    index: 1,
-    isFirstRoom: true,
-  }
-
-  rooms.push(firstRoom)
-
-  const isKeyWithSharedGate = (otherKeys, item) =>
-    item.locked === false && item.locks.length === 1 && otherKeys.includes(item.locks[0])
-
-  const hasSingleChild = node => node.children && node.children.length === 1
-
-  const hasMoreDescendents = node => {
-    if (node.children) {
-      return node.children.some(child => child.children.length > 0)
-    }
-    return false
-  }
-
-  const isPuzzleNode = node => node.isPuzzle === true
-
-  if (remainingKeys.some(item => item.type === KEY_TYPES.SINGLE_ROOM_PUZZLE)) {
-    const result = remainingKeys.reduce(
-      (arrayResult, item) => {
-        if (item.type === KEY_TYPES.SINGLE_ROOM_PUZZLE) {
-          if (isKeyWithSharedGate(remainingKeys, item)) {
-            const correspondingGate = remainingKeys.find(lock => item.locks[0] === lock)
-            const newRoom = { nodesInRoom: [item, correspondingGate] }
-
-            console.log('hasMoreDescendents', hasMoreDescendents(correspondingGate))
-
-            if (hasSingleChild(correspondingGate)) {
-              if (isPuzzleNode(correspondingGate) && !hasMoreDescendents(correspondingGate)) {
-                newRoom.nodesInRoom.push(correspondingGate.children[0])
-              }
-            }
-
-            // if (correspondingGate.childr)
-            arrayResult.singleRooms.push(newRoom)
-          }
-        } else {
-          arrayResult.otherRooms.push(item)
-        }
-        return arrayResult
-      },
-      { singleRooms: [], otherRooms: [] }
-    )
-
-    rooms = rooms.concat(result.singleRooms)
-    remainingKeys = result.otherRooms
-  }
-
-  const externalLockNewRoomProbabilities = {
-    ['true']: 50,
-    ['false']: 50,
-  }
-
-  if (remainingKeys.some(item => item.type === KEY_TYPES.EXTERNAL_KEY)) {
-    const result = remainingKeys.reduce(
-      (arrayResult, item) => {
-        if (item.type === KEY_TYPES.EXTERNAL_KEY) {
-          const shouldAddToExistingRoom = resultFromProbability(
-            randomizer,
-            externalLockNewRoomProbabilities,
-            false
-          )
-
-          if (shouldAddToExistingRoom === 'true') {
-            console.log('we are adding external to a new room', shouldAddToExistingRoom)
-          } else {
-            const newRoom = { nodesInRoom: [item] }
-            arrayResult.singleRooms.push(newRoom)
-          }
-        } else {
-          arrayResult.otherRooms.push(item)
-        }
-        return arrayResult
-      },
-      { singleRooms: [], otherRooms: [] }
-    )
-
-    rooms = rooms.concat(result.singleRooms)
-    remainingKeys = result.otherRooms
-  }
-
-  const normalGatesNewRoomProbabilities = {
-    ['true']: 25,
-    ['false']: 75,
-  }
-
-  if (remainingKeys.some(item => item.type === KEY_TYPES.NORMAL_KEY)) {
-    const result = remainingKeys.reduce(
-      (arrayResult, item) => {
-        if (item.type === KEY_TYPES.NORMAL_KEY) {
-          const shouldAddToExistingRoom = resultFromProbability(
-            randomizer,
-            normalGatesNewRoomProbabilities,
-            false
-          )
-
-          if (shouldAddToExistingRoom === 'true') {
-            console.log('we are adding normal to a new room', shouldAddToExistingRoom)
-          } else {
-            const newRoom = { nodesInRoom: [item] }
-            arrayResult.singleRooms.push(newRoom)
-          }
-        } else {
-          arrayResult.otherRooms.push(item)
-        }
-        return arrayResult
-      },
-      { singleRooms: [], otherRooms: [] }
-    )
-
-    rooms = rooms.concat(result.singleRooms)
-    remainingKeys = result.otherRooms
-  }
-
-  console.log('remainingKeys', remainingKeys)
-
-  const keyItemGateProbabilities = {
-    ['true']: 80,
-    ['false']: 50,
-  }
-
-  if (remainingKeys.some(item => item.type === KEY_TYPES.KEY_ITEM)) {
-    const result = remainingKeys.reduce(
-      (arrayResult, item) => {
-        if (item.type === KEY_TYPES.KEY_ITEM) {
-          const shouldAddToExistingRoom = resultFromProbability(
-            randomizer,
-            keyItemGateProbabilities,
-            false
-          )
-
-          if (shouldAddToExistingRoom === 'true') {
-            const addingRooms = rooms.filter(room => !room.isFirstRoom)
-            if (addingRooms.length > 3) {
-              addingRooms
-            }
-            console.log('addingRooms', addingRooms)
-            console.log('we are adding keyitem to a new room', shouldAddToExistingRoom)
-          } else {
-            const newRoom = { nodesInRoom: [item] }
-            arrayResult.singleRooms.push(newRoom)
-          }
-        } else {
-          arrayResult.otherRooms.push(item)
-        }
-        return arrayResult
-      },
-      { singleRooms: [], otherRooms: [] }
-    )
-
-    rooms = rooms.concat(result.singleRooms)
-    remainingKeys = result.otherRooms
-  }
-
-  if (remainingKeys.length) {
-    throw new Error('Still have rooms to place!')
-  }
-
-  return rooms
 }
 
 export const createDungeons = currentStep => {
@@ -251,7 +93,7 @@ export const createDungeons = currentStep => {
     // 'forestTemple',
     // 'mermaidsCave2',
     // 'dancingDragon2',
-    // // 'jabujabuOracle',
+    // 'jabujabuOracle',
     // 'unicornsCave2',
     // 'crownDungeon',
     // 'ancientTomb',
@@ -293,33 +135,152 @@ export const createDungeons = currentStep => {
     console.log('leastAmountOfSteps', leastAmountOfSteps)
   }
 
-  const fixed = true
-
   let dungeonInfo
   let currentDungeon
+  let seed
 
-  if (fixed) {
-    // const currentDungeon = makeRandomDungeon(currentStep, 1550962391952.9353)
-    currentDungeon = makeRandomDungeon(currentStep, 1551628833378.7515)
-    dungeonInfo = verifyDungeon(currentDungeon)
-    newDungeons.push(currentDungeon)
-  } else {
-    let tries = 0
+  const shouldGenerate = true
+  // seed = 1588517936366.1255 // Handle multiKey rooms better?
+  // seed = 1588536297862.176
+  // seed = 1588590758572.52
+  // currentDungeon = makeRandomDungeon(currentStep, 1588407025859.6)
+  // currentDungeon = makeRandomDungeon(currentStep, 1588408837510.7258)
+  // currentDungeon = makeRandomDungeon(currentStep, 1588414788646.3752) // Problem with this one - we are generating a key lock pair that is technically skippable if key-locks are treated as non-unique
 
-    while (tries++ < 1000) {
-      currentDungeon = makeRandomDungeon(currentStep)
+  if (shouldGenerate) {
+    if (seed) {
+      currentDungeon = makeRandomDungeon(currentStep, seed)
+      dungeonInfo = verifyDungeon(currentDungeon)
+      newDungeons.push(currentDungeon)
+    } else {
+      let tries = 0
+
+      while (tries++ < 1000) {
+        currentDungeon = makeRandomDungeon(currentStep)
+        dungeonInfo = verifyDungeon(currentDungeon)
+        const dungeonScore = calculateDungeonScore(dungeonInfo)
+        if (dungeonScore.criticalPathDistance / dungeonScore.numberOfNodes > 5) {
+          newDungeons.push(currentDungeon)
+          break
+        }
+      }
+    }
+    console.log('seed', dungeonInfo.dungeon.seedName)
+    const rooms = createRoomsFromSteps2(dungeonInfo, currentDungeon.randomizer)
+    console.log('rooms', rooms)
+    const totalRoomsAdded = rooms.reduce((accumulator, value) => {
+      return accumulator + value.nodesInRoom.length
+    }, 0)
+
+    if (totalRoomsAdded !== dungeonInfo.visitedPath.length) {
+      console.log('dungeonInfo', dungeonInfo)
+      console.warn(
+        'we did not place all the rooms!',
+        `${dungeonInfo.visitedPath.length - totalRoomsAdded} left to add`
+      )
+      console.log('rooms', rooms)
+    }
+    const groupingCanvas = document.getElementById('dungeonRooms')
+    drawDungeonRooms(groupingCanvas, rooms)
+
+    return showRoomsAdded(newDungeons, rooms)
+  }
+
+  /*
+    Verification starts here
+  */
+
+  let verificationTries = 0
+
+  let hasPushedADungeon = false
+
+  const roomCount = {}
+
+  while (verificationTries++ < 50000) {
+    if (verificationTries % 100 === 0) console.log('attempt:', verificationTries)
+    let creationTries = 0
+    let newSeed = generateSeedName()
+    while (creationTries++ < 100) {
+      currentDungeon = makeRandomDungeon(currentStep, newSeed)
       dungeonInfo = verifyDungeon(currentDungeon)
       const dungeonScore = calculateDungeonScore(dungeonInfo)
       if (dungeonScore.criticalPathDistance / dungeonScore.numberOfNodes > 5) {
-        newDungeons.push(currentDungeon)
+        if (!hasPushedADungeon) {
+          hasPushedADungeon = true
+          newDungeons.push(currentDungeon)
+        }
         break
+      } else {
+        newSeed = generateSeedName()
       }
     }
+
+    let rooms
+    try {
+      rooms = createRoomsFromSteps2(dungeonInfo, currentDungeon.randomizer)
+    } catch (e) {
+      console.log('newSeed', newSeed)
+      console.log('e', e)
+      throw new Error('Something broke in making a room')
+    }
+
+    rooms
+      .filter(roomGroup => !roomGroup.isFirstRoom)
+      .forEach(roomGroup => {
+        const roomKey = roomGroup.nodesInRoom
+          .map(node => {
+            if (node.type === KEY_TYPES.SINGLE_ROOM_PUZZLE) {
+              if (node.isPuzzle) return 'puzzle'
+              if (node.isCombat) return 'combat'
+              if (node.isMiniboss) return 'miniboss'
+              return 'unknown'
+            } else if (node.type === KEY_TYPES.BOSS) {
+              return node.name
+            } else if (node.type === KEY_TYPES.NORMAL_KEY) {
+              return node.locked ? 'normalGate' : 'normalKey'
+            } else {
+              return node.type
+            }
+          })
+          .sort()
+          .join('+')
+
+        if (roomCount[roomKey]) {
+          roomCount[roomKey].push(newSeed)
+        } else {
+          roomCount[roomKey] = [newSeed]
+        }
+      })
+
+    const totalRoomsAdded = rooms.reduce((accumulator, value) => {
+      return accumulator + value.nodesInRoom.length
+    }, 0)
+
+    if (totalRoomsAdded !== dungeonInfo.visitedPath.length) {
+      console.log('dungeonInfo', dungeonInfo)
+      console.warn(
+        'we did not place all the rooms!',
+        `${dungeonInfo.visitedPath.length - totalRoomsAdded} left to add`,
+        newSeed
+      )
+      console.log('rooms', rooms)
+      throw new Error('NO!')
+    }
   }
-  const rooms = createRoomsFromSteps(dungeonInfo, currentDungeon.randomizer)
-  console.log('rooms', rooms)
+
+  console.log('roomCount', roomCount)
+  const roomCountLengths = {}
+  Object.keys(roomCount).forEach(key => {
+    roomCountLengths[key] = roomCount[key].length
+  })
+  console.log('roomCountLengths', JSON.stringify(roomCountLengths))
+
+  const rooms = createRoomsFromSteps2(dungeonInfo, currentDungeon.randomizer)
   const groupingCanvas = document.getElementById('dungeonRooms')
   drawDungeonRooms(groupingCanvas, rooms)
 
-  return newDungeons
+  return showRoomsAdded(newDungeons, rooms)
+  /*
+    Verification ends here
+  */
 }

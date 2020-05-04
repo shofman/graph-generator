@@ -65,6 +65,10 @@ export class Node {
     this.isPuzzle = isPuzzle
   }
 
+  setMiniboss(isMiniboss = false) {
+    this.isMiniboss = isMiniboss
+  }
+
   setCombat(isCombat = false) {
     this.isCombat = isCombat
   }
@@ -137,6 +141,7 @@ export class Node {
     childrenToLock,
     isPuzzle,
     isCombat,
+    isMiniboss,
   }) {
     const addedLocks = []
     const addedKeys = []
@@ -158,12 +163,14 @@ export class Node {
       lock.setType(type)
       lock.setPuzzle(isPuzzle)
       lock.setCombat(isCombat)
+      lock.setMiniboss(isMiniboss)
     })
     addedKeys.forEach(key => {
       key.setLocks(addedLocks)
       key.setType(type)
       key.setPuzzle(isPuzzle)
       key.setCombat(isCombat)
+      key.setMiniboss(isMiniboss)
     })
 
     return addedLocks.concat(addedKeys)
@@ -176,6 +183,7 @@ export class Node {
     isSingleKey,
     isCombat,
     isPuzzle,
+    isMiniboss,
     color,
     childrenToLock,
     randomizer,
@@ -282,12 +290,14 @@ export class Node {
       lock.setType(type)
       lock.setPuzzle(isPuzzle)
       lock.setCombat(isCombat)
+      lock.setMiniboss(isMiniboss)
     })
     addedKeys.forEach(key => {
       key.setLocks(addedLocks)
       key.setType(type)
       key.setPuzzle(isPuzzle)
       key.setCombat(isCombat)
+      key.setMiniboss(isMiniboss)
     })
 
     return addedLocks.concat(addedKeys)

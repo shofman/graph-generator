@@ -115,19 +115,28 @@ export const drawDungeonRooms = (canvas, rooms) => {
   const ctx = canvas.getContext('2d')
 
   let yIndex = 0
+  let xIndex = 0
 
   const HEIGHT_OF_LETTERS = 20
   const GAP_BETWEEN_BOXES = 30
   const LETTER_OFFSET = 13
+  const BOX_WIDTH = 150
 
   rooms.forEach(groups => {
     const boxHeight = groups.nodesInRoom.length * HEIGHT_OF_LETTERS
+    const maxHeight = yIndex + LETTER_OFFSET + boxHeight
+
+    if (maxHeight > 800) {
+      xIndex += BOX_WIDTH + GAP_BETWEEN_BOXES
+      yIndex = 0
+    }
+
     ctx.strokeStyle = 'red'
-    ctx.rect(0, yIndex, 150, boxHeight)
+    ctx.rect(xIndex, yIndex, BOX_WIDTH, boxHeight)
     ctx.stroke()
 
     groups.nodesInRoom.forEach((node, index) => {
-      ctx.fillText(node.name, 5, yIndex + LETTER_OFFSET + HEIGHT_OF_LETTERS * index)
+      ctx.fillText(node.name, xIndex + 5, yIndex + LETTER_OFFSET + HEIGHT_OF_LETTERS * index)
     })
 
     yIndex += boxHeight + GAP_BETWEEN_BOXES

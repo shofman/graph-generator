@@ -6,6 +6,7 @@ const createConnection = (start, end) => ({ from: start, to: end })
 export class Tree {
   constructor() {
     this.rootValue = createNode('start', '#96c2fc', null)
+    this.rootValue.setType(KEY_TYPES.START)
   }
 
   draw() {
@@ -50,6 +51,7 @@ export class Tree {
 
   addEndState() {
     const endNode = createNode('end', 'beige', this.rootValue)
+    endNode.setType(KEY_TYPES.END)
     this.rootValue.addChild(endNode)
     return endNode
   }
