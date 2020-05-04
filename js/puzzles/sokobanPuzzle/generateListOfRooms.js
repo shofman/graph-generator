@@ -1,6 +1,6 @@
 import { hardcodedSubroomTemplates } from './subroomTemplates.js'
 import { arrayCopy } from './helpers.js'
-import { shuffleRooms } from './shuffleRooms.js'
+import { shuffleList } from '../../utils/shuffleList.js'
 
 const rotateBy90 = oldRoom => {
   const newRoom = []
@@ -50,7 +50,7 @@ export const generateListOfRooms = (shuffle = false, randomizer = {}) => {
   })
 
   if (shuffle) {
-    return shuffleRooms(allPermutationsOfRooms, randomizer)
+    return shuffleList(allPermutationsOfRooms, randomizer)
   }
 
   return allPermutationsOfRooms

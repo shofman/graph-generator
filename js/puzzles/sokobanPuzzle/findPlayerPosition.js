@@ -1,7 +1,7 @@
 import { findGroupsWithFlooding, prepareVisitationGraph } from './visitationGraph.js'
 import { SUCCESS_TARGET } from './blockTypes.js'
 import { arrayCopy } from './helpers.js'
-import { shuffleRooms as shuffleList } from './shuffleRooms.js'
+import { shuffleList } from '../../utils/shuffleList.js'
 
 export const findPlayerPosition = (bestResult, lastStateGoals, randomizer) => {
   // Place player in grid in a random possible position

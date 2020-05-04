@@ -1,6 +1,6 @@
 import { isWithinYGrid, isWithinXGrid, getGridXLength } from './gridDimensions.js'
 import { prepareVisitationGraph, findGroupsWithFlooding } from './visitationGraph.js'
-import { shuffleRooms as shuffleList } from './shuffleRooms.js'
+import { shuffleList } from '../../utils/shuffleList.js'
 import { arrayCopy } from './helpers.js'
 import { getNumberOfBlocksSurroundingRoom } from './getNumberOfBlocksSurroundingRoom.js'
 import {
