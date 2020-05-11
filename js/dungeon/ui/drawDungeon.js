@@ -1,11 +1,5 @@
 import { KEY_TYPES } from '../dungeonStructure/keyTypes.js'
-
-const getRandomIntInclusive = (randomizer, min, max) => {
-  min = Math.ceil(min)
-  max = Math.floor(max)
-  //The maximum is inclusive and the minimum is inclusive
-  return Math.floor(randomizer() * (max - min + 1)) + min
-}
+import { getRandomIntInclusive } from '../utils/getRandomIntInclusive.js'
 
 export const drawDungeon = (canvas, dungeonToDraw) => {
   if (!dungeonToDraw.convertedSteps) {
@@ -111,7 +105,7 @@ export const drawDungeon = (canvas, dungeonToDraw) => {
   ctx.stroke()
 }
 
-export const drawDungeonRooms = (canvas, rooms) => {
+export const drawRooms = (canvas, rooms) => {
   const ctx = canvas.getContext('2d')
 
   let yIndex = 0

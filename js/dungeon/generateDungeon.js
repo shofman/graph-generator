@@ -43,7 +43,7 @@ import { calculateDungeonScore } from './evaluate/evaluateDungeon.js'
 import { verifyDungeon } from './evaluate/verifyDungeon.js'
 import { createHardCodedDungeons } from './hardcodedDungeons/createHardcodedDungeons.js'
 import { makeRandomDungeon } from './randomDungeons/createRandomDungeon.js'
-import { drawDungeonRooms } from './ui/drawDungeon.js'
+import { drawRooms } from './ui/drawDungeon.js'
 import { createRoomsFromSteps as createRoomsFromSteps2 } from './createRoomsFromSteps.js'
 import { generateSeedName } from './utils/seedName.js'
 
@@ -143,6 +143,7 @@ export const createDungeons = currentStep => {
   // seed = 1588517936366.1255 // Handle multiKey rooms better?
   // seed = 1588536297862.176
   // seed = 1588590758572.52
+  seed = 1588707120611.39
   // currentDungeon = makeRandomDungeon(currentStep, 1588407025859.6)
   // currentDungeon = makeRandomDungeon(currentStep, 1588408837510.7258)
   // currentDungeon = makeRandomDungeon(currentStep, 1588414788646.3752) // Problem with this one - we are generating a key lock pair that is technically skippable if key-locks are treated as non-unique
@@ -181,7 +182,7 @@ export const createDungeons = currentStep => {
       console.log('rooms', rooms)
     }
     const groupingCanvas = document.getElementById('dungeonRooms')
-    drawDungeonRooms(groupingCanvas, rooms)
+    drawRooms(groupingCanvas, rooms)
 
     return showRoomsAdded(newDungeons, rooms)
   }
@@ -277,7 +278,7 @@ export const createDungeons = currentStep => {
 
   const rooms = createRoomsFromSteps2(dungeonInfo, currentDungeon.randomizer)
   const groupingCanvas = document.getElementById('dungeonRooms')
-  drawDungeonRooms(groupingCanvas, rooms)
+  drawRooms(groupingCanvas, rooms)
 
   return showRoomsAdded(newDungeons, rooms)
   /*

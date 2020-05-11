@@ -1,6 +1,7 @@
 import { drawDungeonTree, rewind, advance } from './ui/drawGraph.js'
 import { evaluateDungeon } from './evaluate/evaluateDungeon.js'
 import { drawDungeon } from './ui/drawDungeon.js'
+import { layoutDungeon } from './ui/placeRooms.js'
 import { verify } from './evaluate/verifyDungeon.js'
 
 window.drawDungeonTree = drawDungeonTree
@@ -10,7 +11,6 @@ window.evaluateDungeon = evaluateDungeon
 window.verify = verify
 
 window.switchViews = () => {
-  console.log('i am here')
   const dungeonRooms = document.getElementById('dungeonRooms')
   const dungeonVisual = document.getElementById('dungeonVisual')
 
@@ -25,4 +25,5 @@ window.switchViews = () => {
 
 const result = drawDungeonTree()
 evaluateDungeon()
-drawDungeon(document.getElementById('dungeonVisual'), result[0])
+layoutDungeon(document.getElementById('dungeonVisual'), result[0])
+window.switchViews()
