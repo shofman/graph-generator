@@ -284,7 +284,6 @@ const createPlaceRooms = (rooms, randomizer) => {
             position: { xPos, yPos },
           })
         })
-        console.log('roomsToAddNext', roomsToAddNext)
 
         const placeRooms = createPlaceRooms(rooms, randomizer)
         drawDungeonLayout(storedDungeon, document.getElementById('dungeonVisual'), true)

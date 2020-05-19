@@ -114,7 +114,7 @@ export const drawRooms = (canvas, rooms) => {
   const HEIGHT_OF_LETTERS = 20
   const GAP_BETWEEN_BOXES = 30
   const LETTER_OFFSET = 13
-  const BOX_WIDTH = 10
+  const BOX_WIDTH = 150
 
   rooms.forEach(groups => {
     const boxHeight = groups.nodesInRoom.length * HEIGHT_OF_LETTERS
