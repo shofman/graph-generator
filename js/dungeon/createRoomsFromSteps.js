@@ -1,6 +1,7 @@
 import { KEY_TYPES } from './dungeonStructure/keyTypes.js'
 import { resultFromProbability } from './utils/resultFromProbability.js'
 import { shuffleList } from '../utils/shuffleList.js'
+import { randChunkSplit } from './utils/randChunkSplit.js'
 
 // Helpers
 const isSingleChild = node => node.parent.children.length === 1
@@ -33,18 +34,6 @@ const hasMatchingNodeAsSibling = node => {
   return node.parent.children.some(child => node.keys[0] == child)
 }
 
-const randChunkSplit = (randomizer, rooms, min, max) => {
-  if (typeof randomizer !== 'function') throw new Error('Randomizer must be a function')
-  const roomsToChunk = rooms.slice()
-  const newChunks = []
-  let size = 1
-  while (roomsToChunk.length > 0) {
-    size = Math.min(max, Math.floor(randomizer() * max + min))
-    newChunks.push(roomsToChunk.splice(0, size))
-  }
-  return newChunks
-}
-
 // Main logic
 
 const KEY_ITEM_SINGLE_LOCK_COMBINE_ODDS = { true: 30, false: 70 }
@@ -69,9 +58,14 @@ export const createRoomsFromSteps = (steps, randomizer) => {
       listOfAddedRoomNames.push(room.name)
     })
 
+    const possibleParents = toAdd.map(node => node.parent).filter(parent => !toAdd.includes(parent))
+    const uniqueParents = [...new Set(possibleParents)]
+
     return {
       nodesInRoom: toAdd,
       indexId: indexId++,
+      roomName: toAdd[0].name,
+      parentNode: uniqueParents[0],
     }
   }
 

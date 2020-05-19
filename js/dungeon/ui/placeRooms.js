@@ -1,5 +1,9 @@
 import { shuffleList } from '../../utils/shuffleList.js'
 import { getRandomIntInclusive } from '../utils/getRandomIntInclusive.js'
+import { drawDungeonLayout } from '../ui/drawDungeonLayout.js'
+import { circularArrayCopy, arrayCopy } from '../../utils/arrayCopy.js'
+import { randChunkSplit } from '../utils/randChunkSplit.js'
+import { getAllPermutations } from '../utils/getAllPermutations.js'
 
 const createLabelForRoom = (xPos, yPos, listOfNames) => {
   return {
@@ -46,23 +50,204 @@ const createState = ({ xPos, yPos, gridHistory, roomHistory, roomsToPlace, grid 
   }
 }
 
-const canPlaceRoom = (currentPosition, currentDirection, gridDimensions) => {
+const getNewPosition = (currentPosition, currentDirection) => {
   const { xPos, yPos } = currentPosition
   const { x, y } = currentDirection
 
-  console.log('xPos, x, yPos, y, gridDimensions', xPos, x, yPos, y, gridDimensions)
-  if (xPos + x > gridDimensions.width - 1) return false
-  if (yPos + y > gridDimensions.height - 1) return false
-  if (xPos + x < 0) return false
-  if (yPos + y < 0) return false
-  return true
+  return { x: x + xPos, y: y + yPos }
+}
+
+const canPlaceRoom = (dungeon, currentPosition, currentDirection, gridDimensions) => {
+  const { x: newPosX, y: newPosY } = getNewPosition(currentPosition, currentDirection)
+
+  if (newPosX > gridDimensions.width - 1) return false
+  if (newPosY > gridDimensions.height - 1) return false
+  if (newPosX < 0) return false
+  if (newPosY < 0) return false
+
+  return dungeon[newPosY][newPosX] === 0
+}
+
+const addChildrenNodesToRoomsToAdd = (rooms, roomsToAdd) => node => {
+  const children = node.children
+  if (!children) return
+  children
+    .filter(child => {
+      const correspondingRoom = findRoomForNode(rooms, child)
+      const currentRoom = findRoomForNode(rooms, node)
+      return correspondingRoom !== currentRoom
+    })
+    .forEach(child => {
+      const correspondingRoom = findRoomForNode(rooms, child)
+      if (!roomsToAdd.includes(correspondingRoom)) {
+        roomsToAdd.push(correspondingRoom)
+      }
+    })
+}
+
+const createHallway = () => ({
+  indexId: -1,
+  nodesInRoom: [{ name: 'hallway' }],
+  parentNode: undefined,
+})
+
+// solve(game):
+//     if (game board is full)
+//         return SUCCESS
+//     else
+//         next_square = getNextEmptySquare()
+//         for each value that can legally be put in next_square
+//             put value in next_square (i.e. modify game state)
+//             if (solve(game)) return SUCCESS
+//             remove value from next_square (i.e. backtrack to a previous state)
+//     return FAILURE
+
+const createPlaceRooms = (rooms, randomizer) => {
+  const createHallwayRooms = (chunkedRooms, dungeon, currentPosition, gridDimensions, depth) => {
+    // drawDungeonLayout(dungeon, document.getElementById('dungeonVisual'), true)
+    // debugger
+
+    let chunkedRoomIndex = 0
+    let tempDungeon = dungeon
+    const hallwayDirections = shuffleList(Object.values(directions), randomizer)
+    let numberOfHallwaysPlaced = 0
+
+    while (chunkedRoomIndex < chunkedRooms.length && hallwayDirections.length) {
+      const hallwayDirection = hallwayDirections.shift()
+      if (canPlaceRoom(tempDungeon, currentPosition, hallwayDirection, gridDimensions)) {
+        numberOfHallwaysPlaced++
+        const { x: hallX, y: hallY } = getNewPosition(currentPosition, hallwayDirection)
+        const hallwayDungeon = circularArrayCopy(tempDungeon)
+        hallwayDungeon[hallY][hallX] = createHallway()
+        const result = placeRooms(
+          chunkedRooms[chunkedRoomIndex],
+          hallwayDungeon,
+          { xPos: hallX, yPos: hallY },
+          gridDimensions,
+          depth + 1
+        )
+        drawDungeonLayout(hallwayDungeon, document.getElementById('dungeonVisual'), true)
+
+        if (result.isSuccessful) {
+          tempDungeon = result.storedDungeon
+          chunkedRoomIndex++
+        }
+      }
+    }
+
+    return {
+      isSuccessful: numberOfHallwaysPlaced === chunkedRooms.length,
+      storedDungeon: tempDungeon,
+    }
+  }
+
+  const createLookup = size => (accumulator, arrayOfDirections) => {
+    const truncatedDirections = arrayOfDirections.slice(0, size)
+    const key = JSON.stringify(truncatedDirections)
+    if (!accumulator[key]) {
+      accumulator[key] = true
+      accumulator.result.push(truncatedDirections)
+    }
+    return accumulator
+  }
+
+  const allDirections = getAllPermutations(Object.values(directions))
+  const directionToRoomLookup = {
+    [1]: allDirections.reduce(createLookup(1), { result: [] }).result,
+    [2]: allDirections.reduce(createLookup(2), { result: [] }).result,
+    [3]: allDirections.reduce(createLookup(3), { result: [] }).result,
+  }
+
+  const placeRooms = (roomsToAdd, dungeon, currentPosition, gridDimensions, depth) => {
+    if (roomsToAdd.length === 0) return { isSuccessful: true, storedDungeon: dungeon }
+    console.log('roomsToAdd', roomsToAdd)
+
+    let roomIndex = 0
+    let directionIndex = 0
+
+    let storedDungeon = dungeon
+
+    if (roomsToAdd.length > 3) {
+      const chunkedRooms = randChunkSplit(randomizer, roomsToAdd, 1, 2)
+      return createHallwayRooms(chunkedRooms, dungeon, currentPosition, gridDimensions, depth)
+    }
+    const arrayOfDirectionsToConsider = shuffleList(
+      arrayCopy(directionToRoomLookup[roomsToAdd.length]),
+      randomizer
+    )
+    console.log('arrayOfDirectionsToConsider', arrayOfDirectionsToConsider)
+    let hasPlaced = false
+
+    while (roomIndex < roomsToAdd.length && directionIndex < arrayOfDirectionsToConsider.length) {
+      const shuffledDirections = arrayCopy(arrayOfDirectionsToConsider[directionIndex])
+
+      while (shuffledDirections.length) {
+        const currentDirection = shuffledDirections.shift()
+        if (
+          canPlaceRoom(storedDungeon, currentPosition, currentDirection, gridDimensions) &&
+          roomIndex < roomsToAdd.length
+        ) {
+          const currentRoom = roomsToAdd[roomIndex]
+          const currentName = currentRoom.roomName
+          console.log('currentRoom', currentRoom)
+          const { x: xPos, y: yPos } = getNewPosition(currentPosition, currentDirection)
+          const newDungeon = circularArrayCopy(storedDungeon)
+          newDungeon[yPos][xPos] = currentRoom
+          // drawDungeonLayout(newDungeon, document.getElementById('dungeonVisual'), true)
+          // debugger
+
+          const newRoomsToAdd = []
+          currentRoom.nodesInRoom.forEach(addChildrenNodesToRoomsToAdd(rooms, newRoomsToAdd))
+          const placeRooms = createPlaceRooms(rooms, randomizer)
+          const newPosition = { xPos, yPos }
+          const result = placeRooms(
+            newRoomsToAdd,
+            newDungeon,
+            newPosition,
+            gridDimensions,
+            depth + 1
+          )
+          hasPlaced = result.isSuccessful
+          if (result.isSuccessful) {
+            // debugger
+            storedDungeon = result.storedDungeon
+            roomIndex++
+          } else {
+            console.log('newRoomsToAdd', newRoomsToAdd)
+            // debugger
+            storedDungeon = dungeon
+            directionIndex++
+            roomIndex = 0
+          }
+        } else {
+          hasPlaced = false
+          directionIndex++
+          roomIndex = 0
+          storedDungeon = dungeon
+        }
+      }
+      const numberOfRoomsPlaced = roomIndex
+      if (roomsToAdd.length !== numberOfRoomsPlaced && hasPlaced) {
+        hasPlaced = false
+        directionIndex++
+        roomIndex = 0
+        storedDungeon = dungeon
+      } else {
+        // debugger
+      }
+    }
+    if (!hasPlaced) {
+      // debugger
+      return { isSuccessful: false, storedDungeon: storedDungeon || dungeon }
+    }
+    return { isSuccessful: true, storedDungeon: storedDungeon || dungeon }
+  }
+
+  return placeRooms
 }
 
 export const layoutDungeon = (canvas, dungeonToDraw) => {
-  const ctx = canvas.getContext('2d')
   const { rooms, randomizer } = dungeonToDraw
-
-  console.log('randomizer', randomizer)
 
   // Set grid to be rooms.length ^ 2, to ensure we have enough space to place all
   const layoutWidth = rooms.length
@@ -85,24 +270,16 @@ export const layoutDungeon = (canvas, dungeonToDraw) => {
   const startingRoomX = Math.floor(layoutWidth / 2)
   const startingRoomY = layoutHeight - 1
 
-  dungeon[startingRoomY][startingRoomX] = startingNode.nodesInRoom.filter(
-    node => !node.parent
-  )[0].name
-
-  console.log('dungeon', dungeon)
+  dungeon[startingRoomY][startingRoomX] = startingNode
 
   const roomsToAdd = []
-  startingNode.nodesInRoom.forEach(node => {
-    const children = node.children
-    children
-      .filter(child => !startingNode.nodesInRoom.includes(child))
-      .forEach(child => {
-        const correspondingRoom = findRoomForNode(rooms, child)
-        if (!roomsToAdd.includes(correspondingRoom)) {
-          roomsToAdd.push(correspondingRoom)
-        }
-      })
-  })
+  startingNode.nodesInRoom.forEach(addChildrenNodesToRoomsToAdd(rooms, roomsToAdd))
+
+  const shuffledRoomsToAdd = shuffleList(roomsToAdd, randomizer)
+
+  console.log('shuffledRoomsToAdd', shuffledRoomsToAdd)
+
+  const placeRooms = createPlaceRooms(rooms, randomizer)
 
   const firstState = createState({
     xPos: startingRoomX,
@@ -113,154 +290,13 @@ export const layoutDungeon = (canvas, dungeonToDraw) => {
     roomHistory: [],
   })
 
-  if (roomsToAdd.length > 3) {
-    // Create hallway
-  } else {
-    console.log('randomizer', randomizer)
-    if (randomizer() < 100) {
-      const shuffledRoomsToAdd = shuffleList(roomsToAdd, randomizer)
-
-      const shuffledDirections = shuffleList(Object.values(directions), randomizer)
-      console.log('shuffledDirections', shuffledDirections)
-      console.log('shuffledRoomsToAdd', shuffledRoomsToAdd)
-
-      const currentDirection = shuffledDirections[3] // .shift()
-      const currentRoom = shuffledRoomsToAdd.shift()
-      console.log('currentDirection', currentDirection)
-      if (canPlaceRoom(firstState.currentPosition, currentDirection, gridDimensions)) {
-        console.log('we can place')
-      }
-    } else {
-      // TODO - figure out probs of adding hallway here
-    }
-  }
-
-  console.log('roomsToAdd', roomsToAdd)
-}
-
-export const drawDungeonFromRooms = (canvas, dungeonToDraw) => {
-  const ctx = canvas.getContext('2d')
-
-  const { rooms, randomizer } = dungeonToDraw
-
-  // Calculate max size that, if we took all the max room widths
-  // and sent all the rooms to draw in that direction, that would be zero from our starting point
-  const DUNGEON_WIDTH = 120
-  const DUNGEON_HEIGHT = 120
-
-  let dungeon = []
-  for (let i = 0; i < DUNGEON_HEIGHT; i++) {
-    let setToOne = i === 0 || i === DUNGEON_HEIGHT - 1
-    dungeon.push(
-      Array.apply(null, Array(DUNGEON_WIDTH)).map((j, index) => {
-        return index === 0 || index === DUNGEON_WIDTH - 1 || setToOne ? 1 : 0
-      })
-    )
-  }
-
-  const newRoomWidth = getRandomIntInclusive(randomizer, 15, 35)
-  const newRoomHeight = getRandomIntInclusive(randomizer, 15, 35)
-
-  const startingRoomX = Math.floor(DUNGEON_WIDTH / 2) - Math.floor(newRoomWidth / 2)
-  const startingRoomY = DUNGEON_HEIGHT - newRoomHeight
-
-  for (let row = 0; row < newRoomHeight; row++) {
-    for (let col = 0; col < newRoomWidth; col++) {
-      dungeon[row + startingRoomY][col + startingRoomX] = 1
-    }
-  }
-
-  const dungeonLabels = []
-  const startingNode = rooms.filter(room => room.isFirstRoom)[0]
-  const startingLabel = createLabelForRoom(
-    startingRoomX,
-    startingRoomY,
-    startingNode.nodesInRoom.map(node => node.name)
+  const success = placeRooms(
+    shuffledRoomsToAdd,
+    dungeon,
+    firstState.currentPosition,
+    gridDimensions,
+    0
   )
-
-  dungeonLabels.push(startingLabel)
-
-  const roomsAdded = []
-
-  const roomsToAdd = []
-  startingNode.nodesInRoom.forEach(node => {
-    const children = node.children
-    children
-      .filter(child => !startingNode.nodesInRoom.includes(child))
-      .forEach(child => {
-        const correspondingRoom = findRoomForNode(rooms, child)
-        if (!roomsToAdd.includes(correspondingRoom)) {
-          roomsToAdd.push(correspondingRoom)
-        }
-      })
-  })
-
-  // TODO - attempt to force layout grid.
-  // Ignore random widths / heights - separate visual component from underlying logic
-  // First check that the room positionings can work via brute force
-  // Attempt the 3 next positions
-  // If there is ever a failure state where none of the room sizes work, insert a 'hallway node' and check again.
-  // Once we have a static grid of interlocking pieces, then we can convert that into a visual representation
-  const shuffledRoomsToAdd = shuffleList(roomsToAdd, randomizer)
-
-  let hasRoomsToAdd = shuffledRoomsToAdd.length
-  // while (hasRoomsToAdd) {
-  //   const currentRoom = shuffledRoomsToAdd.shift()
-  //   roomsAdded.push(currentRoom)
-
-  //   const roomWidth = getRandomIntInclusive(randomizer, 15, 35)
-  //   const roomHeight = getRandomIntInclusive(randomizer, 15, 35)
-
-  //   const RoomX = Math.floor(DUNGEON_WIDTH / 2) - Math.floor(newRoomWidth / 2)
-  //   const startingRoomY = DUNGEON_HEIGHT - newRoomHeight
-
-  //   for (let row = 0; row < newRoomHeight; row++) {
-  //     for (let col = 0; col < newRoomWidth; col++) {
-  //       dungeon[row + startingRoomY][col + startingRoomX] = 1
-  //     }
-  //   }
-  // }
-
-  console.log('roomsToAdd', shuffledRoomsToAdd)
-
-  dungeon.forEach((row, yIndex) => {
-    row.forEach((point, xIndex) => {
-      if (point === 1) {
-        ctx.fillStyle = '#666666'
-      } else {
-        ctx.fillStyle = '#FFFFFF'
-      }
-      ctx.fillRect(xIndex * 4, yIndex * 4, 4, 4)
-    })
-  })
-  ctx.stroke()
-
-  dungeonLabels.forEach(label => {
-    const baseX = label.xPos
-    const baseY = label.yPos
-    const GAP = 14
-
-    const getBackgroundLength = word => {
-      if (word.length <= 5) {
-        return 30
-      } else if (word.length <= 10) {
-        return 50
-      } else if (word.length <= 15) {
-        return 60
-      } else if (word.length <= 20) {
-        return 90
-      }
-    }
-
-    label.listOfNames.forEach((name, index) => {
-      const startingX = baseX * 4
-      const startingY = baseY * 4 + GAP * index
-      ctx.fillStyle = 'black'
-      ctx.fillRect(startingX, startingY, getBackgroundLength(name), 20)
-      ctx.fillStyle = 'orange'
-      ctx.font = '10px Comic Sans MS'
-      ctx.fillText(name, startingX + 4, startingY + GAP)
-      ctx.stroke()
-    })
-  })
+  console.log('success', success)
+  return dungeon
 }

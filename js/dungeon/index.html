@@ -5,7 +5,6 @@
 
     <style type="text/css">
         #generation, #mynetwork {
-            display: inline;
             float: left;
         }
         #generation2 {
@@ -15,8 +14,76 @@
             border: 1px solid black;
             float: left;
         }
+
+        #dungeonVisual {
+            max-width: 1000px;
+            min-width: 400px;
+        }
+
+        #dungeonRooms {
+            width: 650px;
+        }
         .space-left {
             margin-left: 18px;
+        }
+        .dungeon-grouping {
+            display: flex;
+            flex-direction: column;
+        }
+        .dungeon-header {
+            flex-direction: row;
+        }
+        table {
+            table-layout: fixed;
+            width: 100%;
+        }
+    
+        table td {
+            width: 50px;   
+            text-align: center; 
+            vertical-align: middle;
+            border: 1px solid lightgray;
+        }
+
+        td.filled {
+            background: lightgray;
+            border: 1px solid black;
+            padding: 10px;
+        }
+
+        td.lower-parent {
+            border-bottom: 0px solid black;
+        }
+
+        td.upper-child {
+            border-top: 0px solid black;
+        }
+
+        td.left-child {
+            border-left: 0px solid black;
+        }
+
+        td.right-parent {
+            border-right: 0px solid black;
+        }
+
+        td.right-child {
+            border-right: 0px solid black;
+        }
+
+        td.left-parent {
+            border-left: 0px solid black;
+        }
+
+        td.lower-child {
+            border-bottom: 0px solid black;
+        }
+
+        td.upper-parent {
+            border-top: 0px solid black;
+        }
+        .dungeon-room-visual {
+            display: flex;
         }
     </style>
 </head>
@@ -35,12 +102,19 @@
 
 <div id="mynetwork"></div>
 
-<div>
-    <label class="space-left" for="dungeonView">View rooms/groups</label>
-    <input id="dungeonView" type="checkbox" onchange="switchViews()">
+<div class="dungeon-grouping">
+    <div class="dungeon-header">
+        <label class="space-left" for="dungeonView">View rooms/groups</label>
+        <!-- <input id="dungeonView" type="checkbox" onchange="switchViews()"> -->
+        <button id="rewindDraw" onclick="rewindDraw()">-</button>
+        <input id="drawDungeonSlider" type="range" min="0" range="1" value="0" onchange="stepThroughDungeon()" />
+        <button id="advanceDraw" onclick="advanceDraw()">+</button>
+    </div>
+    <div class="dungeon-room-visual">
+        <table class="space-left" id="dungeonVisual" width="650" height="800"></table>
+        <canvas class="space-left" id="dungeonRooms" width="650" height="800"></canvas>
+    </div>
 </div>
-<canvas class="space-left" id="dungeonVisual" width="650" height="800" style="display: none;"></canvas>
-<canvas class="space-left" id="dungeonRooms" width="650" height="800"></canvas>
 
 </body>
 </html>

@@ -1,12 +1,15 @@
 import { drawDungeonTree, rewind, advance } from './ui/drawGraph.js'
 import { evaluateDungeon } from './evaluate/evaluateDungeon.js'
 import { drawDungeon } from './ui/drawDungeon.js'
+import { drawDungeonLayout, rewindDraw, advanceDraw, setupFirstView } from './ui/drawDungeonLayout.js'
 import { layoutDungeon } from './ui/placeRooms.js'
 import { verify } from './evaluate/verifyDungeon.js'
 
 window.drawDungeonTree = drawDungeonTree
 window.rewind = rewind
 window.advance = advance
+window.rewindDraw = rewindDraw
+window.advanceDraw = advanceDraw
 window.evaluateDungeon = evaluateDungeon
 window.verify = verify
 
@@ -25,5 +28,8 @@ window.switchViews = () => {
 
 const result = drawDungeonTree()
 evaluateDungeon()
-layoutDungeon(document.getElementById('dungeonVisual'), result[0])
-window.switchViews()
+const newDungeonLayout = layoutDungeon(document.getElementById('dungeonVisual'), result[0])
+
+drawDungeonLayout(newDungeonLayout, document.getElementById('dungeonVisual'))
+setupFirstView()
+// window.switchViews()

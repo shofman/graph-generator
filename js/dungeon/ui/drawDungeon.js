@@ -130,7 +130,7 @@ export const drawRooms = (canvas, rooms) => {
     ctx.stroke()
 
     groups.nodesInRoom.forEach((node, index) => {
-      ctx.fillText(node.name, xIndex + 5, yIndex + LETTER_OFFSET + HEIGHT_OF_LETTERS * index)
+      ctx.fillText(node.name, xIndex + 5, yIndex + LETTER_OFFSET + HEIGHT_OF_LETTERS * index, 50)
     })
 
     yIndex += boxHeight + GAP_BETWEEN_BOXES
