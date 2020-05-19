@@ -19,10 +19,6 @@
             max-width: 1000px;
             min-width: 400px;
         }
-
-        #dungeonRooms {
-            width: 650px;
-        }
         .space-left {
             margin-left: 18px;
         }
@@ -43,12 +39,18 @@
             text-align: center; 
             vertical-align: middle;
             border: 1px solid lightgray;
+            max-width: 80px;
+            word-wrap: break-word;
         }
 
         td.filled {
             background: lightgray;
             border: 1px solid black;
             padding: 10px;
+        }
+
+        td.empty {
+            display: none;
         }
 
         td.lower-parent {
@@ -85,6 +87,11 @@
         .dungeon-room-visual {
             display: flex;
         }
+        #roomdebugger {
+            display: flex;
+            flex-direction: column;
+            float: left;
+        }
     </style>
 </head>
 <body>
@@ -100,19 +107,21 @@
 <span id="seed"></span>
 <button id="generation2" onclick="drawDungeonTree()" type="button">Refresh</button>
 
-<div id="mynetwork"></div>
+<div id="roomdebugger">
+    <div id="mynetwork"></div>
+    <canvas id="dungeonRooms" width="800" height="400"></canvas>
+</div>
 
 <div class="dungeon-grouping">
     <div class="dungeon-header">
         <label class="space-left" for="dungeonView">View rooms/groups</label>
-        <!-- <input id="dungeonView" type="checkbox" onchange="switchViews()"> -->
+        <input id="dungeonView" type="checkbox" onchange="switchViews()">
         <button id="rewindDraw" onclick="rewindDraw()">-</button>
         <input id="drawDungeonSlider" type="range" min="0" range="1" value="0" onchange="stepThroughDungeon()" />
         <button id="advanceDraw" onclick="advanceDraw()">+</button>
     </div>
     <div class="dungeon-room-visual">
         <table class="space-left" id="dungeonVisual" width="650" height="800"></table>
-        <canvas class="space-left" id="dungeonRooms" width="650" height="800"></canvas>
     </div>
 </div>
 

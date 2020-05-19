@@ -1,14 +1,3 @@
-// const hasLeftNeighbor = (dungeon, rowIndex, colIndex, gridDimensions) => {
-//   debugger
-//   try {
-//     if (dungeon[rowIndex][colIndex - 1]) {
-//       console.log('we are here')
-//     }
-//   } catch(e) {
-//     return false
-//   }
-// }
-
 const hasLowerParent = (dungeon, rowIndex, colIndex) => {
   try {
     const lowerRoom = dungeon[rowIndex + 1][colIndex].nodesInRoom
@@ -104,18 +93,38 @@ const hasLeftParent = (dungeon, rowIndex, colIndex) => {
 export const drawDungeonLayout = (dungeonLayout, table, renderLast = false) => {
   const tableBody = document.createElement('tbody')
 
+  const colIndicesWithValues = dungeonLayout.reduce((accum, curr) => {
+    const columnsWithValuesForRows = curr
+      .map((item, index) => (item !== 0 ? index : false))
+      .filter(Boolean)
+
+    columnsWithValuesForRows.forEach(indexValue => {
+      if (!accum.includes(indexValue)) {
+        accum.push(indexValue)
+      }
+    })
+    return accum
+  }, [])
+
   dungeonLayout.forEach((rowData, rowIndex) => {
     const row = document.createElement('tr')
+    const numberCell = document.createElement('td')
+    numberCell.appendChild(document.createTextNode(rowIndex))
+    row.append(numberCell)
+
+    let shouldAppend = false
 
     rowData.forEach((cellData, colIndex) => {
       if (cellData !== 0) {
-        // debugger
+        shouldAppend = true
       }
       const emptyCharacter = '‎' // This is not an empty string, but a zero width character
-      const infoToShow = cellData !== 0 ? cellData.nodesInRoom[0].name : emptyCharacter
+      const infoToShow =
+        cellData !== 0 ? `${colIndex}) ${cellData.nodesInRoom[0].name}` : emptyCharacter
       const cell = document.createElement('td')
       cell.appendChild(document.createTextNode(infoToShow))
-      cell.className = cellData !== 0 ? 'filled' : ''
+      const shouldShowEmpty = colIndicesWithValues.includes(colIndex)
+      cell.className = cellData !== 0 ? 'filled' : shouldShowEmpty ? '' : 'empty'
 
       if (hasLowerParent(dungeonLayout, rowIndex, colIndex)) {
         cell.classList.add('lower-parent')
@@ -148,11 +157,12 @@ export const drawDungeonLayout = (dungeonLayout, table, renderLast = false) => {
       if (hasUpperParent(dungeonLayout, rowIndex, colIndex)) {
         cell.classList.add('upper-parent')
       }
-
       row.appendChild(cell)
     })
 
-    tableBody.appendChild(row)
+    if (shouldAppend) {
+      tableBody.appendChild(row)
+    }
   })
 
   if (table.childNodes.length) {
