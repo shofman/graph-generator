@@ -1,6 +1,5 @@
 import { drawDungeonTree, rewind, advance } from './ui/drawGraph.js'
 import { evaluateDungeon } from './evaluate/evaluateDungeon.js'
-import { drawDungeon } from './ui/drawDungeon.js'
 import {
   drawDungeonLayout,
   rewindDraw,
@@ -33,8 +32,21 @@ window.switchViews = () => {
 
 const result = drawDungeonTree()
 evaluateDungeon()
-const newDungeonLayout = layoutDungeon(document.getElementById('dungeonVisual'), result[0])
+const dungeonVisual = document.getElementById('dungeonVisual')
+const newDungeonLayout = layoutDungeon(dungeonVisual, result[0])
 
 drawDungeonLayout(newDungeonLayout, document.getElementById('dungeonVisual'))
 setupFirstView()
-// window.switchViews()
+
+const roomsPlaced = [...document.querySelectorAll('table .filled')]
+const roomsPlacedIgnoringHallways = roomsPlaced.filter(
+  roomDisplay => !roomDisplay.innerHTML.includes('hallway')
+).length
+const roomsExpected = result[0].rooms.length
+
+if (roomsPlacedIgnoringHallways !== roomsExpected) {
+  console.warn(
+    'we did not place all the expected rooms',
+    `Missing ${roomsExpected - roomsPlacedIgnoringHallways}`
+  )
+}
