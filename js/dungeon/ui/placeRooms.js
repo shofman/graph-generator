@@ -140,8 +140,11 @@ const createPlaceRooms = (rooms, randomizer) => {
         const currentChunk = chunkedRooms[chunkedRoomIndex]
         hallwayDungeon[hallY][hallX] = createHallway(currentChunk[0].parentNode, currentChunk)
 
+        const newDirections = getDirections(currentChunk.length, randomizer)
+
         const result = placeRooms(
           currentChunk,
+          newDirections,
           hallwayDungeon,
           { xPos: hallX, yPos: hallY },
           gridDimensions,
@@ -161,7 +164,14 @@ const createPlaceRooms = (rooms, randomizer) => {
     }
   }
 
-  const placeRooms = (roomsToAdd, dungeon, currentPosition, gridDimensions, depth) => {
+  const placeRooms = (
+    roomsToAdd,
+    arrayOfDirectionsToConsider,
+    dungeon,
+    currentPosition,
+    gridDimensions,
+    depth
+  ) => {
     if (roomsToAdd.length === 0) return { isSuccessful: true, storedDungeon: dungeon }
 
     if (roomsToAdd.length > 3) {
@@ -173,7 +183,7 @@ const createPlaceRooms = (rooms, randomizer) => {
       return createHallwayRooms([roomsToAdd], dungeon, currentPosition, gridDimensions, depth)
     }
 
-    const arrayOfDirectionsToConsider = getDirections(roomsToAdd.length, randomizer)
+    // const arrayOfDirectionsToConsider = getDirections(roomsToAdd.length, randomizer)
 
     let storedDungeon = dungeon
 
@@ -197,10 +207,12 @@ const createPlaceRooms = (rooms, randomizer) => {
 
           const newRoomsToAdd = []
           currentRoom.nodesInRoom.forEach(addChildrenNodesToRoomsToAdd(rooms, newRoomsToAdd))
+          const newDirections = getDirections(newRoomsToAdd.length, randomizer)
 
           roomsToAddNext.push({
             roomsToAdd: newRoomsToAdd,
             position: { xPos, yPos },
+            directions: newDirections,
           })
         })
 
@@ -209,12 +221,13 @@ const createPlaceRooms = (rooms, randomizer) => {
         // debugger
 
         if (directionIndex === 5) {
-          debugger
+          // debugger
         }
         const subRoomsPlacedSuccessfully = roomsToAddNext.every(nextRoom => {
           const newDungeon = circularArrayCopy(storedDungeon)
           const result = placeRooms(
             nextRoom.roomsToAdd,
+            nextRoom.directions,
             newDungeon,
             nextRoom.position,
             gridDimensions,
@@ -222,7 +235,7 @@ const createPlaceRooms = (rooms, randomizer) => {
           )
 
           if (directionIndex === 5) {
-            debugger
+            // debugger
           }
 
           if (result.isSuccessful) {
@@ -231,7 +244,7 @@ const createPlaceRooms = (rooms, randomizer) => {
           return result.isSuccessful
         })
         if (directionIndex === 5) {
-          debugger
+          // debugger
         }
 
         hasAllPlacedSuccess = subRoomsPlacedSuccessfully
@@ -289,7 +302,16 @@ export const layoutDungeon = (canvas, dungeonToDraw) => {
     yPos: startingRoomY,
   }
 
-  const success = placeRooms(shuffledRoomsToAdd, dungeon, currentPosition, gridDimensions, 0)
+  const directions = getDirections(shuffledRoomsToAdd.length, randChunkSplit)
+
+  const success = placeRooms(
+    shuffledRoomsToAdd,
+    directions,
+    dungeon,
+    currentPosition,
+    gridDimensions,
+    0
+  )
   console.log('success', success)
   return success.storedDungeon
 }
