@@ -5,6 +5,7 @@ import {
   rewindDraw,
   advanceDraw,
   setupFirstView,
+  stepThroughDungeon,
 } from './ui/drawDungeonLayout.js'
 import { layoutDungeon } from './ui/placeRooms.js'
 import { verify } from './evaluate/verifyDungeon.js'
@@ -14,6 +15,7 @@ window.rewind = rewind
 window.advance = advance
 window.rewindDraw = rewindDraw
 window.advanceDraw = advanceDraw
+window.stepThroughDungeon = stepThroughDungeon
 window.evaluateDungeon = evaluateDungeon
 window.verify = verify
 
@@ -38,7 +40,10 @@ const newDungeonLayout = layoutDungeon(dungeonVisual, result[0])
 drawDungeonLayout(newDungeonLayout, document.getElementById('dungeonVisual'))
 setupFirstView()
 
-const roomsPlaced = [...document.querySelectorAll('table .filled')]
+const nodes = document.querySelectorAll('tbody')
+const lastTable = nodes[nodes.length - 1]
+const roomsPlaced = [...lastTable.querySelectorAll('.filled')]
+
 const roomsPlacedIgnoringHallways = roomsPlaced.filter(
   roomDisplay => !roomDisplay.innerHTML.includes('hallway')
 ).length

@@ -31,25 +31,6 @@ const directions = {
   west: { x: -1, y: 0 },
 }
 
-// What to do I need
-
-// Current position within the grid
-// Grid history
-// Placement history (list of rooms placed)
-// List of rooms to still place
-// Current grid
-
-const createState = ({ xPos, yPos, gridHistory, roomHistory, roomsToPlace, grid }) => {
-  const currentPosition = { xPos, yPos }
-  return {
-    currentPosition,
-    gridHistory,
-    grid,
-    roomHistory,
-    roomsToPlace,
-  }
-}
-
 const getNewPosition = (currentPosition, currentDirection) => {
   const { xPos, yPos } = currentPosition
   const { x, y } = currentDirection
@@ -103,29 +84,52 @@ const getFreeSpacesAround = (currentPosition, dungeon) => {
   )
 }
 
-const createHallway = () => ({
+const createHallway = (parent, children) => ({
   indexId: -1,
   nodesInRoom: [{ name: 'hallway' }],
-  parentNode: undefined,
+  parentNode: parent,
+  roomName: 'hallway',
+  children,
 })
 
-// solve(game):
-//     if (game board is full)
-//         return SUCCESS
-//     else
-//         next_square = getNextEmptySquare()
-//         for each value that can legally be put in next_square
-//             put value in next_square (i.e. modify game state)
-//             if (solve(game)) return SUCCESS
-//             remove value from next_square (i.e. backtrack to a previous state)
-//     return FAILURE
+// Directions methods
+const createLookup = size => (accumulator, arrayOfDirections) => {
+  const truncatedDirections = arrayOfDirections.slice(0, size)
+  const key = JSON.stringify(truncatedDirections)
+  if (!accumulator[key]) {
+    accumulator[key] = true
+    accumulator.result.push(truncatedDirections)
+  }
+  return accumulator
+}
+
+const allDirections = getAllPermutations(Object.values(directions))
+const directionToRoomLookup = {
+  [1]: allDirections.reduce(createLookup(1), { result: [] }).result,
+  [2]: allDirections.reduce(createLookup(2), { result: [] }).result,
+  [3]: allDirections.reduce(createLookup(3), { result: [] }).result,
+}
+
+const getDirections = (index, randomizer) => {
+  if (index === 0 || index > Object.keys(directionToRoomLookup).length) {
+    return []
+  }
+  return shuffleList(arrayCopy(directionToRoomLookup[index]), randomizer)
+}
 
 const createPlaceRooms = (rooms, randomizer) => {
+  // Placement methods
   const createHallwayRooms = (chunkedRooms, dungeon, currentPosition, gridDimensions, depth) => {
     let chunkedRoomIndex = 0
     let tempDungeon = dungeon
     const hallwayDirections = shuffleList(Object.values(directions), randomizer)
     let numberOfHallwaysPlaced = 0
+
+    const freeSpacesAround = getFreeSpacesAround(currentPosition, dungeon)
+    if (freeSpacesAround < chunkedRooms.length) {
+      if (freeSpacesAround === 0) return { isSuccessful: false, storedDungeon: dungeon }
+      debugger
+    }
 
     while (chunkedRoomIndex < chunkedRooms.length && hallwayDirections.length) {
       const hallwayDirection = hallwayDirections.shift()
@@ -133,9 +137,11 @@ const createPlaceRooms = (rooms, randomizer) => {
         numberOfHallwaysPlaced++
         const { x: hallX, y: hallY } = getNewPosition(currentPosition, hallwayDirection)
         const hallwayDungeon = circularArrayCopy(tempDungeon)
-        hallwayDungeon[hallY][hallX] = createHallway()
+        const currentChunk = chunkedRooms[chunkedRoomIndex]
+        hallwayDungeon[hallY][hallX] = createHallway(currentChunk[0].parentNode, currentChunk)
+
         const result = placeRooms(
-          chunkedRooms[chunkedRoomIndex],
+          currentChunk,
           hallwayDungeon,
           { xPos: hallX, yPos: hallY },
           gridDimensions,
@@ -155,23 +161,6 @@ const createPlaceRooms = (rooms, randomizer) => {
     }
   }
 
-  const createLookup = size => (accumulator, arrayOfDirections) => {
-    const truncatedDirections = arrayOfDirections.slice(0, size)
-    const key = JSON.stringify(truncatedDirections)
-    if (!accumulator[key]) {
-      accumulator[key] = true
-      accumulator.result.push(truncatedDirections)
-    }
-    return accumulator
-  }
-
-  const allDirections = getAllPermutations(Object.values(directions))
-  const directionToRoomLookup = {
-    [1]: allDirections.reduce(createLookup(1), { result: [] }).result,
-    [2]: allDirections.reduce(createLookup(2), { result: [] }).result,
-    [3]: allDirections.reduce(createLookup(3), { result: [] }).result,
-  }
-
   const placeRooms = (roomsToAdd, dungeon, currentPosition, gridDimensions, depth) => {
     if (roomsToAdd.length === 0) return { isSuccessful: true, storedDungeon: dungeon }
 
@@ -184,10 +173,7 @@ const createPlaceRooms = (rooms, randomizer) => {
       return createHallwayRooms([roomsToAdd], dungeon, currentPosition, gridDimensions, depth)
     }
 
-    const arrayOfDirectionsToConsider = shuffleList(
-      arrayCopy(directionToRoomLookup[roomsToAdd.length]),
-      randomizer
-    )
+    const arrayOfDirectionsToConsider = getDirections(roomsToAdd.length, randomizer)
 
     let storedDungeon = dungeon
 
@@ -219,8 +205,12 @@ const createPlaceRooms = (rooms, randomizer) => {
         })
 
         const placeRooms = createPlaceRooms(rooms, randomizer)
-        // drawDungeonLayout(storedDungeon, document.getElementById('dungeonVisual'), true)
+        drawDungeonLayout(storedDungeon, document.getElementById('dungeonVisual'), true)
+        // debugger
 
+        if (directionIndex === 5) {
+          debugger
+        }
         const subRoomsPlacedSuccessfully = roomsToAddNext.every(nextRoom => {
           const newDungeon = circularArrayCopy(storedDungeon)
           const result = placeRooms(
@@ -231,11 +221,18 @@ const createPlaceRooms = (rooms, randomizer) => {
             depth + 1
           )
 
+          if (directionIndex === 5) {
+            debugger
+          }
+
           if (result.isSuccessful) {
             storedDungeon = result.storedDungeon
           }
           return result.isSuccessful
         })
+        if (directionIndex === 5) {
+          debugger
+        }
 
         hasAllPlacedSuccess = subRoomsPlacedSuccessfully
       }
@@ -243,10 +240,12 @@ const createPlaceRooms = (rooms, randomizer) => {
       if (!hasAllPlacedSuccess) {
         directionIndex++
         storedDungeon = dungeon
+        drawDungeonLayout(storedDungeon, document.getElementById('dungeonVisual'), true)
+        // debugger
       }
     }
 
-    return { isSuccessful: true, storedDungeon }
+    return { isSuccessful: hasAllPlacedSuccess, storedDungeon }
   }
 
   return placeRooms
@@ -283,26 +282,14 @@ export const layoutDungeon = (canvas, dungeonToDraw) => {
 
   const shuffledRoomsToAdd = shuffleList(roomsToAdd, randomizer)
 
-  console.log('shuffledRoomsToAdd', shuffledRoomsToAdd)
-
   const placeRooms = createPlaceRooms(rooms, randomizer)
 
-  const firstState = createState({
+  const currentPosition = {
     xPos: startingRoomX,
     yPos: startingRoomY,
-    gridHistory: [],
-    grid: dungeon,
-    roomsToPlace: roomsToAdd,
-    roomHistory: [],
-  })
+  }
 
-  const success = placeRooms(
-    shuffledRoomsToAdd,
-    dungeon,
-    firstState.currentPosition,
-    gridDimensions,
-    0
-  )
+  const success = placeRooms(shuffledRoomsToAdd, dungeon, currentPosition, gridDimensions, 0)
   console.log('success', success)
   return success.storedDungeon
 }

@@ -1,93 +1,74 @@
-const hasLowerParent = (dungeon, rowIndex, colIndex) => {
+const hasParent = (dungeon, childRowIndex, childColIndex, rowIndex, colIndex) => {
   try {
-    const lowerRoom = dungeon[rowIndex + 1][colIndex].nodesInRoom
-    const currentNodeParent = dungeon[rowIndex][colIndex].nodesInRoom[0].parent
-    return lowerRoom.includes(currentNodeParent)
+    const room = dungeon[childRowIndex][childColIndex].nodesInRoom
+    const currentNode = dungeon[rowIndex][colIndex]
+
+    if (currentNode.roomName === 'hallway') {
+      return (
+        room.includes(currentNode.parentNode) ||
+        room.map(item => item.parent).includes(currentNode.parentNode)
+      )
+    }
+
+    const allParents = currentNode.nodesInRoom.map(room => room.parent)
+    return allParents.filter(parent => room.includes(parent)).length > 0
   } catch (e) {
     return false
   }
+}
+
+const hasChild = (dungeon, parentRowIndex, parentColIndex, rowIndex, colIndex) => {
+  try {
+    const room = dungeon[parentRowIndex][parentColIndex].nodesInRoom
+    const currentNode = dungeon[rowIndex][colIndex]
+
+    if (room.map(room => room.name).includes('hallway')) {
+      return (
+        dungeon[parentRowIndex][parentColIndex].children.includes(currentNode) ||
+        currentNode.roomName === dungeon[parentRowIndex][parentColIndex].parentNode.name
+      )
+    }
+
+    const allParents = room.map(room => room.parent)
+    const hasNodeChildren = currentNode.nodesInRoom.some(node => {
+      return allParents.includes(node)
+    })
+    return hasNodeChildren
+  } catch (e) {
+    return false
+  }
+}
+
+const hasLowerParent = (dungeon, rowIndex, colIndex) => {
+  return hasParent(dungeon, rowIndex + 1, colIndex, rowIndex, colIndex)
 }
 
 const hasUpperParent = (dungeon, rowIndex, colIndex) => {
-  try {
-    const upperRoom = dungeon[rowIndex - 1][colIndex].nodesInRoom
-    const currentNodeParent = dungeon[rowIndex][colIndex].nodesInRoom[0].parent
-    return upperRoom.includes(currentNodeParent)
-  } catch (e) {
-    return false
-  }
+  return hasParent(dungeon, rowIndex - 1, colIndex, rowIndex, colIndex)
 }
 
 const hasLowerChild = (dungeon, rowIndex, colIndex) => {
-  try {
-    const lowerRoom = dungeon[rowIndex + 1][colIndex].nodesInRoom
-    const currentNode = dungeon[rowIndex][colIndex]
-    const hasNodeChildren = currentNode.nodesInRoom.some(node => {
-      return lowerRoom[0].parent === node
-    })
-    return hasNodeChildren
-  } catch (e) {
-    return false
-  }
+  return hasChild(dungeon, rowIndex + 1, colIndex, rowIndex, colIndex)
 }
 
 const hasUpperChild = (dungeon, rowIndex, colIndex) => {
-  try {
-    const upperRoom = dungeon[rowIndex - 1][colIndex].nodesInRoom
-    const currentNode = dungeon[rowIndex][colIndex]
-    const hasNodeChildren = currentNode.nodesInRoom.some(node => {
-      return upperRoom[0].parent === node
-    })
-    return hasNodeChildren
-  } catch (e) {
-    return false
-  }
+  return hasChild(dungeon, rowIndex - 1, colIndex, rowIndex, colIndex)
 }
 
 const hasLeftChild = (dungeon, rowIndex, colIndex) => {
-  try {
-    const leftRoom = dungeon[rowIndex][colIndex - 1].nodesInRoom
-    const currentNode = dungeon[rowIndex][colIndex]
-    const hasNodeChildren = currentNode.nodesInRoom.some(node => {
-      return leftRoom[0].parent === node
-    })
-    return hasNodeChildren
-  } catch (e) {
-    return false
-  }
+  return hasChild(dungeon, rowIndex, colIndex - 1, rowIndex, colIndex)
 }
 
 const hasRightParent = (dungeon, rowIndex, colIndex) => {
-  try {
-    const rightRoom = dungeon[rowIndex][colIndex + 1].nodesInRoom
-    const currentNodeParent = dungeon[rowIndex][colIndex].nodesInRoom[0].parent
-    return rightRoom.includes(currentNodeParent)
-  } catch (e) {
-    return false
-  }
+  return hasParent(dungeon, rowIndex, colIndex + 1, rowIndex, colIndex)
 }
 
 const hasRightChild = (dungeon, rowIndex, colIndex) => {
-  try {
-    const rightRoom = dungeon[rowIndex][colIndex + 1].nodesInRoom
-    const currentNode = dungeon[rowIndex][colIndex]
-    const hasNodeChildren = currentNode.nodesInRoom.some(node => {
-      return rightRoom[0].parent === node
-    })
-    return hasNodeChildren
-  } catch (e) {
-    return false
-  }
+  return hasChild(dungeon, rowIndex, colIndex + 1, rowIndex, colIndex)
 }
 
 const hasLeftParent = (dungeon, rowIndex, colIndex) => {
-  try {
-    const leftRoom = dungeon[rowIndex][colIndex - 1].nodesInRoom
-    const currentNodeParent = dungeon[rowIndex][colIndex].nodesInRoom[0].parent
-    return leftRoom.includes(currentNodeParent)
-  } catch (e) {
-    return false
-  }
+  return hasParent(dungeon, rowIndex, colIndex - 1, rowIndex, colIndex)
 }
 
 export const drawDungeonLayout = (dungeonLayout, table, renderLast = false) => {
@@ -210,6 +191,17 @@ export const advanceDraw = () => {
   const maxLength = table.children.length - 1
   slider.value = parseInt(slider.value) + 1
   if (slider.value > maxLength) slider.value = maxLength
+
+  Array.from(document.getElementById('dungeonVisual').children).forEach(child => {
+    child.style.display = 'none'
+  })
+
+  document.getElementsByClassName(`table-${slider.value}`)[0].style.display = 'block'
+}
+
+export const stepThroughDungeon = () => {
+  const slider = document.getElementById('drawDungeonSlider')
+  slider.value = parseInt(slider.value)
 
   Array.from(document.getElementById('dungeonVisual').children).forEach(child => {
     child.style.display = 'none'

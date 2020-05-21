@@ -42,7 +42,6 @@ export const drawDungeon = (canvas, dungeonToDraw) => {
     numberOfSingleLockRooms +
     numberOfNormalLocks +
     numberOfExternalRooms
-  // console.log(maxRooms)
 
   let dungeon = []
   for (let i = 0; i < DUNGEON_SIZE_Y; i++) {
