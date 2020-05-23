@@ -84,6 +84,26 @@ const getFreeSpacesAround = (currentPosition, dungeon) => {
   )
 }
 
+const getFreeSpacesAroundArray = (arrayOfPositions, dungeon) => {
+  const seenPoints = []
+  let total = 0
+  arrayOfPositions.forEach(position => {
+    const { xPos: x, yPos: y } = position
+    const newPoints = [{ x, y: y + 1 }, { x, y: y - 1 }, { x: x - 1, y }, { x: x + 1, y }]
+    newPoints.forEach(direction => {
+      const isFree = isFreeSpace(direction.x, direction.y, dungeon)
+      if (isFree) {
+        if (!seenPoints.includes(JSON.stringify(direction))) {
+          seenPoints.push(JSON.stringify(direction))
+          total += 1
+        }
+      }
+    })
+  })
+
+  return seenPoints
+}
+
 const createHallway = (parent, children) => ({
   indexId: -1,
   nodesInRoom: [{ name: 'hallway' }],
@@ -117,50 +137,208 @@ const getDirections = (index, randomizer) => {
   return shuffleList(arrayCopy(directionToRoomLookup[index]), randomizer)
 }
 
+let placeRoomCounter = 0
+let drawHistory = true
+
 const createPlaceRooms = (rooms, randomizer) => {
   // Placement methods
-  const createHallwayRooms = (chunkedRooms, dungeon, currentPosition, gridDimensions, depth) => {
-    let chunkedRoomIndex = 0
-    let tempDungeon = dungeon
+
+  const placeHallway = (dungeon, currentPosition, currentChunk, gridDimensions) => {
+    let hasPlacedHallway = false
+    let newHallwayPosition = undefined
     const hallwayDirections = shuffleList(Object.values(directions), randomizer)
-    let numberOfHallwaysPlaced = 0
 
-    const freeSpacesAround = getFreeSpacesAround(currentPosition, dungeon)
-    if (freeSpacesAround < chunkedRooms.length) {
-      if (freeSpacesAround === 0) return { isSuccessful: false, storedDungeon: dungeon }
-      debugger
-    }
-
-    while (chunkedRoomIndex < chunkedRooms.length && hallwayDirections.length) {
+    while (!hasPlacedHallway && hallwayDirections.length) {
       const hallwayDirection = hallwayDirections.shift()
-      if (canPlaceRoom(tempDungeon, currentPosition, hallwayDirection, gridDimensions)) {
-        numberOfHallwaysPlaced++
+
+      // Check to see if we can place a hallway
+      if (canPlaceRoom(dungeon, currentPosition, hallwayDirection, gridDimensions)) {
+        hasPlacedHallway = true
         const { x: hallX, y: hallY } = getNewPosition(currentPosition, hallwayDirection)
-        const hallwayDungeon = circularArrayCopy(tempDungeon)
-        const currentChunk = chunkedRooms[chunkedRoomIndex]
-        hallwayDungeon[hallY][hallX] = createHallway(currentChunk[0].parentNode, currentChunk)
-
-        const newDirections = getDirections(currentChunk.length, randomizer)
-
-        const result = placeRooms(
-          currentChunk,
-          newDirections,
-          hallwayDungeon,
-          { xPos: hallX, yPos: hallY },
-          gridDimensions,
-          depth + 1
-        )
-
-        if (result.isSuccessful) {
-          tempDungeon = result.storedDungeon
-          chunkedRoomIndex++
+        dungeon[hallY][hallX] = createHallway(currentChunk.parentNode, currentChunk)
+        if (drawHistory) {
+          drawDungeonLayout(dungeon, document.getElementById('dungeonVisual'), true)
         }
+        newHallwayPosition = { xPos: hallX, yPos: hallY }
       }
     }
 
     return {
-      isSuccessful: numberOfHallwaysPlaced === chunkedRooms.length,
-      storedDungeon: tempDungeon,
+      dungeon,
+      hasPlacedHallway,
+      newHallwayPosition,
+    }
+  }
+
+  const createHallways = (chunkedRoomsToAdd, dungeon, currentPosition, gridDimensions, depth) => {
+    const freeSpacesAroundCurrentPos = getFreeSpacesAround(currentPosition, dungeon)
+    if (freeSpacesAroundCurrentPos === 0) return { isSuccessful: false, storedDungeon: dungeon }
+
+    // Attempt to place a single hallway
+    let tempDungeon = circularArrayCopy(dungeon)
+    let chunkedRoomIndex = 0
+
+    let { hasPlacedHallway, newHallwayPosition, dungeon: hallwayDungeon } = placeHallway(
+      tempDungeon,
+      currentPosition,
+      dungeon[currentPosition.yPos][currentPosition.xPos],
+      gridDimensions
+    )
+    if (!hasPlacedHallway) {
+      return { isSuccessful: false, storedDungeon: dungeon }
+    }
+    tempDungeon = hallwayDungeon
+    let listOfAddedHallwayPositions = [newHallwayPosition]
+
+    // Check to see how we can place - do we have enough space to place the remaining chunks, or do we need more?
+    let freeSpacesAroundHallway = getFreeSpacesAround(newHallwayPosition, tempDungeon)
+    if (freeSpacesAroundHallway < chunkedRoomsToAdd.length) {
+      if (freeSpacesAroundHallway === 0) {
+        return { isSuccessful: false, storedDungeon: dungeon }
+      } else if (freeSpacesAroundHallway === 1) {
+        return createHallways(chunkedRoomsToAdd, dungeon, newHallwayPosition, gridDimensions, depth)
+      } else {
+        // Calculate how much minimum free space we need to place all the rooms
+        let freeSpaceNeededFromChunks = chunkedRoomsToAdd.reduce(
+          (accum, current) => accum + current.length,
+          0
+        )
+
+        while (freeSpaceNeededFromChunks > freeSpacesAroundHallway) {
+          const newPlacement = placeHallway(
+            tempDungeon,
+            newHallwayPosition,
+            dungeon[newHallwayPosition.yPos][newHallwayPosition.xPos],
+            gridDimensions
+          )
+
+          if (newPlacement.hasPlacedHallway) {
+            tempDungeon = newPlacement.dungeon
+            newHallwayPosition = newPlacement.newHallwayPosition
+            listOfAddedHallwayPositions.push(newHallwayPosition)
+            freeSpacesAroundHallway = getFreeSpacesAroundArray(
+              listOfAddedHallwayPositions,
+              tempDungeon
+            ).length
+          } else {
+            return { isSuccessful: false, storedDungeon: dungeon }
+          }
+        }
+
+        let dungeonWithNecessaryHallways = circularArrayCopy(tempDungeon)
+
+        const freeSpaces = shuffleList(
+          getFreeSpacesAroundArray(listOfAddedHallwayPositions, dungeonWithNecessaryHallways).map(
+            JSON.parse
+          ),
+          randomizer
+        )
+
+        const roomsToAddNext = []
+        chunkedRoomsToAdd.forEach((chunkedRoomArray, index) => {
+          // Stored as an array here (from legacy decision to store as chunks)
+          // Possibly revisit this later
+          const currentChunkedRoom = chunkedRoomArray[0]
+          const freeSpace = freeSpaces[index]
+          dungeonWithNecessaryHallways[freeSpace.y][freeSpace.x] = currentChunkedRoom
+
+          const newRoomsToAdd = []
+          currentChunkedRoom.nodesInRoom.forEach(addChildrenNodesToRoomsToAdd(rooms, newRoomsToAdd))
+          const newDirections = getDirections(newRoomsToAdd.length, randomizer)
+
+          roomsToAddNext.push({
+            roomsToAdd: newRoomsToAdd,
+            position: { xPos: freeSpace.x, yPos: freeSpace.y },
+            directions: newDirections,
+            directionIndex: 0,
+            directionMax: newDirections.length,
+          })
+        })
+
+        if (drawHistory) {
+          drawDungeonLayout(
+            dungeonWithNecessaryHallways,
+            document.getElementById('dungeonVisual'),
+            true
+          )
+        }
+
+        let isValid = true
+        let isFinishedPlacing = false
+        let failingIndex = -1
+
+        while (!isFinishedPlacing) {
+          roomsToAddNext.forEach((nextRoom, index) => {
+            if (!isValid) return
+            const newDungeon = circularArrayCopy(dungeonWithNecessaryHallways)
+            const result = placeRooms(
+              nextRoom.roomsToAdd,
+              nextRoom.directions.slice(nextRoom.directionIndex, nextRoom.directionMax),
+              newDungeon,
+              nextRoom.position,
+              gridDimensions,
+              depth + 1
+            )
+
+            if (result.isSuccessful) {
+              dungeonWithNecessaryHallways = result.storedDungeon
+            } else {
+              failingIndex = index
+              isValid = false
+            }
+          })
+
+          if (!isValid) {
+            const lastSuccessfulRoomPlaced = roomsToAddNext[failingIndex - 1]
+            if (
+              !lastSuccessfulRoomPlaced ||
+              lastSuccessfulRoomPlaced.directionIndex + 1 > roomsToAddNext.length
+            ) {
+              isFinishedPlacing = true
+            } else {
+              // Ignore the direction that caused the failed placement from before
+              lastSuccessfulRoomPlaced.directionIndex = lastSuccessfulRoomPlaced.directionIndex + 1
+
+              // Reset all indices for other entries back to zero
+              // (to ensure we reconsider directions that have been discarded)
+              for (let i = failingIndex; i < roomsToAddNext.length; i++) {
+                roomsToAddNext[i].directionIndex = 0
+              }
+              isValid = true
+              dungeonWithNecessaryHallways = circularArrayCopy(tempDungeon)
+            }
+          } else {
+            isFinishedPlacing = true
+          }
+        }
+
+        if (isValid) {
+          return { isSuccessful: true, storedDungeon: dungeonWithNecessaryHallways }
+        }
+
+        return { isSuccessful: false, storedDungeon: dungeon }
+      }
+    } else {
+      while (chunkedRoomIndex < chunkedRoomsToAdd.length) {
+        const currentChunk = chunkedRoomsToAdd[chunkedRoomIndex]
+        const newDirections = getDirections(currentChunk.length, randomizer)
+        const result = placeRooms(
+          currentChunk,
+          newDirections,
+          tempDungeon,
+          newHallwayPosition,
+          gridDimensions,
+          depth + 1
+        )
+
+        if (!result.isSuccessful) {
+          return { isSuccessful: false, storedDungeon: dungeon }
+        } else {
+          tempDungeon = result.storedDungeon
+          chunkedRoomIndex++
+        }
+      }
+      return { isSuccessful: true, storedDungeon: tempDungeon }
     }
   }
 
@@ -172,20 +350,19 @@ const createPlaceRooms = (rooms, randomizer) => {
     gridDimensions,
     depth
   ) => {
+    placeRoomCounter++
     if (roomsToAdd.length === 0) return { isSuccessful: true, storedDungeon: dungeon }
 
     if (roomsToAdd.length > 3) {
-      const chunkedRooms = randChunkSplit(randomizer, roomsToAdd, 1, 2)
-      return createHallwayRooms(chunkedRooms, dungeon, currentPosition, gridDimensions, depth)
+      const chunkedRooms = randChunkSplit(randomizer, roomsToAdd, 1, 1)
+      return createHallways(chunkedRooms, dungeon, currentPosition, gridDimensions, depth)
     }
 
     if (getFreeSpacesAround(currentPosition, dungeon) < roomsToAdd.length) {
-      return createHallwayRooms([roomsToAdd], dungeon, currentPosition, gridDimensions, depth)
+      return createHallways([roomsToAdd], dungeon, currentPosition, gridDimensions, depth)
     }
 
-    // const arrayOfDirectionsToConsider = getDirections(roomsToAdd.length, randomizer)
-
-    let storedDungeon = dungeon
+    let storedDungeon = circularArrayCopy(dungeon)
 
     let hasAllPlacedSuccess = false
 
@@ -213,48 +390,71 @@ const createPlaceRooms = (rooms, randomizer) => {
             roomsToAdd: newRoomsToAdd,
             position: { xPos, yPos },
             directions: newDirections,
+            directionIndex: 0,
+            directionMax: newDirections.length,
           })
         })
 
-        const placeRooms = createPlaceRooms(rooms, randomizer)
-        drawDungeonLayout(storedDungeon, document.getElementById('dungeonVisual'), true)
+        if (drawHistory) {
+          drawDungeonLayout(storedDungeon, document.getElementById('dungeonVisual'), true)
+        }
         // debugger
 
-        if (directionIndex === 5) {
-          // debugger
-        }
-        const subRoomsPlacedSuccessfully = roomsToAddNext.every(nextRoom => {
-          const newDungeon = circularArrayCopy(storedDungeon)
-          const result = placeRooms(
-            nextRoom.roomsToAdd,
-            nextRoom.directions,
-            newDungeon,
-            nextRoom.position,
-            gridDimensions,
-            depth + 1
-          )
+        let failingIndex = -1
+        let isValid = true
+        let isFinishedPlacing = false
 
-          if (directionIndex === 5) {
-            // debugger
+        while (!isFinishedPlacing) {
+          roomsToAddNext.forEach((nextRoom, index) => {
+            if (!isValid) return
+            const newDungeon = circularArrayCopy(storedDungeon)
+            const result = placeRooms(
+              nextRoom.roomsToAdd,
+              nextRoom.directions.slice(nextRoom.directionIndex, nextRoom.directionMax),
+              newDungeon,
+              nextRoom.position,
+              gridDimensions,
+              depth + 1
+            )
+
+            if (result.isSuccessful) {
+              storedDungeon = result.storedDungeon
+            } else {
+              failingIndex = index
+              isValid = false
+            }
+          })
+
+          if (!isValid) {
+            const lastSuccessfulRoomPlaced = roomsToAddNext[failingIndex - 1]
+            if (
+              !lastSuccessfulRoomPlaced ||
+              lastSuccessfulRoomPlaced.directionIndex + 1 > roomsToAddNext.length
+            ) {
+              isFinishedPlacing = true
+            } else {
+              // Ignore the direction that caused the failed placement from before
+              lastSuccessfulRoomPlaced.directionIndex = lastSuccessfulRoomPlaced.directionIndex + 1
+
+              // Reset all indices for other entries back to zero
+              // (to ensure we reconsider directions that have been discarded)
+              for (let i = failingIndex; i < roomsToAddNext.length; i++) {
+                roomsToAddNext[i].directionIndex = 0
+              }
+              isValid = true
+              storedDungeon = circularArrayCopy(dungeon)
+            }
+          } else {
+            isFinishedPlacing = true
           }
-
-          if (result.isSuccessful) {
-            storedDungeon = result.storedDungeon
-          }
-          return result.isSuccessful
-        })
-        if (directionIndex === 5) {
-          // debugger
         }
 
-        hasAllPlacedSuccess = subRoomsPlacedSuccessfully
+        hasAllPlacedSuccess = isValid
       }
 
       if (!hasAllPlacedSuccess) {
         directionIndex++
-        storedDungeon = dungeon
-        drawDungeonLayout(storedDungeon, document.getElementById('dungeonVisual'), true)
-        // debugger
+        storedDungeon = circularArrayCopy(dungeon)
       }
     }
 
@@ -302,7 +502,7 @@ export const layoutDungeon = (canvas, dungeonToDraw) => {
     yPos: startingRoomY,
   }
 
-  const directions = getDirections(shuffledRoomsToAdd.length, randChunkSplit)
+  const directions = getDirections(shuffledRoomsToAdd.length, randomizer)
 
   const success = placeRooms(
     shuffledRoomsToAdd,

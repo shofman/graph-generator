@@ -141,20 +141,18 @@ export const createDungeons = currentStep => {
 
   const shouldGenerate = true
   // seed = 1588517936366.1255 // Handle multiKey rooms better?
-  // seed = 1588536297862.176
-  // seed = 1588590758572.52
-  // seed = 1588707120611.39
-  // seed = 1589931070441.9375 // Not enough rooms generated
-  // seed = 1589931867045.4417 // Not enough rooms generated
-  // seed = 1589932401098.902 // Missing 10 entries here
-  // seed = 1589932466069.771 // Missing small number here
-  // seed = 1589932853764.0083 // Fails here due to being unable to place alongside the edge wall
-  // seed = 1589963257334.5435 // Negative amounts?
-  // seed = 1589963287630.0735 // Negative amounts here too
-  // seed = 1589976923648.3518 // Not enough placed
-  // seed = 1589976954764.921 // Missing a couple
-  // seed = 1589977118069.6997 // Missing a ton
-  seed = 1589989621499.353
+
+  // seed = 1589976954764.921 // Missing a couple - not contiguous?!??!
+  // seed = 1590077310772.8684
+  // seed = 1590169111302.217
+
+  // seed = 1589931867045.4417 // Weirdness going on here with presentation
+  // seed = 1589932401098.902 // Weirdness going on here with presentation
+  // seed = 1590168298673.6724 // Misssing small number
+  // seed = 1590169084846.8787
+  seed = 1590169097825.6536
+  // seed = 1590168216706.4155
+  // seed = 1590169576248.228
 
   // currentDungeon = makeRandomDungeon(currentStep, 1588407025859.6)
   // currentDungeon = makeRandomDungeon(currentStep, 1588408837510.7258)

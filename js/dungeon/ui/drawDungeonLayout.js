@@ -100,10 +100,23 @@ export const drawDungeonLayout = (dungeonLayout, table, renderLast = false) => {
         shouldAppend = true
       }
       const emptyCharacter = '‎' // This is not an empty string, but a zero width character
-      const infoToShow =
-        cellData !== 0 ? `${colIndex}) ${cellData.nodesInRoom[0].name}` : emptyCharacter
+      const infoToShow = cellData !== 0 ? `${colIndex}` : emptyCharacter
       const cell = document.createElement('td')
-      cell.appendChild(document.createTextNode(infoToShow))
+
+      const wrapper = document.createElement('div')
+
+      wrapper.appendChild(document.createTextNode(infoToShow))
+      if (cellData !== 0) {
+        const listElement = document.createElement('ul')
+        cellData.nodesInRoom.forEach(node => {
+          const li = document.createElement('li')
+          li.appendChild(document.createTextNode(node.name))
+          listElement.appendChild(li)
+        })
+        wrapper.appendChild(listElement)
+      }
+
+      cell.appendChild(wrapper)
       const shouldShowEmpty = colIndicesWithValues.includes(colIndex)
       cell.className = cellData !== 0 ? 'filled' : shouldShowEmpty ? '' : 'empty'
 
