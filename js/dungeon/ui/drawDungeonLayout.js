@@ -71,7 +71,12 @@ const hasLeftParent = (dungeon, rowIndex, colIndex) => {
   return hasParent(dungeon, rowIndex, colIndex - 1, rowIndex, colIndex)
 }
 
+let drawLayoutTimes = 0
+let debugDrawLayoutTimes = false
+
 export const drawDungeonLayout = (dungeonLayout, table, renderLast = false) => {
+  drawLayoutTimes++
+  if (debugDrawLayoutTimes) console.log('drawLayoutTimes', drawLayoutTimes)
   const tableBody = document.createElement('tbody')
 
   const colIndicesWithValues = dungeonLayout.reduce((accum, curr) => {
@@ -87,6 +92,11 @@ export const drawDungeonLayout = (dungeonLayout, table, renderLast = false) => {
     return accum
   }, [])
 
+  const maxRowWithValue = dungeonLayout.length - 1 // start should be in the last row
+  const minRowWithValue = dungeonLayout.findIndex(row => {
+    return !row.every(item => item === 0)
+  })
+
   dungeonLayout.forEach((rowData, rowIndex) => {
     const row = document.createElement('tr')
     const numberCell = document.createElement('td')
@@ -96,17 +106,19 @@ export const drawDungeonLayout = (dungeonLayout, table, renderLast = false) => {
     let shouldAppend = false
 
     rowData.forEach((cellData, colIndex) => {
-      if (cellData !== 0) {
+      const hasRowFilled = maxRowWithValue >= rowIndex && rowIndex >= minRowWithValue
+      const hasData = cellData !== 0
+      if (hasData || hasRowFilled) {
         shouldAppend = true
       }
       const emptyCharacter = '‎' // This is not an empty string, but a zero width character
-      const infoToShow = cellData !== 0 ? `${colIndex}` : emptyCharacter
+      const infoToShow = hasData ? `${colIndex}` : emptyCharacter
       const cell = document.createElement('td')
 
       const wrapper = document.createElement('div')
 
       wrapper.appendChild(document.createTextNode(infoToShow))
-      if (cellData !== 0) {
+      if (hasData) {
         const listElement = document.createElement('ul')
         cellData.nodesInRoom.forEach(node => {
           const li = document.createElement('li')
@@ -118,7 +130,7 @@ export const drawDungeonLayout = (dungeonLayout, table, renderLast = false) => {
 
       cell.appendChild(wrapper)
       const shouldShowEmpty = colIndicesWithValues.includes(colIndex)
-      cell.className = cellData !== 0 ? 'filled' : shouldShowEmpty ? '' : 'empty'
+      cell.className = hasData ? 'filled' : shouldShowEmpty ? 'visible' : 'empty'
 
       if (hasLowerParent(dungeonLayout, rowIndex, colIndex)) {
         cell.classList.add('lower-parent')
@@ -194,7 +206,7 @@ export const rewindDraw = () => {
   })
   slider.value = slider.value - 1
   if (slider.value < 0) slider.value = 0
-
+  console.log('slider.value', slider.value)
   document.getElementsByClassName(`table-${slider.value}`)[0].style.display = 'block'
 }
 
@@ -204,6 +216,7 @@ export const advanceDraw = () => {
   const maxLength = table.children.length - 1
   slider.value = parseInt(slider.value) + 1
   if (slider.value > maxLength) slider.value = maxLength
+  console.log('slider.value', slider.value)
 
   Array.from(document.getElementById('dungeonVisual').children).forEach(child => {
     child.style.display = 'none'
@@ -215,6 +228,7 @@ export const advanceDraw = () => {
 export const stepThroughDungeon = () => {
   const slider = document.getElementById('drawDungeonSlider')
   slider.value = parseInt(slider.value)
+  console.log('slider.value', slider.value)
 
   Array.from(document.getElementById('dungeonVisual').children).forEach(child => {
     child.style.display = 'none'

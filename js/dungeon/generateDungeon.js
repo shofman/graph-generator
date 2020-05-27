@@ -69,6 +69,7 @@ const showRoomsAdded = (dungeonData, roomData) => {
       ...dungeon,
       nodes: nodes,
       rooms: roomData,
+      totalRoomsAdded: roomsAdded,
     }
   })
 }
@@ -142,17 +143,50 @@ export const createDungeons = currentStep => {
   const shouldGenerate = true
   // seed = 1588517936366.1255 // Handle multiKey rooms better?
 
+  // Fixed seeds
+  // seed = 1590228819172.405 // Missing only a couple, not using hallways
   // seed = 1589976954764.921 // Missing a couple - not contiguous?!??!
-  // seed = 1590077310772.8684
-  // seed = 1590169111302.217
+  // seed = 1590228728734.0586 // Unconnected, not using hallways
 
-  // seed = 1589931867045.4417 // Weirdness going on here with presentation
+  // Fixed seed (but needs better presentation)
   // seed = 1589932401098.902 // Weirdness going on here with presentation
-  // seed = 1590168298673.6724 // Misssing small number
   // seed = 1590169084846.8787
-  seed = 1590169097825.6536
+  // seed = 1590169097825.6536 // Current problem
+  // seed = 1590228706889.6035 // Did not break using hallways
+
+  // Fixed bug where we reverted to a previous snapshot without required rooms
+  // seed = 1590228771249.1765 // Big gap
+  // seed = 1590168298673.6724 // Misssing small number
+  // seed = 1590077310772.8684
   // seed = 1590168216706.4155
   // seed = 1590169576248.228
+  // seed = 1590254083147.8586
+  // seed = 1590319129786.9465
+  // seed = 1590319425009.2466
+  // seed = 1590319433722.451
+  
+  // Give the large hallway algorithm the ability to place a hallway to see if it fixes something
+  // seed = 1590269316611.2944 // Same here
+  // seed = 1590268921085.763 // Something has gone terribly wrong here
+  // seed = 1590228746532.7815 // maybe interesting to debug
+  // seed = 1590519823913.1116
+  // seed = 1590169111302.217 // BROKEN AGAIN!!!!
+  // seed = 1590228801245.274 // horrific explosion
+
+  // Too long running programs (too many permutations)
+  // Fixed
+  // seed = 1590521789370.064
+  // seed = 1590521836914.4592
+  // seed = 1590524614564.1333
+  // seed = 1590526912647.095
+  // seed = 1590527000863.102
+  // seed = 1590527077233.749
+
+  // Broken
+
+  // seed = 1590529175745.4773 // did not place all
+  // seed = 1590529229238.0076 // slow
+  seed = 1590529275861.6543 // missing negative number?
 
   // currentDungeon = makeRandomDungeon(currentStep, 1588407025859.6)
   // currentDungeon = makeRandomDungeon(currentStep, 1588408837510.7258)

@@ -35,7 +35,11 @@ window.switchViews = () => {
 const result = drawDungeonTree()
 evaluateDungeon()
 const dungeonVisual = document.getElementById('dungeonVisual')
-const newDungeonLayout = layoutDungeon(dungeonVisual, result[0])
+const {
+  dungeon: newDungeonLayout,
+  hasPlacedAggressiveHallways,
+  hasPlacedRoomHallways,
+} = layoutDungeon(dungeonVisual, result[0])
 
 drawDungeonLayout(newDungeonLayout, document.getElementById('dungeonVisual'))
 setupFirstView()
@@ -52,6 +56,69 @@ const roomsExpected = result[0].rooms.length
 if (roomsPlacedIgnoringHallways !== roomsExpected) {
   console.warn(
     'we did not place all the expected rooms',
-    `Missing ${roomsExpected - roomsPlacedIgnoringHallways}`
+    `Missing ${roomsExpected - roomsPlacedIgnoringHallways}`,
+    `used aggressive hallway algorithm: ${hasPlacedAggressiveHallways}`,
+    `used hallway system with multiple rooms per chunk ${hasPlacedRoomHallways}`
   )
+
+  const arrayOfNodesPlaced = roomsPlaced
+    .filter(roomDisplay => !roomDisplay.innerHTML.includes('hallway'))
+    .reduce((accum, roomDisplay) => {
+      const listedNodes = [...roomDisplay.querySelectorAll('li')]
+      listedNodes.forEach(listElement => {
+        const html = listElement.innerHTML
+        accum.push(html)
+      })
+      return accum
+    }, [])
+
+  const arrayOfNodesThatNeedPlacing = result[0].totalRoomsAdded
+
+  const missingNodes = []
+  arrayOfNodesThatNeedPlacing.forEach(neededNode => {
+    if (!arrayOfNodesPlaced.includes(neededNode)) {
+      missingNodes.push(neededNode)
+    }
+  })
+  const stringOfMissingNodes = missingNodes.join(' ')
+  if (stringOfMissingNodes === '') {
+    console.warn('Duplicate node was placed on the grid!')
+    debugger
+  } else {
+    console.warn('missing the following nodes:', missingNodes.join(' '))
+    debugger
+  }
+}
+
+const verifyConnectedness = dungeon => {
+  const hasAdjacentNeighbor = (dungeon, x, y) => {
+    try {
+      return dungeon[y][x] !== 0
+    } catch (e) {
+      return false
+    }
+  }
+
+  return dungeon.every((row, rowIndex) => {
+    return row.every((col, colIndex) => {
+      if (col === 0) return true
+      return (
+        hasAdjacentNeighbor(dungeon, colIndex + 1, rowIndex) ||
+        hasAdjacentNeighbor(dungeon, colIndex - 1, rowIndex) ||
+        hasAdjacentNeighbor(dungeon, colIndex, rowIndex + 1) ||
+        hasAdjacentNeighbor(dungeon, colIndex, rowIndex - 1)
+      )
+    })
+  })
+}
+
+const isDungeonConnected = verifyConnectedness(newDungeonLayout)
+
+if (!isDungeonConnected) {
+  console.warn(
+    'all rooms are not connected',
+    `used aggressive hallway algorithm: ${hasPlacedAggressiveHallways}`,
+    `used hallway system with multiple rooms per chunk ${hasPlacedRoomHallways}`
+  )
+  debugger
 }
