@@ -271,12 +271,7 @@ const createPlaceRooms = (rooms, gridDimensions, randomizer) => {
       }
     }
 
-    let dungeonWithNecessaryHallways = circularArrayCopy(largeHallwayDungeon)
-
-    const freeSpaceKeys = getFreeSpacesAroundArray(
-      listOfAddedHallwayPositions,
-      dungeonWithNecessaryHallways
-    )
+    const freeSpaceKeys = getFreeSpacesAroundArray(listOfAddedHallwayPositions, largeHallwayDungeon)
     const freeSpaceValues = freeSpaceKeys.map(JSON.parse)
 
     // Trim this list - choose only gates (nodes whose children matter)
@@ -321,6 +316,8 @@ const createPlaceRooms = (rooms, gridDimensions, randomizer) => {
 
     // Iterate through all the free space possibilities (in case we placed a graph in a weird place)
     while (freeSpaceIndex < freeSpacePermutations.length) {
+      let dungeonWithNecessaryHallways = circularArrayCopy(largeHallwayDungeon)
+
       const freeSpaces = freeSpacePermutations[freeSpaceIndex]
 
       const roomsToAddNext = []
@@ -456,7 +453,7 @@ const createPlaceRooms = (rooms, gridDimensions, randomizer) => {
       if (freeSpacesAroundHallway === 0) {
         return failedDungeon(dungeon)
       } else if (freeSpacesAroundHallway === 1) {
-        return createHallways(chunkedRoomsToAdd, dungeon, newHallwayPosition, depth)
+        return createHallways(chunkedRoomsToAdd, dungeon, newHallwayPosition, depth + 1)
       } else {
         return createLargeHallway(chunkedRoomsToAdd, tempDungeon, newHallwayPosition, depth)
       }
