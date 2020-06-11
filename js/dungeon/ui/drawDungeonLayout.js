@@ -1,17 +1,33 @@
 const hasParent = (dungeon, childRowIndex, childColIndex, rowIndex, colIndex) => {
   try {
-    const room = dungeon[childRowIndex][childColIndex].nodesInRoom
+    const childRoom = dungeon[childRowIndex][childColIndex]
+    const roomsInChild = childRoom.nodesInRoom
     const currentNode = dungeon[rowIndex][colIndex]
 
     if (currentNode.roomName === 'hallway') {
+      let trueParent = currentNode.parentNode
+      if (currentNode.parentNode && currentNode.parentNode.roomName === 'hallway') {
+        while (trueParent.roomName === 'hallway') {
+          trueParent = trueParent.parentNode
+        }
+      }
       return (
-        room.includes(currentNode.parentNode) ||
-        room.map(item => item.parent).includes(currentNode.parentNode)
+        roomsInChild.includes(trueParent) ||
+        roomsInChild.map(item => item.parent).includes(trueParent) ||
+        childRoom.parentNode === currentNode ||
+        trueParent === childRoom ||
+        trueParent.nodesInRoom.includes(childRoom.parentNode)
       )
+    } else if (childRoom.roomName === 'hallway') {
+      let trueChild = childRoom
+      while (trueChild.roomName === 'hallway') {
+        trueChild = trueChild.parentNode
+      }
+      return trueChild === currentNode || trueChild.nodesInRoom.includes(currentNode.parentNode)
     }
 
     const allParents = currentNode.nodesInRoom.map(room => room.parent)
-    return allParents.filter(parent => room.includes(parent)).length > 0
+    return allParents.filter(parent => roomsInChild.includes(parent)).length > 0
   } catch (e) {
     return false
   }
@@ -19,17 +35,36 @@ const hasParent = (dungeon, childRowIndex, childColIndex, rowIndex, colIndex) =>
 
 const hasChild = (dungeon, parentRowIndex, parentColIndex, rowIndex, colIndex) => {
   try {
-    const room = dungeon[parentRowIndex][parentColIndex].nodesInRoom
+    const parentRoom = dungeon[parentRowIndex][parentColIndex]
+    const nodesInParentRoom = parentRoom.nodesInRoom
     const currentNode = dungeon[rowIndex][colIndex]
 
-    if (room.map(room => room.name).includes('hallway')) {
+    if (parentRoom.roomName === currentNode.roomName && parentRoom.roomName === 'hallway') {
+      return true
+    }
+
+    if (
+      parentRoom.roomName === 'hallway' &&
+      parentRoom.parentNode.nodesInRoom.includes(currentNode.parentNode)
+    ) {
+      return true
+    }
+
+    if (
+      currentNode.roomName === 'hallway' &&
+      currentNode.parentNode.nodesInRoom.includes(parentRoom.parentNode)
+    ) {
+      return true
+    }
+
+    if (nodesInParentRoom.map(room => room.name).includes('hallway')) {
       return (
-        dungeon[parentRowIndex][parentColIndex].children.includes(currentNode) ||
-        currentNode.roomName === dungeon[parentRowIndex][parentColIndex].parentNode.name
+        parentRoom.children.includes(currentNode) ||
+        currentNode.roomName === parentRoom.parentNode.name
       )
     }
 
-    const allParents = room.map(room => room.parent)
+    const allParents = nodesInParentRoom.map(room => room.parent)
     const hasNodeChildren = currentNode.nodesInRoom.some(node => {
       return allParents.includes(node)
     })

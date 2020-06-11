@@ -181,7 +181,7 @@ const getDirections = (index, randomizer) => {
 }
 
 let placeRoomCounter = 0
-let drawHistory = true
+let drawHistory = false
 let shouldIndicatePlaceCounter = false
 let hasPlacedAggressiveHallways = false
 let hasPlacedRoomHallways = false
@@ -226,7 +226,7 @@ const createPlaceRooms = (rooms, gridDimensions, randomizer) => {
       if (canPlaceRoom(dungeon, currentPosition, hallwayDirection)) {
         hasPlacedHallway = true
         const { x: hallX, y: hallY } = getNewPosition(currentPosition, hallwayDirection)
-        dungeon[hallY][hallX] = createHallway(currentChunk.parentNode, currentChunk)
+        dungeon[hallY][hallX] = createHallway(currentChunk, currentChunk.children)
         if (drawHistory) {
           drawDungeonLayout(dungeon, document.getElementById('dungeonVisual'), true)
         }
@@ -255,7 +255,7 @@ const createPlaceRooms = (rooms, gridDimensions, randomizer) => {
       const newPlacement = placeHallway(
         largeHallwayDungeon,
         hallwayPosition,
-        dungeon[hallwayPosition.yPos][hallwayPosition.xPos]
+        largeHallwayDungeon[hallwayPosition.yPos][hallwayPosition.xPos]
       )
 
       if (newPlacement.hasPlacedHallway) {

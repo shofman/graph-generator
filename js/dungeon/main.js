@@ -9,6 +9,7 @@ import {
 } from './ui/drawDungeonLayout.js'
 import { layoutDungeon } from './ui/placeRooms.js'
 import { verify } from './evaluate/verifyDungeon.js'
+import { drawDungeonView } from './ui/drawDungeonView.js'
 
 window.drawDungeonTree = drawDungeonTree
 window.rewind = rewind
@@ -53,7 +54,9 @@ const roomsPlacedIgnoringHallways = roomsPlaced.filter(
 ).length
 const roomsExpected = result[0].rooms.length
 
-if (roomsPlacedIgnoringHallways !== roomsExpected) {
+const doLengthsOfRoomsMatch = roomsPlacedIgnoringHallways === roomsExpected
+
+if (!doLengthsOfRoomsMatch) {
   console.warn(
     'we did not place all the expected rooms',
     `Missing ${roomsExpected - roomsPlacedIgnoringHallways}`,
@@ -121,4 +124,8 @@ if (!isDungeonConnected) {
     `used hallway system with multiple rooms per chunk ${hasPlacedRoomHallways}`
   )
   debugger
+}
+
+if (isDungeonConnected && doLengthsOfRoomsMatch) {
+  drawDungeonView(result[0], newDungeonLayout)
 }

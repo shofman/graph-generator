@@ -185,11 +185,13 @@ export const createDungeons = currentStep => {
   // Reset the grid if randomizing the placements
   // seed = 1590529275861.6543 // missing negative number?
 
-  // Broken
+  // Working test
+  // seed = 1590705763952.6433
 
+  // Broken
   // seed = 1590529175745.4773 // did not place all
   // seed = 1590529229238.0076 // slow
-  seed = 1590698133823.4531 // Too much recursion error
+  // seed = 1590698133823.4531 // Too much recursion error
 
   // currentDungeon = makeRandomDungeon(currentStep, 1588407025859.6)
   // currentDungeon = makeRandomDungeon(currentStep, 1588408837510.7258)
