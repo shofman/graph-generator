@@ -1,4 +1,4 @@
-import { KEY_TYPES } from '../dungeonStructure/keyTypes.js'
+import { KeyType } from '../dungeonStructure/keyTypes.js'
 import { getRandomIntInclusive } from '../utils/getRandomIntInclusive.js'
 
 export const drawDungeon = (canvas, dungeonToDraw) => {
@@ -20,10 +20,10 @@ export const drawDungeon = (canvas, dungeonToDraw) => {
   const numberOfStartingRooms = 1
 
   // Variable rooms
-  const singleRooms = key => key.type === KEY_TYPES.SINGLE_ROOM_PUZZLE
-  const singleLocks = key => key.type === KEY_TYPES.SINGLE_LOCK_KEY
-  const normalLocks = key => key.type === KEY_TYPES.NORMAL_KEY
-  const externalLocks = key => key.type === KEY_TYPES.EXTERNAL_LOCK
+  const singleRooms = key => key.type === KeyType.SINGLE_ROOM_PUZZLE
+  const singleLocks = key => key.type === KeyType.SINGLE_LOCK_KEY
+  const normalLocks = key => key.type === KeyType.NORMAL_KEY
+  const externalLocks = key => key.type === KeyType.EXTERNAL_LOCK
 
   const numberOfSingleRooms = dungeonToDraw.convertedSteps.filter(singleRooms).length
 

@@ -1,7 +1,7 @@
 import { getDistanceBetweenLeafs, getLockedDistanceBetweenLeafs } from './calculateLeafDistances.js'
 import { drawDungeonTree } from '../ui/drawGraph.js'
 import { verifyDungeons } from './verifyDungeon.js'
-import { KEY_TYPES } from '../dungeonStructure/keyTypes.js'
+import { KeyType } from '../dungeonStructure/keyTypes.js'
 
 export const isMeaningfulBranch = node => {
   const nodeHasBranchingBinaryChildren = node => {
@@ -91,7 +91,7 @@ export const calculateDungeonScore = dungeon => {
     const currentNodeGroup = dungeon.keysGroupedByType[classifiedNodeKeys]
     if (currentNodeGroup.length) {
       switch (classifiedNodeKeys) {
-        case KEY_TYPES.BOSS: {
+        case KeyType.BOSS: {
           currentNodeGroup.forEach(key => {
             const bossGate = key.locks[0]
             dungeonInfo.keys.bossKey.distanceToGate = getDistanceBetweenLeafs(
@@ -108,7 +108,7 @@ export const calculateDungeonScore = dungeon => {
           break
         }
 
-        case KEY_TYPES.KEY_ITEM: {
+        case KeyType.KEY_ITEM: {
           let totalKeyItemDistanceFromStart = 0
           currentNodeGroup.forEach(key => {
             totalKeyItemDistanceFromStart += key.calculateHeight()
@@ -136,7 +136,7 @@ export const calculateDungeonScore = dungeon => {
           break
         }
 
-        case KEY_TYPES.MULTI_KEY: {
+        case KeyType.MULTI_KEY: {
           currentNodeGroup.forEach(key => {
             const locks = key.locks
             locks.forEach(lock => {
@@ -155,7 +155,7 @@ export const calculateDungeonScore = dungeon => {
           break
         }
 
-        case KEY_TYPES.MULTI_LOCK: {
+        case KeyType.MULTI_LOCK: {
           currentNodeGroup.forEach(key => {
             const locks = key.locks
             locks.forEach(lock => {
@@ -175,7 +175,7 @@ export const calculateDungeonScore = dungeon => {
           break
         }
 
-        case KEY_TYPES.NORMAL_KEY: {
+        case KeyType.NORMAL_KEY: {
           currentNodeGroup.forEach(key => {
             const locks = key.locks
             locks.forEach(lock => {
@@ -190,8 +190,8 @@ export const calculateDungeonScore = dungeon => {
           break
         }
 
-        case KEY_TYPES.COMBAT_KEY:
-        case KEY_TYPES.SINGLE_LOCK_KEY:
+        case KeyType.COMBAT_KEY:
+        case KeyType.SINGLE_LOCK_KEY:
           currentNodeGroup.forEach(key => {
             const locks = key.locks
             locks.forEach(lock => {
@@ -209,8 +209,8 @@ export const calculateDungeonScore = dungeon => {
           })
           break
 
-        case KEY_TYPES.SINGLE_ROOM_PUZZLE:
-        case KEY_TYPES.EXTERNAL_KEY:
+        case KeyType.SINGLE_ROOM_PUZZLE:
+        case KeyType.EXTERNAL_KEY:
           break
 
         default: {

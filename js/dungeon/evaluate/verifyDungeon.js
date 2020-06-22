@@ -1,5 +1,5 @@
 import { drawDungeonTree } from '../ui/drawGraph.js'
-import { KEY_TYPES } from '../dungeonStructure/keyTypes.js'
+import { KeyType } from '../dungeonStructure/keyTypes.js'
 
 export const verify = (verifications = 1) => {
   for (let i = 0; i < verifications; i++) {
@@ -16,7 +16,7 @@ export const verifyDungeon = dungeon => {
   let blockedPaths = []
 
   // Possibly split into key and gates here
-  const keysGroupedByType = Object.values(KEY_TYPES).reduce(function(result, keyType) {
+  const keysGroupedByType = Object.values(KeyType).reduce(function(result, keyType) {
     result[keyType] = []
     return result
   }, {})
@@ -24,7 +24,7 @@ export const verifyDungeon = dungeon => {
   const addChildToPaths = child => {
     let typeToUse = child.type
     if (!Array.isArray(keysGroupedByType[typeToUse])) {
-      typeToUse = KEY_TYPES.UNKNOWN
+      typeToUse = KeyType.UNKNOWN
     }
 
     if (!child.locked) {

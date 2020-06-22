@@ -1,4 +1,4 @@
-import { KEY_TYPES } from './dungeonStructure/keyTypes.js'
+import { KeyType } from './dungeonStructure/keyTypes.js'
 import { resultFromProbability } from './utils/resultFromProbability.js'
 import { shuffleList } from '../utils/shuffleList.js'
 import { randChunkSplit } from './utils/randChunkSplit.js'
@@ -9,9 +9,9 @@ const isKey = node => node.locked === false
 const isGate = node => node.locked === true
 const isParentCombat = node => node.parent.isCombat === true
 const isParentPuzzle = node => node.parent.isPuzzle === true
-const isParentStart = node => node.parent.type === KEY_TYPES.START
-const isKeyItem = child => child.type === KEY_TYPES.KEY_ITEM
-const isSingleRoomPuzzle = room => room.type === KEY_TYPES.SINGLE_ROOM_PUZZLE
+const isParentStart = node => node.parent.type === KeyType.START
+const isKeyItem = child => child.type === KeyType.KEY_ITEM
+const isSingleRoomPuzzle = room => room.type === KeyType.SINGLE_ROOM_PUZZLE
 
 const hasTypeAsNeighbors = (node, type) => {
   if (node.parent && node.parent.children.length > 1) {
@@ -97,10 +97,10 @@ export const createRoomsFromSteps = (steps, randomizer) => {
     // But if there is a single key possibility as a sibling, sometimes add it as a reward for the miniboss
     const isKeyReward = node =>
       isKey(node) &&
-      (node.type === KEY_TYPES.MULTI_KEY ||
-        node.type === KEY_TYPES.NORMAL_KEY ||
-        node.type === KEY_TYPES.SINGLE_LOCK_KEY ||
-        node.type === KEY_TYPES.KEY_ITEM)
+      (node.type === KeyType.MULTI_KEY ||
+        node.type === KeyType.NORMAL_KEY ||
+        node.type === KeyType.SINGLE_LOCK_KEY ||
+        node.type === KeyType.KEY_ITEM)
 
     // 3 used here since MINIBOSS GATE, MINIBOSS KEY + at least one key
     if (node.parent.children.length > 3 && node.parent.children.some(isKeyReward)) {
@@ -120,7 +120,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
 
   const createBossGateRooms = node => {
     let hasAlreadyAdded = false
-    if (node.parent.type === KEY_TYPES.EXTERNAL_KEY && isSingleChild(node.parent)) {
+    if (node.parent.type === KeyType.EXTERNAL_KEY && isSingleChild(node.parent)) {
       const shouldAddExternalKey = randomizeResult({
         true: 50,
         false: 50,
@@ -137,28 +137,28 @@ export const createRoomsFromSteps = (steps, randomizer) => {
 
   const createBossKeyRooms = node => {
     const lockingType = node.parent.type
-    if (lockingType === KEY_TYPES.SINGLE_ROOM_PUZZLE || lockingType === KEY_TYPES.KEY_ITEM) {
+    if (lockingType === KeyType.SINGLE_ROOM_PUZZLE || lockingType === KeyType.KEY_ITEM) {
       // If the node above is a combat/miniboss/puzzle room, keep bossKey as separate
       createSingleRoom(node)
     } else if (hasMatchingNodeAsSibling(node)) {
       // If the key has a boss gate as a sibling, make it a separate room
       createSingleRoom(node)
 
-      if (lockingType === KEY_TYPES.NORMAL_KEY) {
+      if (lockingType === KeyType.NORMAL_KEY) {
         createSingleRoom(node.parent)
       }
-    } else if (lockingType === KEY_TYPES.EXTERNAL_KEY) {
+    } else if (lockingType === KeyType.EXTERNAL_KEY) {
       const shouldCombine = randomizeResult({ true: 50, false: 50 })
       if (shouldCombine) {
         createSingleRoom([node, node.parent])
       } else {
         createSingleRoom(node)
       }
-    } else if (lockingType === KEY_TYPES.SINGLE_LOCK_KEY) {
+    } else if (lockingType === KeyType.SINGLE_LOCK_KEY) {
       createSingleRoom(node)
-    } else if (lockingType === KEY_TYPES.NORMAL_KEY) {
+    } else if (lockingType === KeyType.NORMAL_KEY) {
       createSingleRoom(node)
-    } else if (lockingType === KEY_TYPES.MULTI_KEY) {
+    } else if (lockingType === KeyType.MULTI_KEY) {
       if (node.parent.children.length === 1) {
         const createTantilizingReveal = randomizeResult({ true: 50, false: 50 })
         if (createTantilizingReveal) {
@@ -239,18 +239,18 @@ export const createRoomsFromSteps = (steps, randomizer) => {
           const newRoomChunks = randChunkSplit(randomizer, node.parent.children, 1, 3)
           newRoomChunks.forEach(createRoomFromChunk)
         }
-      } else if (hasTypeAsNeighbors(node, KEY_TYPES.NORMAL_KEY)) {
+      } else if (hasTypeAsNeighbors(node, KeyType.NORMAL_KEY)) {
         const nodesToConsider = node.parent.children.filter(
-          child => child.type === KEY_TYPES.NORMAL_KEY
+          child => child.type === KeyType.NORMAL_KEY
         )
         const chunks = randChunkSplit(randomizer, nodesToConsider, 1, 3)
         chunks.forEach(createRoomFromChunk)
-      } else if (node.parent.type === KEY_TYPES.NORMAL_KEY) {
+      } else if (node.parent.type === KeyType.NORMAL_KEY) {
         createSingleRoom(node)
       } else if (isParentStart(node)) {
         const possibleRoomTypesToAddAlongside = [
-          KEY_TYPES.SINGLE_ROOM_PUZZLE,
-          KEY_TYPES.SINGLE_LOCK_KEY,
+          KeyType.SINGLE_ROOM_PUZZLE,
+          KeyType.SINGLE_LOCK_KEY,
         ]
         const topGrouping = node.parent.children.filter(child =>
           possibleRoomTypesToAddAlongside.includes(child.type)
@@ -269,7 +269,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
         console.log('still to implement key for ', node)
       }
     } else {
-      if (node.parent.type === KEY_TYPES.NORMAL_KEY && node.parent.locked) {
+      if (node.parent.type === KeyType.NORMAL_KEY && node.parent.locked) {
         const combineTwoLocksIntoSingleRoom = randomizeResult({
           true: 30,
           false: 70,
@@ -299,7 +299,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
             createSingleRoom(node)
           }
         } else {
-          if (node.parent.type === KEY_TYPES.EXTERNAL_KEY) {
+          if (node.parent.type === KeyType.EXTERNAL_KEY) {
             const addExternalKey = randomizeResult({ true: 50, false: 50 })
             if (addExternalKey) {
               createSingleRoom([node, node.parent])
@@ -312,7 +312,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
         }
       } else if (isParentStart(node)) {
         const gatesAtStart = node.parent.children.filter(
-          child => child.locked && child.type !== KEY_TYPES.KEY_ITEM
+          child => child.locked && child.type !== KeyType.KEY_ITEM
         )
         const hasMultigates = gatesAtStart.length > 1
         if (hasMultigates) {
@@ -414,9 +414,9 @@ export const createRoomsFromSteps = (steps, randomizer) => {
     } else if (isKey(node) && (isParentCombat(node) || isParentPuzzle(node))) {
       // If the key is locked by a puzzle or combat room, it should be a separate room
       createSingleRoom(node)
-    } else if (isKey(node) && node.parent.type === KEY_TYPES.NORMAL_KEY) {
+    } else if (isKey(node) && node.parent.type === KeyType.NORMAL_KEY) {
       createSingleRoom(node)
-    } else if (isGate(node) && node.parent.type === KEY_TYPES.NORMAL_KEY) {
+    } else if (isGate(node) && node.parent.type === KeyType.NORMAL_KEY) {
       if (node.parent.children.length === 1) {
         createSingleRoom(node)
       } else if (node.parent.children.filter(isGate).length > 1) {
@@ -451,7 +451,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
       } else {
         createSingleRoom(node)
       }
-    } else if (node.parent.type === KEY_TYPES.EXTERNAL_KEY) {
+    } else if (node.parent.type === KeyType.EXTERNAL_KEY) {
       const combineKeyWithExternal = randomizeResult({ true: 30, false: 70 })
       if (combineKeyWithExternal) {
         createSingleRoom([node, node.parent])
@@ -464,18 +464,18 @@ export const createRoomsFromSteps = (steps, randomizer) => {
       // We have multiple gates as children - possible tease
       const chunks = randChunkSplit(randomizer, node.parent.children.filter(isGate), 1, 3)
       chunks.forEach(createRoomFromChunk)
-    } else if (isKey(node) && node.parent.type === KEY_TYPES.SINGLE_LOCK_KEY) {
+    } else if (isKey(node) && node.parent.type === KeyType.SINGLE_LOCK_KEY) {
       createSingleRoom(node)
     } else if (node.parent.isMiniboss) {
       createSingleRoom(node)
-    } else if (isKey(node) && node.parent.type === KEY_TYPES.MULTI_KEY) {
+    } else if (isKey(node) && node.parent.type === KeyType.MULTI_KEY) {
       const createTantilizingReveal = randomizeResult({ true: 50, false: 50 })
       if (createTantilizingReveal) {
         createSingleRoom([node, node.parent])
       } else {
         createSingleRoom(node)
       }
-    } else if (isGate(node) && node.parent.type === KEY_TYPES.SINGLE_LOCK_KEY) {
+    } else if (isGate(node) && node.parent.type === KeyType.SINGLE_LOCK_KEY) {
       if (node.parent.children.length === 1) {
         const shouldCombine = randomizeResult(KEY_ITEM_SINGLE_LOCK_COMBINE_ODDS)
         if (shouldCombine) {
@@ -494,7 +494,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
         const chunks = randChunkSplit(randomizer, node.parent.children, 1, 3)
         chunks.forEach(createRoomFromChunk)
       }
-    } else if (isGate(node) && node.parent.type === KEY_TYPES.MULTI_KEY) {
+    } else if (isGate(node) && node.parent.type === KeyType.MULTI_KEY) {
       createSingleRoom(node)
     } else if (isGate(node) && node.parent.isMiniboss) {
       createSingleRoom(node)
@@ -506,7 +506,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
   const createPuzzleRooms = node => {
     if (node.parent.children.length === 2 && hasMatchingNodeAsSibling(node)) {
       let hasAlreadyAdded = false
-      if (node.parent.type === KEY_TYPES.EXTERNAL_KEY) {
+      if (node.parent.type === KeyType.EXTERNAL_KEY) {
         const combineExternalKeyPuzzles = randomizeResult({ true: 30, false: 70 })
         if (combineExternalKeyPuzzles) {
           hasAlreadyAdded = true
@@ -525,7 +525,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
   }
 
   const createExternalItemRooms = node => {
-    if (node.parent.type === KEY_TYPES.EXTERNAL_KEY) {
+    if (node.parent.type === KeyType.EXTERNAL_KEY) {
       const combineExternalKeyPuzzles = randomizeResult({ ['true']: 30, ['false']: 70 })
 
       if (combineExternalKeyPuzzles) {
@@ -550,7 +550,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
       }
     } else if (isParentStart(node)) {
       const gatesAtStart = node.parent.children.filter(
-        child => child.locked && child.type !== KEY_TYPES.SINGLE_ROOM_PUZZLE
+        child => child.locked && child.type !== KeyType.SINGLE_ROOM_PUZZLE
       )
       const hasMultigates = gatesAtStart.length > 1
       if (hasMultigates) {
@@ -570,7 +570,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
       } else {
         createSingleRoom(node)
       }
-    } else if (node.parent.type === KEY_TYPES.NORMAL_KEY && node.parent.children.length === 1) {
+    } else if (node.parent.type === KeyType.NORMAL_KEY && node.parent.children.length === 1) {
       // Normal lock followed by single external lock
       const keepLockInRoom = randomizeResult({ true: 30, false: 70 })
       if (keepLockInRoom) {
@@ -579,7 +579,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
         createSingleRoom(node)
         createSingleRoom(node.parent)
       }
-    } else if (node.parent.type === KEY_TYPES.NORMAL_KEY && node.parent.children.length > 1) {
+    } else if (node.parent.type === KeyType.NORMAL_KEY && node.parent.children.length > 1) {
       if (node.parent.children.length === 2) {
         const combineRooms = randomizeResult({ true: 30, false: 70 })
         if (combineRooms) {
@@ -594,16 +594,16 @@ export const createRoomsFromSteps = (steps, randomizer) => {
       }
     } else if (node.parent.isMiniboss) {
       createSingleRoom(node)
-    } else if (node.parent.type === KEY_TYPES.KEY_ITEM) {
+    } else if (node.parent.type === KeyType.KEY_ITEM) {
       createSingleRoom(node)
-    } else if (node.parent.type === KEY_TYPES.SINGLE_LOCK_KEY) {
+    } else if (node.parent.type === KeyType.SINGLE_LOCK_KEY) {
       const combineRooms = randomizeResult({ true: 50, false: 50 })
       if (combineRooms) {
         createSingleRoom([node, node.parent])
       } else {
         createSingleRoom(node)
       }
-    } else if (node.parent.type === KEY_TYPES.MULTI_KEY) {
+    } else if (node.parent.type === KeyType.MULTI_KEY) {
       const combineRooms = randomizeResult({ true: 20, false: 80 })
       if (combineRooms) {
         createSingleRoom([node, node.parent])
@@ -618,7 +618,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
   const createSingleLockRooms = node => {
     const parentType = node.parent.type
     if (isKey(node)) {
-      if (parentType === KEY_TYPES.SINGLE_ROOM_PUZZLE) {
+      if (parentType === KeyType.SINGLE_ROOM_PUZZLE) {
         // We may want to add this as a reward
         const addAsReward = randomizeResult({ true: 70, false: 30 })
         if (addAsReward && hasMatchingNodeAsSibling(node.parent)) {
@@ -626,7 +626,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
         } else {
           createSingleRoom(node)
         }
-      } else if (parentType === KEY_TYPES.NORMAL_KEY) {
+      } else if (parentType === KeyType.NORMAL_KEY) {
         createSingleRoom(node)
       } else if (isParentStart(node)) {
         if (hasMatchingNodeAsSibling(node)) {
@@ -648,56 +648,56 @@ export const createRoomsFromSteps = (steps, randomizer) => {
             console.warn('not imle')
           }
         }
-      } else if (parentType === KEY_TYPES.SINGLE_LOCK_KEY) {
+      } else if (parentType === KeyType.SINGLE_LOCK_KEY) {
         const combineSingleLocks = randomizeResult({ true: 50, false: 50 })
         if (combineSingleLocks) {
           createSingleRoom([node, node.parent])
         } else {
           createSingleRoom(node)
         }
-      } else if (parentType === KEY_TYPES.KEY_ITEM) {
+      } else if (parentType === KeyType.KEY_ITEM) {
         const shouldCombineWithKeyItem = randomizeResult({ true: 50, false: 50 })
         if (shouldCombineWithKeyItem) {
           createSingleRoom([node, node.parent])
         } else {
           createSingleRoom(node)
         }
-      } else if (parentType === KEY_TYPES.EXTERNAL_KEY) {
+      } else if (parentType === KeyType.EXTERNAL_KEY) {
         const addSingleKeyToExternalLock = randomizeResult({ true: 30, false: 70 })
         if (addSingleKeyToExternalLock) {
           createSingleRoom([node, node.parent])
         } else {
           createSingleRoom(node)
         }
-      } else if (parentType === KEY_TYPES.MULTI_KEY) {
+      } else if (parentType === KeyType.MULTI_KEY) {
         createSingleRoom(node)
       } else {
         console.log('currentNode not handled', node)
       }
     } else {
       if (
-        parentType === KEY_TYPES.SINGLE_ROOM_PUZZLE ||
-        parentType === KEY_TYPES.SINGLE_LOCK_KEY ||
-        parentType === KEY_TYPES.NORMAL_KEY
+        parentType === KeyType.SINGLE_ROOM_PUZZLE ||
+        parentType === KeyType.SINGLE_LOCK_KEY ||
+        parentType === KeyType.NORMAL_KEY
       ) {
         createSingleRoom(node)
       } else if (isParentStart(node)) {
         createSingleRoom(node)
-      } else if (parentType === KEY_TYPES.EXTERNAL_KEY && node.parent.children.length === 1) {
+      } else if (parentType === KeyType.EXTERNAL_KEY && node.parent.children.length === 1) {
         const combineRooms = randomizeResult({ true: 50, false: 50 })
         if (combineRooms) {
           createSingleRoom([node, node.parent])
         } else {
           createSingleRoom(node)
         }
-      } else if (parentType === KEY_TYPES.MULTI_KEY) {
+      } else if (parentType === KeyType.MULTI_KEY) {
         const combineRooms = randomizeResult({ true: 20, false: 80 })
         if (combineRooms) {
           createSingleRoom([node, node.parent])
         } else {
           createSingleRoom(node)
         }
-      } else if (parentType === KEY_TYPES.KEY_ITEM && node.parent.children.length === 1) {
+      } else if (parentType === KeyType.KEY_ITEM && node.parent.children.length === 1) {
         const combineRooms = randomizeResult(KEY_ITEM_SINGLE_LOCK_COMBINE_ODDS)
         if (combineRooms) {
           createSingleRoom([node, node.parent])
@@ -715,7 +715,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
   const startNode = allPotentialNodes.pop()
   const externalKeys = []
   startNode.children.forEach(child => {
-    if (child.type === KEY_TYPES.EXTERNAL_KEY && !child.locked) {
+    if (child.type === KeyType.EXTERNAL_KEY && !child.locked) {
       externalKeys.push(child)
     }
   })
@@ -737,19 +737,19 @@ export const createRoomsFromSteps = (steps, randomizer) => {
       createBossKeyRooms(currentNode)
     } else if (currentNode.name === 'minibossGate') {
       createMiniBossRooms(currentNode)
-    } else if (currentNode.type === KEY_TYPES.NORMAL_KEY) {
+    } else if (currentNode.type === KeyType.NORMAL_KEY) {
       createNormalKeyLockRooms(currentNode)
     } else if (currentNode.isCombat) {
       createCombatRoomRooms(currentNode)
-    } else if (currentNode.type === KEY_TYPES.MULTI_KEY) {
+    } else if (currentNode.type === KeyType.MULTI_KEY) {
       createMultiKeyLockRooms(currentNode)
-    } else if (currentNode.type === KEY_TYPES.KEY_ITEM) {
+    } else if (currentNode.type === KeyType.KEY_ITEM) {
       createKeyItemRooms(currentNode)
     } else if (currentNode.isPuzzle) {
       createPuzzleRooms(currentNode)
-    } else if (currentNode.type === KEY_TYPES.EXTERNAL_KEY) {
+    } else if (currentNode.type === KeyType.EXTERNAL_KEY) {
       createExternalItemRooms(currentNode)
-    } else if (currentNode.type === KEY_TYPES.SINGLE_LOCK_KEY) {
+    } else if (currentNode.type === KeyType.SINGLE_LOCK_KEY) {
       createSingleLockRooms(currentNode)
     } else {
       console.log('currentNode not handled', currentNode)

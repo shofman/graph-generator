@@ -1,12 +1,16 @@
-import { createNode } from './treeNode.js'
-import { KEY_TYPES } from './keyTypes.js'
+import { createNode, Node } from './treeNode.js'
+import { KeyType } from './keyTypes.js'
 
 const createConnection = (start, end) => ({ from: start, to: end })
 
+
+
 export class Tree {
+  rootValue: Node
+
   constructor() {
     this.rootValue = createNode('start', '#96c2fc', null)
-    this.rootValue.setType(KEY_TYPES.START)
+    this.rootValue.setType(KeyType.START)
   }
 
   draw() {
@@ -51,7 +55,7 @@ export class Tree {
 
   addEndState() {
     const endNode = createNode('end', 'beige', this.rootValue)
-    endNode.setType(KEY_TYPES.END)
+    endNode.setType(KeyType.END)
     this.rootValue.addChild(endNode)
     return endNode
   }
@@ -59,7 +63,7 @@ export class Tree {
   createBossObstacle(endNode) {
     return {
       name: 'boss',
-      type: KEY_TYPES.BOSS,
+      type: KeyType.BOSS,
       numberOfKeys: 1,
       numberOfLocks: 1,
       color: 'red',
@@ -85,7 +89,7 @@ export class Tree {
   createRandomBossObstacle(endNode) {
     return {
       name: 'boss',
-      type: KEY_TYPES.BOSS,
+      type: KeyType.BOSS,
       color: 'red',
       getChildrenToLock: () => [endNode],
       isSingleKey: true,

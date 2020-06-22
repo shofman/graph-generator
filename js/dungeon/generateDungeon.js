@@ -38,7 +38,7 @@ Repeat for any “open” subtree.
 
 Example dungeon node - {id: 1, label: 'Node 1'},
 */
-import { KEY_TYPES } from './dungeonStructure/keyTypes.js'
+import { KeyType } from './dungeonStructure/keyTypes.js'
 import { calculateDungeonScore } from './evaluate/evaluateDungeon.js'
 import { verifyDungeon } from './evaluate/verifyDungeon.js'
 import { createHardCodedDungeons } from './hardcodedDungeons/createHardcodedDungeons.js'
@@ -117,7 +117,7 @@ export const createDungeons = currentStep => {
       leastAmountOfSteps = dungeon.numberOfSteps
     }
     dungeon.arrayOfSteps.map((step, index) => {
-      if (step.type === KEY_TYPES.KEY_ITEM) {
+      if (step.type === KeyType.KEY_ITEM) {
         averageKeyItemPos += index
       }
     })
@@ -164,7 +164,7 @@ export const createDungeons = currentStep => {
   // seed = 1590319129786.9465
   // seed = 1590319425009.2466
   // seed = 1590319433722.451
-  
+
   // Give the large hallway algorithm the ability to place a hallway to see if it fixes something
   // seed = 1590269316611.2944 // Same here
   // seed = 1590268921085.763 // Something has gone terribly wrong here
@@ -192,6 +192,8 @@ export const createDungeons = currentStep => {
   // seed = 1590529175745.4773 // did not place all
   // seed = 1590529229238.0076 // slow
   // seed = 1590698133823.4531 // Too much recursion error
+
+  seed = 1592832957721.219 // Broken because hallway cannot be reached
 
   // currentDungeon = makeRandomDungeon(currentStep, 1588407025859.6)
   // currentDungeon = makeRandomDungeon(currentStep, 1588408837510.7258)
@@ -279,14 +281,14 @@ export const createDungeons = currentStep => {
       .forEach(roomGroup => {
         const roomKey = roomGroup.nodesInRoom
           .map(node => {
-            if (node.type === KEY_TYPES.SINGLE_ROOM_PUZZLE) {
+            if (node.type === KeyType.SINGLE_ROOM_PUZZLE) {
               if (node.isPuzzle) return 'puzzle'
               if (node.isCombat) return 'combat'
               if (node.isMiniboss) return 'miniboss'
               return 'unknown'
-            } else if (node.type === KEY_TYPES.BOSS) {
+            } else if (node.type === KeyType.BOSS) {
               return node.name
-            } else if (node.type === KEY_TYPES.NORMAL_KEY) {
+            } else if (node.type === KeyType.NORMAL_KEY) {
               return node.locked ? 'normalGate' : 'normalKey'
             } else {
               return node.type

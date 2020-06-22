@@ -1,7 +1,7 @@
 import { AleaRandomizer } from '../../utils/AleaRandomizer.js'
 import { Tree } from '../dungeonStructure/dungeonTree.js'
 import { generateSeedName } from '../utils/seedName.js'
-import { KEY_TYPES } from '../dungeonStructure/keyTypes.js'
+import { KeyType } from '../dungeonStructure/keyTypes.js'
 import {
   createRandomLock,
   createRandomKeyItem,
@@ -15,16 +15,16 @@ import { resultFromProbability } from '../utils/resultFromProbability.js'
 const transposeStepsToRandom = arrayOfSteps => {
   return arrayOfSteps.map(step => {
     switch (step.type) {
-      case KEY_TYPES.NORMAL_KEY:
-      case KEY_TYPES.SINGLE_LOCK_KEY:
-      case KEY_TYPES.SINGLE_ROOM_PUZZLE:
-      case KEY_TYPES.EXTERNAL_KEY:
+      case KeyType.NORMAL_KEY:
+      case KeyType.SINGLE_LOCK_KEY:
+      case KeyType.SINGLE_ROOM_PUZZLE:
+      case KeyType.EXTERNAL_KEY:
         return createRandomLock(step.name, step.type, step.color)
-      case KEY_TYPES.KEY_ITEM:
+      case KeyType.KEY_ITEM:
         return createRandomKeyItem(step.name, step.numberOfLocks)
-      case KEY_TYPES.MULTI_LOCK:
+      case KeyType.MULTI_LOCK:
         return createRandomMultiLock(step.name, step.color)
-      case KEY_TYPES.MULTI_KEY:
+      case KeyType.MULTI_KEY:
         return createRandomMultiKey(step.name, step.color)
       default:
         console.log('we shouldnot be here')
@@ -88,23 +88,19 @@ const createRandomSteps2 = (tree, currentStep, randomizer) => {
     if (randomProbability < 0.27) {
       newKey = createRandomPuzzleLock(
         'puzzleLock' + puzzleLockId++,
-        KEY_TYPES.SINGLE_ROOM_PUZZLE,
+        KeyType.SINGLE_ROOM_PUZZLE,
         'pink'
       )
       newKey.isPuzzle = true
     } else if (randomProbability < 0.27 + 0.23) {
-      newKey = createRandomLock(
-        'combatLock' + combatLockId++,
-        KEY_TYPES.SINGLE_ROOM_PUZZLE,
-        'silver'
-      )
+      newKey = createRandomLock('combatLock' + combatLockId++, KeyType.SINGLE_ROOM_PUZZLE, 'silver')
       newKey.isCombat = true
     } else if (randomProbability < 0.27 + 0.23 + 0.27) {
-      newKey = createRandomLock('normalLock' + normalLockId++, KEY_TYPES.NORMAL_KEY, 'lightblue')
+      newKey = createRandomLock('normalLock' + normalLockId++, KeyType.NORMAL_KEY, 'lightblue')
     } else if (randomProbability < 0.27 + 0.23 + 0.27 + 0.16) {
-      newKey = createRandomLock('externalLock' + externalLockId++, KEY_TYPES.EXTERNAL_KEY, 'green')
+      newKey = createRandomLock('externalLock' + externalLockId++, KeyType.EXTERNAL_KEY, 'green')
     } else {
-      newKey = createRandomLock('singleLock' + singleLockId++, KEY_TYPES.SINGLE_LOCK_KEY, 'orange')
+      newKey = createRandomLock('singleLock' + singleLockId++, KeyType.SINGLE_LOCK_KEY, 'orange')
     }
     termination = randomizer()
 

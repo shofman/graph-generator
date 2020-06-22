@@ -29,13 +29,6 @@ const getNewPosition = (currentPosition, currentDirection) => {
   return { x: x + xPos, y: y + yPos }
 }
 
-const getNewPos = (currentPosition, currentDirection) => {
-  const { xPos, yPos } = currentPosition
-  const { x, y } = currentDirection
-
-  return { xPos: x + xPos, yPos: y + yPos }
-}
-
 const addChildrenNodesToRoomsToAdd = (rooms, roomsToAdd) => node => {
   const children = node.children
   if (!children) return
@@ -190,19 +183,11 @@ const drawDungeon = dungeon => {
   drawDungeonLayout(dungeon, document.getElementById('dungeonVisual'), true)
 }
 
-let currentAttempts = []
-
 const successfulDungeon = dungeon => ({ isSuccessful: true, storedDungeon: dungeon })
 const failedDungeon = dungeon => ({ isSuccessful: false, storedDungeon: dungeon })
 
 const createPlaceRooms = (rooms, gridDimensions, randomizer) => {
   // Placement methods
-  const addRoomToDungeon = (dungeon, room, roomXPos, roomYPos) => {
-    const immutableDungeon = circularArrayCopy(dungeon)
-    immutableDungeon[roomYPos][roomXPos] = room
-    return immutableDungeon
-  }
-
   const canPlaceRoom = (dungeon, currentPosition, currentDirection) => {
     const { x: newPosX, y: newPosY } = getNewPosition(currentPosition, currentDirection)
 
@@ -480,8 +465,6 @@ const createPlaceRooms = (rooms, gridDimensions, randomizer) => {
     }
   }
 
-  const placeOneRoom = () => {} // Replace if (canPlaceAllRooms) {...} internal logic with this
-
   const placeRooms = (roomsToAdd, arrayOfDirectionsToConsider, dungeon, currentPosition, depth) => {
     placeRoomCounter++
     if (roomsToAdd.length === 0) return successfulDungeon(dungeon)
@@ -499,8 +482,6 @@ const createPlaceRooms = (rooms, gridDimensions, randomizer) => {
       return createHallways([roomsToAdd], dungeon, currentPosition, depth)
     }
 
-    const generatedName = roomsToAdd.map(room => room.roomName).join('_')
-
     let storedDungeon = circularArrayCopy(dungeon)
     let placedDungeon = undefined
 
@@ -517,6 +498,7 @@ const createPlaceRooms = (rooms, gridDimensions, randomizer) => {
 
       if (canPlaceAllRooms) {
         const roomsToAddNext = []
+        console.log('roomsToAdd', roomsToAdd)
         roomsToAdd.forEach((currentRoom, index) => {
           const currentDirection = directions[index]
           const { x: xPos, y: yPos } = getNewPosition(currentPosition, currentDirection)

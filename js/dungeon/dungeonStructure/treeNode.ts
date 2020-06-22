@@ -1,7 +1,39 @@
-import { KEY_TYPES } from './keyTypes.js'
+import { KeyType } from './keyTypes.js'
 import { getAllSubsets } from '../../utils/getAllSubsets.js'
 
+type NodeValue = {
+  id: string
+  label: string
+  color: string
+}
+
+type Obstacle = {
+  name: string,
+  type: KeyType,
+  isSingleLock: boolean
+  isSingleKey: boolean
+  isCombat: boolean
+  isPuzzle: boolean
+  isMiniboss: boolean
+  color: string,
+  childrenToLock: Node[]
+  randomizer: () => number
+  probabilityToAdd: string,
+}
+
 export class Node {
+  parent?: Node
+  locks: Array<Node>
+  keys: Array<Node>
+  locked: boolean
+  name: string
+  value: NodeValue
+  children: Array<Node>
+  type: KeyType
+  isCombat: boolean
+  isPuzzle: boolean
+  isMiniboss: boolean
+
   constructor(parent, value) {
     this.parent = parent
     this.value = value
@@ -33,69 +65,71 @@ export class Node {
     return this.value
   }
 
-  getChildren() {
+  getChildren() : Node[] {
     return this.children
   }
 
-  getFilteredChildren(arrayOfChildren) {
+  getFilteredChildren(arrayOfChildren: Node[]) : any {
     const allChildren = this.getChildren()
-    const childrenToReturn = arrayOfChildren.map(child => {
+    const childrenToReturn = arrayOfChildren.map((child : any) => {
       if (Array.isArray(child)) {
+        console.log('we are also here in getFilteredChildren', arrayOfChildren)
         return allChildren.filter(everyChild => child.includes(everyChild.value.label))
       } else {
+        console.log('we are here in getFilteredChildren', arrayOfChildren)
         return allChildren.find(everyChild => everyChild.value.label === child)
       }
     })
     return childrenToReturn
   }
 
-  setKeys(keys) {
+  setKeys(keys : Node[]) : void {
     this.keys = keys
   }
 
-  setType(type) {
+  setType(type : KeyType) : void {
     this.type = type
   }
 
-  setPuzzle(isPuzzle = false) {
+  setPuzzle(isPuzzle: boolean = false) : void {
     this.isPuzzle = isPuzzle
   }
 
-  setMiniboss(isMiniboss = false) {
+  setMiniboss(isMiniboss: boolean = false) : void {
     this.isMiniboss = isMiniboss
   }
 
-  setCombat(isCombat = false) {
+  setCombat(isCombat: boolean = false) : void {
     this.isCombat = isCombat
   }
 
-  calculateHeight() {
+  calculateHeight() : number {
     const calculatedHeight = this.parent ? this.parent.calculateHeight() + 1 : 0
     return calculatedHeight
   }
 
-  setLocks(locks) {
+  setLocks(locks : Node[]) : void {
     this.locks = locks
   }
 
-  hasChildren() {
+  hasChildren() : boolean {
     return !!this.children.length
   }
 
-  addChild(childNode) {
+  addChild(childNode : Node) : void {
     this.children.push(childNode)
     childNode.setParent(this)
   }
 
-  removeChild(itemToRemove) {
+  removeChild(itemToRemove : Node) : void {
     this.children = this.children.filter(item => item.getValue().id !== itemToRemove.getValue().id)
   }
 
-  setParent(parentNode) {
+  setParent(parentNode : Node) : void {
     this.parent = parentNode
   }
 
-  insertLock(lockNode, childrenNodes) {
+  insertLock(lockNode : Node, childrenNodes : Node[]) {
     lockNode.setLocked()
     this.addChild(lockNode)
 
@@ -168,7 +202,7 @@ export class Node {
     childrenToLock,
     randomizer,
     probabilityToAdd,
-  }) {
+  } : Obstacle) {
     const addedLocks = []
     const addedKeys = []
 
@@ -181,30 +215,26 @@ export class Node {
     let isLockingSpecialLock = false
 
     childrenToLock = childrenToLock.filter(child => {
-      if (child.type === KEY_TYPES.SINGLE_ROOM_PUZZLE) {
+      if (child.type === KeyType.SINGLE_ROOM_PUZZLE) {
         isLockingSingleRoom = true
-      } else if (child.type === KEY_TYPES.SINGLE_LOCK_KEY) {
+      } else if (child.type === KeyType.SINGLE_LOCK_KEY) {
         isLockingSpecialLock = true
       }
       return (
-        child.type !== KEY_TYPES.EXTERNAL_KEY ||
-        (child.type === KEY_TYPES.EXTERNAL_KEY && child.locked)
+        child.type !== KeyType.EXTERNAL_KEY ||
+        (child.type === KeyType.EXTERNAL_KEY && child.locked)
       )
     })
 
-    let nodeSubsets = getAllSubsets(childrenToLock).filter(item => item.length !== 0)
+    let nodeSubsets = getAllSubsets(childrenToLock).filter((item : Node[]) => item.length !== 0)
 
     if (isLockingSingleRoom) {
-      nodeSubsets = nodeSubsets.filter(subsetArray => {
-        if (subsetArray.every(item => item.type !== KEY_TYPES.SINGLE_ROOM_PUZZLE)) {
+      nodeSubsets = nodeSubsets.filter((subsetArray : Node[]) => {
+        if (subsetArray.every(item => item.type !== KeyType.SINGLE_ROOM_PUZZLE)) {
           return true
         }
         return false
       })
-    }
-
-    if (isLockingSpecialLock) {
-      nodeSubsets = nodeSubsets.filter(subsetArray => {})
     }
 
     childrenToLock.forEach(child => {
@@ -237,7 +267,7 @@ export class Node {
       const lockNode = createNode(`${name}Gate`, color)
       const childToLock = childrenToLock[Math.floor(randomizer() * childrenToLock.length)]
 
-      if (childToLock.type === KEY_TYPES.SINGLE_ROOM_PUZZLE) {
+      if (childToLock.type === KeyType.SINGLE_ROOM_PUZZLE) {
         if (childToLock.locked) {
           this.insertLock(lockNode, [childToLock, childToLock.keys[0]])
         } else {
@@ -284,6 +314,6 @@ export class Node {
   }
 }
 
-export const createNode = (name, lockColor, parent = null) => {
+export const createNode = (name: string, lockColor: string, parent: Node = null) : Node => {
   return new Node(parent, { id: name, label: name, color: lockColor })
 }

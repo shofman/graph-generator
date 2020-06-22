@@ -1,4 +1,4 @@
-import { KEY_TYPES } from '../dungeonStructure/keyTypes.js'
+import { KeyType } from '../dungeonStructure/keyTypes.js'
 
 export const createRandomPuzzleLock = (name, type, color) => {
   return Object.assign(createRandomLock(name, type, color), { isPuzzle: true, isCombat: false })
@@ -18,7 +18,7 @@ export const createRandomLock = (name, type, color) => {
 export const createRandomMiniboss = name => {
   return {
     name,
-    type: KEY_TYPES.SINGLE_ROOM_PUZZLE,
+    type: KeyType.SINGLE_ROOM_PUZZLE,
     color: 'purple',
     getChildrenToLock: rootValue => rootValue.getChildren(),
     isSingleKey: true,
@@ -30,7 +30,7 @@ export const createRandomMiniboss = name => {
 export const createRandomKeyItem = (name, numberOfLocks) => {
   return {
     name,
-    type: KEY_TYPES.KEY_ITEM,
+    type: KeyType.KEY_ITEM,
     color: 'lightgreen',
     getChildrenToLock: rootValue => rootValue.getChildren(),
     isSingleKey: true,
@@ -41,7 +41,7 @@ export const createRandomKeyItem = (name, numberOfLocks) => {
 export const createRandomMultiLock = (name, color) => {
   return {
     name,
-    type: KEY_TYPES.MULTI_LOCK,
+    type: KeyType.MULTI_LOCK,
     color,
     getChildrenToLock: rootValue => rootValue.getChildren(),
     isSingleKey: true,
@@ -52,7 +52,7 @@ export const createRandomMultiLock = (name, color) => {
 export const createRandomMultiKey = (name, color) => {
   return {
     name,
-    type: KEY_TYPES.MULTI_KEY,
+    type: KeyType.MULTI_KEY,
     color,
     getChildrenToLock: rootValue => rootValue.getChildren(),
     isSingleLock: true,

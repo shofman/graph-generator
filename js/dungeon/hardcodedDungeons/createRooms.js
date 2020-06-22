@@ -1,9 +1,9 @@
-import { KEY_TYPES } from '../dungeonStructure/keyTypes.js'
+import { KeyType } from '../dungeonStructure/keyTypes.js'
 
 export const createLockObstacle = (name, getChildrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.NORMAL_KEY,
+    type: KeyType.NORMAL_KEY,
     numberOfLocks: 1,
     numberOfKeys: 1,
     color: 'lightblue',
@@ -14,7 +14,7 @@ export const createLockObstacle = (name, getChildrenToLock) => {
 export const createFilteredLockObstacle = (name, childrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.NORMAL_KEY,
+    type: KeyType.NORMAL_KEY,
     numberOfLocks: 1,
     numberOfKeys: 1,
     color: 'lightblue',
@@ -25,7 +25,7 @@ export const createFilteredLockObstacle = (name, childrenToLock) => {
 export const createSingleLock = (name, color, childrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.SINGLE_LOCK_KEY,
+    type: KeyType.SINGLE_LOCK_KEY,
     numberOfLocks: 1,
     numberOfKeys: 1,
     color,
@@ -36,7 +36,7 @@ export const createSingleLock = (name, color, childrenToLock) => {
 export const createSingleRoomPuzzle = (name, color, childrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.SINGLE_ROOM_PUZZLE,
+    type: KeyType.SINGLE_ROOM_PUZZLE,
     numberOfKeys: 1,
     numberOfLocks: 1,
     color,
@@ -47,7 +47,7 @@ export const createSingleRoomPuzzle = (name, color, childrenToLock) => {
 export const createExternalLock = (name, childrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.EXTERNAL_KEY,
+    type: KeyType.EXTERNAL_KEY,
     numberOfLocks: 1,
     numberOfKeys: 1,
     color: 'green',
@@ -58,7 +58,7 @@ export const createExternalLock = (name, childrenToLock) => {
 export const createMultiLock = (name, color, numberOfLocks, childrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.MULTI_LOCK,
+    type: KeyType.MULTI_LOCK,
     numberOfLocks,
     numberOfKeys: 1,
     color,
@@ -69,7 +69,7 @@ export const createMultiLock = (name, color, numberOfLocks, childrenToLock) => {
 export const createMultiKey = (name, color, numberOfKeys, childrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.MULTI_KEY,
+    type: KeyType.MULTI_KEY,
     numberOfKeys,
     numberOfLocks: 1,
     color,
@@ -80,7 +80,7 @@ export const createMultiKey = (name, color, numberOfKeys, childrenToLock) => {
 export const createKeyItem = (name, numberOfLocks, childrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.KEY_ITEM,
+    type: KeyType.KEY_ITEM,
     numberOfKeys: 1,
     numberOfLocks,
     color: 'lightgreen',
@@ -91,7 +91,7 @@ export const createKeyItem = (name, numberOfLocks, childrenToLock) => {
 export const createCombatPuzzleKey = (name, childrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.SINGLE_ROOM_PUZZLE,
+    type: KeyType.SINGLE_ROOM_PUZZLE,
     numberOfKeys: 1,
     numberOfLocks: 1,
     color: 'silver',
@@ -102,7 +102,7 @@ export const createCombatPuzzleKey = (name, childrenToLock) => {
 export const createPuzzleKey = (name, childrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.SINGLE_ROOM_PUZZLE,
+    type: KeyType.SINGLE_ROOM_PUZZLE,
     color: 'pink',
     numberOfKeys: 1,
     numberOfLocks: 1,
@@ -113,7 +113,7 @@ export const createPuzzleKey = (name, childrenToLock) => {
 export const createMiniboss = (name, childrenToLock) => {
   return {
     name,
-    type: KEY_TYPES.SINGLE_ROOM_PUZZLE,
+    type: KeyType.SINGLE_ROOM_PUZZLE,
     numberOfKeys: 1,
     numberOfLocks: 1,
     color: 'purple',
