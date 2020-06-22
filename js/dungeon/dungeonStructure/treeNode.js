@@ -13,10 +13,6 @@ export class Node {
     this.type = undefined
   }
 
-  getParent() {
-    return this.value.getParent()
-  }
-
   isLocked() {
     return this.locked
   }
@@ -73,29 +69,13 @@ export class Node {
     this.isCombat = isCombat
   }
 
-  getKeys() {
-    return this.keys
-  }
-
   calculateHeight() {
     const calculatedHeight = this.parent ? this.parent.calculateHeight() + 1 : 0
     return calculatedHeight
   }
 
-  isBossNode() {
-    return this.name === ''
-  }
-
   setLocks(locks) {
     this.locks = locks
-  }
-
-  getLocks() {
-    return this.locks
-  }
-
-  displayChildren() {
-    console.log(this.children.map(child => child))
   }
 
   hasChildren() {

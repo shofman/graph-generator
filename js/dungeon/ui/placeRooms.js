@@ -483,8 +483,6 @@ const createPlaceRooms = (rooms, gridDimensions, randomizer) => {
   const placeOneRoom = () => {} // Replace if (canPlaceAllRooms) {...} internal logic with this
 
   const placeRooms = (roomsToAdd, arrayOfDirectionsToConsider, dungeon, currentPosition, depth) => {
-    // if (drawHistory) drawDungeon(dungeon)
-    // debugger
     placeRoomCounter++
     if (roomsToAdd.length === 0) return successfulDungeon(dungeon)
     if (getFreeSpacesAround(currentPosition, dungeon) === 0) {
