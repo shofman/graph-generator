@@ -1,7 +1,13 @@
-import { createNode, Node } from './treeNode.js'
+import { createNode, Node, NodeValue, Obstacle, RandomObstacle } from './treeNode.js'
 import { KeyType } from './keyTypes.js'
 
-const createConnection = (start, end) => ({ from: start, to: end })
+type Connection = {
+  from: string
+  to: string
+}
+
+const createConnection = (start: string, end: string) : Connection => ({ from: start, to: end })
+
 
 export class Tree {
   rootValue: Node
@@ -12,11 +18,11 @@ export class Tree {
   }
 
   draw() {
-    const connections = []
-    const keyLockConnections = []
-    let nodes = []
+    const connections : Connection[] = []
+    const keyLockConnections : Connection[] = []
+    let nodes : NodeValue[] = []
 
-    const drawQueue = []
+    const drawQueue : Node[] = []
 
     drawQueue.push(this.rootValue)
     nodes.push(this.rootValue.getValue())
@@ -51,14 +57,14 @@ export class Tree {
     }
   }
 
-  addEndState() {
+  addEndState() : Node {
     const endNode = createNode('end', 'beige', this.rootValue)
     endNode.setType(KeyType.END)
     this.rootValue.addChild(endNode)
     return endNode
   }
 
-  createBossObstacle(endNode) {
+  createBossObstacle(endNode: Node){
     return {
       name: 'boss',
       type: KeyType.BOSS,
@@ -69,6 +75,8 @@ export class Tree {
     }
   }
 
+  // Ignore the hardcoded values for now
+  // @ts-ignore
   createHardCodedDungeon(step, uniqueObstacles) {
     const baseObstacles = [this.createBossObstacle(this.addEndState())]
     const obstacles = baseObstacles.concat(uniqueObstacles).slice(0, step)
@@ -76,7 +84,7 @@ export class Tree {
     return obstacles.length
   }
 
-  createRandomDungeon(step, randomizer, uniqueObstacles) {
+  createRandomDungeon(step : number, randomizer : () => number, uniqueObstacles : Obstacle[]) : number {
     const baseObstacles = [this.createRandomBossObstacle(this.addEndState())]
     const obstacles = baseObstacles.concat(uniqueObstacles).slice(0, step)
     this.addRandomDungeonObstacles(obstacles, randomizer)
@@ -84,7 +92,7 @@ export class Tree {
     return obstacles.length
   }
 
-  createRandomBossObstacle(endNode) {
+  createRandomBossObstacle(endNode : Node) : Obstacle {
     return {
       name: 'boss',
       type: KeyType.BOSS,
@@ -96,7 +104,10 @@ export class Tree {
     }
   }
 
+  // Ignore the hardcoded values for now
+  // @ts-ignore
   addDungeonObstacles(obstacles) {
+    // @ts-ignore
     obstacles.forEach(obstacle => {
       this.rootValue.addObstacle(
         Object.assign(obstacle, {
@@ -106,14 +117,13 @@ export class Tree {
     })
   }
 
-  addRandomDungeonObstacles(obstacles, randomizer) {
+  addRandomDungeonObstacles(obstacles : Obstacle[], randomizer : () => number) {
     obstacles.forEach(obstacle => {
-      this.rootValue.addRandomObstacle(
-        Object.assign(obstacle, {
-          randomizer,
-          childrenToLock: obstacle.getChildrenToLock(this.rootValue),
-        })
-      )
+      const randomObstacle : RandomObstacle = Object.assign(obstacle, {
+        randomizer,
+        childrenToLock: obstacle.getChildrenToLock(this.rootValue),
+      })
+      this.rootValue.addRandomObstacle(randomObstacle)
     })
   }
 }

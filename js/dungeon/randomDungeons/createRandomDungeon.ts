@@ -1,5 +1,6 @@
 import { AleaRandomizer } from '../../utils/AleaRandomizer.js'
 import { Tree } from '../dungeonStructure/dungeonTree.js'
+import { HardCodedObstacle, Obstacle } from '../dungeonStructure/treeNode.js'
 import { generateSeedName } from '../utils/seedName.js'
 import { KeyType } from '../dungeonStructure/keyTypes.js'
 import {
@@ -12,7 +13,7 @@ import {
 } from './createRooms.js'
 import { resultFromProbability } from '../utils/resultFromProbability.js'
 
-const transposeStepsToRandom = arrayOfSteps => {
+const transposeStepsToRandom = (arrayOfSteps: HardCodedObstacle[]) : Obstacle[] => {
   return arrayOfSteps.map(step => {
     switch (step.type) {
       case KeyType.NORMAL_KEY:
@@ -33,7 +34,7 @@ const transposeStepsToRandom = arrayOfSteps => {
   })
 }
 
-const createRandomSteps2 = (tree, currentStep, randomizer) => {
+const createRandomSteps2 = (tree : Tree, currentStep : number, randomizer : () => number) => {
   // TODO - prevent single Locks from occuring at the same place, especially at the top of the tree
   // TODO - limit total amount of keys
   /*
@@ -78,13 +79,13 @@ const createRandomSteps2 = (tree, currentStep, randomizer) => {
     2-9:15
   */
 
-  const randomObstacles = []
+  const randomObstacles : Obstacle[] = []
 
   let termination
 
   do {
     const randomProbability = randomizer()
-    let newKey
+    let newKey : Obstacle
     if (randomProbability < 0.27) {
       newKey = createRandomPuzzleLock(
         'puzzleLock' + puzzleLockId++,
@@ -108,7 +109,7 @@ const createRandomSteps2 = (tree, currentStep, randomizer) => {
   } while (termination > randomObstacles.length / 30 || randomObstacles.length < 15)
 
   const shouldAddMultiKeyProbability = randomizer()
-  let insertionPoint
+  let insertionPoint : number
   if (shouldAddMultiKeyProbability < 15 / 52) {
     insertionPoint = Math.floor(randomizer() * randomObstacles.length)
     randomObstacles.splice(insertionPoint, 0, createRandomMultiKey('multiKey', 'cyan'))
@@ -129,7 +130,7 @@ const createRandomSteps2 = (tree, currentStep, randomizer) => {
   }
 }
 
-export const makeRandomDungeon = (currentStep, seedName, arrayOfSteps) => {
+export const makeRandomDungeon = (currentStep : number, seedName : number, arrayOfSteps?: HardCodedObstacle[]) => {
   if (!seedName) {
     seedName = generateSeedName()
   }

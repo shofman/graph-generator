@@ -1,28 +1,38 @@
 import { KeyType } from './keyTypes.js'
 import { getAllSubsets } from '../../utils/getAllSubsets.js'
 
-type NodeValue = {
+export type NodeValue = {
   id: string
   label: string
   color: string
 }
 
-type Obstacle = {
+export type Obstacle = {
   name: string,
   type: KeyType,
   isSingleLock: boolean
   isSingleKey: boolean
-  isCombat: boolean
-  isPuzzle: boolean
-  isMiniboss: boolean
+  isCombat?: boolean
+  isPuzzle?: boolean
+  isMiniboss?: boolean
   color: string,
+  getChildrenToLock: (rootValue : Node) => Node[]
+  probabilityToAdd?: string,
+}
+
+export type HardCodedObstacle  = Obstacle & {
+  numberOfLocks: number
+  numberOfKeys: number
   childrenToLock: Node[]
+}
+
+export type RandomObstacle = Obstacle & {
   randomizer: () => number
-  probabilityToAdd: string,
+  childrenToLock: Node[]
 }
 
 export class Node {
-  parent?: Node
+  parent: Nullable<Node>
   locks: Array<Node>
   keys: Array<Node>
   locked: boolean
@@ -34,7 +44,7 @@ export class Node {
   isPuzzle: boolean
   isMiniboss: boolean
 
-  constructor(parent, value) {
+  constructor(parent : Nullable<Node>, value : NodeValue) {
     this.parent = parent
     this.value = value
     this.name = value.label
@@ -42,7 +52,7 @@ export class Node {
     this.locked = false
     this.keys = []
     this.locks = []
-    this.type = undefined
+    this.type = KeyType.UNKNOWN
   }
 
   isLocked() {
@@ -154,9 +164,9 @@ export class Node {
     isPuzzle,
     isCombat,
     isMiniboss,
-  }) {
-    const addedLocks = []
-    const addedKeys = []
+  }: HardCodedObstacle ) {
+    const addedLocks : Node[] = []
+    const addedKeys : Node[] = []
 
     for (let i of Array(numberOfLocks).keys()) {
       const lockNode = createNode(`${name}Gate${numberOfLocks > 1 ? i + 1 : ''}`, color)
@@ -200,9 +210,9 @@ export class Node {
     childrenToLock,
     randomizer,
     probabilityToAdd,
-  } : Obstacle) {
-    const addedLocks = []
-    const addedKeys = []
+  } : RandomObstacle) {
+    const addedLocks : Node[] = []
+    const addedKeys : Node[] = []
 
     const forceAdd = probabilityToAdd === '100'
 
@@ -251,8 +261,8 @@ export class Node {
         } else {
           const subsetToAdd = nodeSubsets[Math.floor(randomizer() * nodeSubsets.length)]
           subsetToAdd &&
-            subsetToAdd.forEach(node => {
-              nodeSubsets = nodeSubsets.filter(nodeSubset => !nodeSubset.includes(node))
+            subsetToAdd.forEach((node : Node) => {
+              nodeSubsets = nodeSubsets.filter((nodeSubset : Node[]) => !nodeSubset.includes(node))
             })
           this.insertLock(lockNode, subsetToAdd)
         }
@@ -312,6 +322,6 @@ export class Node {
   }
 }
 
-export const createNode = (name: string, lockColor: string, parent: Node = null) : Node => {
+export const createNode = (name: string, lockColor: string, parent: Nullable<Node> = null) : Node => {
   return new Node(parent, { id: name, label: name, color: lockColor })
 }

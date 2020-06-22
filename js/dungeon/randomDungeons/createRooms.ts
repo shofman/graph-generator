@@ -1,10 +1,11 @@
 import { KeyType } from '../dungeonStructure/keyTypes.js'
+import { Obstacle } from '../dungeonStructure/treeNode.js'
 
-export const createRandomPuzzleLock = (name, type, color) => {
+export const createRandomPuzzleLock = (name : string, type : KeyType, color: string) : Obstacle => {
   return Object.assign(createRandomLock(name, type, color), { isPuzzle: true, isCombat: false })
 }
 
-export const createRandomLock = (name, type, color) => {
+export const createRandomLock = (name: string, type : KeyType, color: string) : Obstacle => {
   return {
     name,
     type,
@@ -15,7 +16,7 @@ export const createRandomLock = (name, type, color) => {
   }
 }
 
-export const createRandomMiniboss = name => {
+export const createRandomMiniboss = (name : string) : Obstacle => {
   return {
     name,
     type: KeyType.SINGLE_ROOM_PUZZLE,
@@ -27,7 +28,7 @@ export const createRandomMiniboss = name => {
   }
 }
 
-export const createRandomKeyItem = (name, numberOfLocks) => {
+export const createRandomKeyItem = (name : string, numberOfLocks: number) : Obstacle => {
   return {
     name,
     type: KeyType.KEY_ITEM,
@@ -38,7 +39,7 @@ export const createRandomKeyItem = (name, numberOfLocks) => {
   }
 }
 
-export const createRandomMultiLock = (name, color) => {
+export const createRandomMultiLock = (name : string, color : string) : Obstacle => {
   return {
     name,
     type: KeyType.MULTI_LOCK,
@@ -49,7 +50,7 @@ export const createRandomMultiLock = (name, color) => {
   }
 }
 
-export const createRandomMultiKey = (name, color) => {
+export const createRandomMultiKey = (name : string, color : string) : Obstacle => {
   return {
     name,
     type: KeyType.MULTI_KEY,
