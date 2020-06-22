@@ -3,8 +3,6 @@ import { KeyType } from './keyTypes.js'
 
 const createConnection = (start, end) => ({ from: start, to: end })
 
-
-
 export class Tree {
   rootValue: Node
 

@@ -645,7 +645,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
               })
             }
           } else {
-            console.warn('not imle')
+            console.warn('currentNode not implemented')
           }
         }
       } else if (parentType === KeyType.SINGLE_LOCK_KEY) {
@@ -705,7 +705,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
           createSingleRoom(node)
         }
       } else {
-        console.log('currentNode not handled', node)
+        console.log('currentNode not handled for nonKey singleLock room', node)
       }
     }
   }
@@ -752,7 +752,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
     } else if (currentNode.type === KeyType.SINGLE_LOCK_KEY) {
       createSingleLockRooms(currentNode)
     } else {
-      console.log('currentNode not handled', currentNode)
+      console.log('currentNode not handled because we fell through', currentNode)
     }
   }
 

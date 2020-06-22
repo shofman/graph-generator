@@ -73,10 +73,8 @@ export class Node {
     const allChildren = this.getChildren()
     const childrenToReturn = arrayOfChildren.map((child : any) => {
       if (Array.isArray(child)) {
-        console.log('we are also here in getFilteredChildren', arrayOfChildren)
         return allChildren.filter(everyChild => child.includes(everyChild.value.label))
       } else {
-        console.log('we are here in getFilteredChildren', arrayOfChildren)
         return allChildren.find(everyChild => everyChild.value.label === child)
       }
     })
