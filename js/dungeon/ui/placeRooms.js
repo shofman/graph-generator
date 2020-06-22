@@ -498,7 +498,6 @@ const createPlaceRooms = (rooms, gridDimensions, randomizer) => {
 
       if (canPlaceAllRooms) {
         const roomsToAddNext = []
-        console.log('roomsToAdd', roomsToAdd)
         roomsToAdd.forEach((currentRoom, index) => {
           const currentDirection = directions[index]
           const { x: xPos, y: yPos } = getNewPosition(currentPosition, currentDirection)

@@ -672,7 +672,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
       } else if (parentType === KeyType.MULTI_KEY) {
         createSingleRoom(node)
       } else {
-        console.log('currentNode not handled', node)
+        createSingleRoom(node)
       }
     } else {
       if (
@@ -705,7 +705,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
           createSingleRoom(node)
         }
       } else {
-        console.log('currentNode not handled for nonKey singleLock room', node)
+        createSingleRoom(node)
       }
     }
   }

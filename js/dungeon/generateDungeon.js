@@ -56,8 +56,6 @@ const showRoomsAdded = (dungeonData, roomData) => {
       })
     })
 
-    console.log('roomsAdded', roomsAdded)
-
     const nodes = dungeon.nodes.map(dungeonNodes => {
       if (roomsAdded.includes(dungeonNodes.id)) {
         return { ...dungeonNodes, shape: 'box', borderWidth: 2 }
@@ -192,8 +190,6 @@ export const createDungeons = currentStep => {
   // seed = 1590529175745.4773 // did not place all
   // seed = 1590529229238.0076 // slow
   // seed = 1590698133823.4531 // Too much recursion error
-
-  seed = 1592832957721.219 // Broken because hallway cannot be reached
 
   // currentDungeon = makeRandomDungeon(currentStep, 1588407025859.6)
   // currentDungeon = makeRandomDungeon(currentStep, 1588408837510.7258)
