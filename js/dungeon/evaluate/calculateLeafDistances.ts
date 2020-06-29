@@ -1,10 +1,12 @@
-export const getDistanceBetweenLeafs = (leaf1, leaf2) => {
-  const leaf1Path = []
-  const leaf2Path = []
+import { Node } from '../dungeonStructure/treeNode'
+
+export const getDistanceBetweenLeafs = (leaf1: Node, leaf2: Node) => {
+  const leaf1Path: Node[] = []
+  const leaf2Path: Node[] = []
 
   let leafPointer1 = leaf1
   let leafPointer2 = leaf2
-  const createDistance = distanceValue => ({
+  const createDistance = (distanceValue: number) => ({
     distance: distanceValue,
     path1: leaf1Path,
     path2: leaf2Path,
@@ -58,7 +60,7 @@ export const getDistanceBetweenLeafs = (leaf1, leaf2) => {
 }
 
 // Distance between leafs, but taking into account locked door costs (e.g. how much you have to travel around)
-export const getLockedDistanceBetweenLeafs = (leaf1, leaf2, withRecursion = false) => {
+export const getLockedDistanceBetweenLeafs = (leaf1: Node, leaf2: Node, withRecursion = false) : number => {
   const distanceObject = getDistanceBetweenLeafs(leaf1, leaf2)
 
   if (distanceObject.criticalPath.length) {
@@ -78,9 +80,10 @@ export const getLockedDistanceBetweenLeafs = (leaf1, leaf2, withRecursion = fals
       const key = leaf.keys[0]
       const addedDistance = withRecursion
         ? getLockedDistanceBetweenLeafs(key, leaf, true)
-        : getDistanceBetweenLeafs(key, leaf)
-      totalDistance += withRecursion ? addedDistance : addedDistance.distance
+        : getDistanceBetweenLeafs(key, leaf).distance
+      totalDistance += addedDistance
     })
     return totalDistance
   }
+  return 0
 }

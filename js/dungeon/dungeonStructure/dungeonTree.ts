@@ -1,7 +1,7 @@
-import { createNode, Node, NodeValue, Obstacle, RandomObstacle } from './treeNode.js'
+import { createNode, Node, NodeValue, Obstacle } from './treeNode.js'
 import { KeyType } from './keyTypes.js'
 
-type Connection = {
+export type Connection = {
   from: string
   to: string
 }
@@ -119,11 +119,7 @@ export class Tree {
 
   addRandomDungeonObstacles(obstacles : Obstacle[], randomizer : () => number) {
     obstacles.forEach(obstacle => {
-      const randomObstacle : RandomObstacle = Object.assign(obstacle, {
-        randomizer,
-        childrenToLock: obstacle.getChildrenToLock(this.rootValue),
-      })
-      this.rootValue.addRandomObstacle(randomObstacle)
+      this.rootValue.addRandomObstacle(obstacle, randomizer, obstacle.getChildrenToLock(this.rootValue))
     })
   }
 }

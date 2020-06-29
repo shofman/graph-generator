@@ -1,33 +1,55 @@
 import { KeyType } from './dungeonStructure/keyTypes.js'
+import { Node } from './dungeonStructure/treeNode.js'
 import { resultFromProbability } from './utils/resultFromProbability.js'
 import { shuffleList } from '../utils/shuffleList.js'
 import { randChunkSplit } from './utils/randChunkSplit.js'
+import { VerifiedDungeon } from './evaluate/verifyDungeon.js'
+
+// Types
+type NonStartNode = Overwrite<Node, { parent: NonStartNode }>
+
+type CoinFlipProbabilities = {
+  true: number
+  false: number
+}
+
+type CombatProbabilities = {
+  [roomCount : number]: CoinFlipProbabilities
+}
+
+export type RoomType = {
+    nodesInRoom: Node[]
+    indexId: number
+    roomName: string
+    parentNode: Nullable<Node>
+    isFirstRoom: boolean
+}
 
 // Helpers
-const isSingleChild = node => node.parent.children.length === 1
-const isKey = node => node.locked === false
-const isGate = node => node.locked === true
-const isParentCombat = node => node.parent.isCombat === true
-const isParentPuzzle = node => node.parent.isPuzzle === true
-const isParentStart = node => node.parent.type === KeyType.START
-const isKeyItem = child => child.type === KeyType.KEY_ITEM
-const isSingleRoomPuzzle = room => room.type === KeyType.SINGLE_ROOM_PUZZLE
+const isSingleChild = (node : NonStartNode) => node.parent.children.length === 1
+const isKey = (node : Node) => node.locked === false
+const isGate = (node : Node) => node.locked === true
+const isParentCombat = (node : NonStartNode) => node.parent.isCombat === true
+const isParentPuzzle = (node : NonStartNode) => node.parent.isPuzzle === true
+const isParentStart = (node : NonStartNode) => node.parent.type === KeyType.START
+const isKeyItem = (child : Node) => child.type === KeyType.KEY_ITEM
+const isSingleRoomPuzzle = (room : Node) => room.type === KeyType.SINGLE_ROOM_PUZZLE
 
-const hasTypeAsNeighbors = (node, type) => {
-  if (node.parent && node.parent.children.length > 1) {
+const hasTypeAsNeighbors = (node : NonStartNode, type : KeyType) => {
+  if (node.parent.children.length > 1) {
     return node.parent.children.some(child => child.type === type)
   }
   return false
 }
 
-const findCorrespondingNodeAsSibling = node => {
+const findCorrespondingNodeAsSibling = (node : NonStartNode) => {
   if (node.locked === false) {
     return node.parent.children.find(child => node.locks[0] === child)
   }
   return node.parent.children.find(child => node.keys[0] === child)
 }
 
-const hasMatchingNodeAsSibling = node => {
+const hasMatchingNodeAsSibling = (node : NonStartNode) => {
   if (node.locked === false) {
     return node.parent.children.some(child => node.locks[0] == child)
   }
@@ -36,29 +58,41 @@ const hasMatchingNodeAsSibling = node => {
 
 // Main logic
 
-const KEY_ITEM_SINGLE_LOCK_COMBINE_ODDS = { true: 30, false: 70 }
+const KEY_ITEM_SINGLE_LOCK_COMBINE_ODDS : CoinFlipProbabilities = { true: 30, false: 70 }
 
-export const createRoomsFromSteps = (steps, randomizer) => {
+export const createRoomsFromSteps = (steps: VerifiedDungeon, randomizer: () => number) : RoomType[] => {
   let indexId = 0
-  const listOfAddedRoomNames = []
+  const listOfAddedRoomNames : string[] = []
 
-  const randomizeResult = odds => {
+  const randomizeResult = (odds : CoinFlipProbabilities) => {
     return 'true' === resultFromProbability(randomizer, odds, 'false')
   }
 
-  const createRoom = roomsToAdd => {
-    const roomsArray = Array.isArray(roomsToAdd) ? [...roomsToAdd] : [roomsToAdd]
+  const createRoom = (roomsToAdd : (Node | undefined)[] | Node) : RoomType => {
+    // const roomsArray = Array.isArray(roomsToAdd) ? [...roomsToAdd].filter(Boolean) : [roomsToAdd]
+    let roomsArray : Node[] = []
+
+    if (Array.isArray(roomsToAdd)) {
+      roomsToAdd.forEach(room => {
+        if (room) {
+          roomsArray.push(room)
+        }
+      })
+    } else {
+      roomsArray = [roomsToAdd]
+    }
+
     const toAdd = roomsArray.filter(room => !listOfAddedRoomNames.includes(room.name))
 
     if (!toAdd.length) {
-      return {}
+      return {} as RoomType // Gets filtered out below
     }
 
     toAdd.forEach(room => {
       listOfAddedRoomNames.push(room.name)
     })
 
-    const possibleParents = toAdd.map(node => node.parent).filter(parent => !toAdd.includes(parent))
+    const possibleParents = toAdd.map(node => node.parent).filter((parent : NonStartNode) => !toAdd.includes(parent))
     const uniqueParents = [...new Set(possibleParents)]
 
     return {
@@ -66,22 +100,25 @@ export const createRoomsFromSteps = (steps, randomizer) => {
       indexId: indexId++,
       roomName: toAdd[0].name,
       parentNode: uniqueParents[0],
+      isFirstRoom: false,
     }
   }
 
-  const createSingleRoom = node => {
+  const createSingleRoom = (node : Node | (Node | undefined)[]) => {
     roomGroups.push(createRoom(node))
   }
 
   let roomGroups = []
 
-  const createRoomFromChunk = chunk => {
+  const createRoomFromChunk = (chunk : (Node | undefined)[]) => {
     if (chunk.some(isSingleRoomPuzzle)) {
       chunk
         .slice()
         .filter(isSingleRoomPuzzle)
-        .forEach(room => {
-          chunk.push(findCorrespondingNodeAsSibling(room))
+        .forEach((room : NonStartNode)=> {
+          if (room) {
+            chunk.push(findCorrespondingNodeAsSibling(room))
+          }
         })
     }
 
@@ -90,12 +127,12 @@ export const createRoomsFromSteps = (steps, randomizer) => {
 
   const allPotentialNodes = steps.visitedPath.slice().reverse()
 
-  const createMiniBossRooms = node => {
+  const createMiniBossRooms = (node : NonStartNode) => {
     // Minibosses should have their own room
     const nodesToAdd = node.parent.children.filter(child => child.isMiniboss)
 
     // But if there is a single key possibility as a sibling, sometimes add it as a reward for the miniboss
-    const isKeyReward = node =>
+    const isKeyReward = (node : Node) =>
       isKey(node) &&
       (node.type === KeyType.MULTI_KEY ||
         node.type === KeyType.NORMAL_KEY ||
@@ -113,12 +150,12 @@ export const createRoomsFromSteps = (steps, randomizer) => {
     createSingleRoom(nodesToAdd)
   }
 
-  const createEndRooms = node => {
+  const createEndRooms = (node : NonStartNode) => {
     // The end will always be a boss fight room + treasure
     createSingleRoom(node)
   }
 
-  const createBossGateRooms = node => {
+  const createBossGateRooms = (node : NonStartNode) => {
     let hasAlreadyAdded = false
     if (node.parent.type === KeyType.EXTERNAL_KEY && isSingleChild(node.parent)) {
       const shouldAddExternalKey = randomizeResult({
@@ -135,7 +172,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
     }
   }
 
-  const createBossKeyRooms = node => {
+  const createBossKeyRooms = (node : NonStartNode) => {
     const lockingType = node.parent.type
     if (lockingType === KeyType.SINGLE_ROOM_PUZZLE || lockingType === KeyType.KEY_ITEM) {
       // If the node above is a combat/miniboss/puzzle room, keep bossKey as separate
@@ -176,7 +213,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
     }
   }
 
-  const createNormalKeyLockRooms = node => {
+  const createNormalKeyLockRooms = (node : NonStartNode) => {
     if (isKey(node)) {
       const isKeyReward = isParentPuzzle(node) || isParentCombat(node)
 
@@ -200,7 +237,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
           roomsToAdd.push(matchingGateToCurrentKey)
         } else {
           if (hasMatchingSibling) {
-            createSingleRoom(matchingGateToCurrentKey)
+            createSingleRoom(matchingGateToCurrentKey as Node)
           }
         }
 
@@ -233,7 +270,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
         } else if (node.parent.children.length === 2) {
           // In rooms where we only have a matching key and a gate, split them apart
           createSingleRoom(node)
-          createSingleRoom(findCorrespondingNodeAsSibling(node))
+          createSingleRoom(findCorrespondingNodeAsSibling(node) as Node)
         } else {
           // Cluster group randomly
           const newRoomChunks = randChunkSplit(randomizer, node.parent.children, 1, 3)
@@ -327,7 +364,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
     }
   }
 
-  const createCombatRoomRooms = node => {
+  const createCombatRoomRooms = (node : NonStartNode) => {
     if (isParentCombat(node)) {
       if (node.parent.children.length !== 2) {
         throw new Error('combat node duplicate has more children')
@@ -335,7 +372,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
 
       // Count number of waves (combat rooms in a row) to figure out probability
       let combatRoomsInARow = 1
-      let nodeToCheck = node.parent
+      let nodeToCheck : NonStartNode | undefined = node.parent
       while (nodeToCheck) {
         if (nodeToCheck.isCombat) {
           combatRoomsInARow++
@@ -347,7 +384,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
 
       const MAX_NUMBER_FOR_CONSIDERATION = 4
 
-      const multiTieredFightsProbabilities = {
+      const multiTieredFightsProbabilities : CombatProbabilities = {
         2: {
           true: 60,
           false: 40,
@@ -369,7 +406,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
           : randomizeResult(multiTieredFightsProbabilities[combatRoomsInARow])
 
       if (createMultiWaveRoom) {
-        const roomsToAdd = [...node.parent.children]
+        const roomsToAdd : (Node | undefined)[] = [...node.parent.children]
         let combatRoomNode = node.parent
         while (combatRoomNode.isCombat) {
           roomsToAdd.push(combatRoomNode)
@@ -400,17 +437,17 @@ export const createRoomsFromSteps = (steps, randomizer) => {
     }
   }
 
-  const createMultiKeyLockRooms = node => {
+  const createMultiKeyLockRooms = (node : NonStartNode) => {
     createSingleRoom(node)
   }
 
-  const createKeyItemRooms = node => {
+  const createKeyItemRooms = (node : NonStartNode) => {
     if (isParentStart(node)) {
       createSingleRoom(node)
     } else if (hasMatchingNodeAsSibling(node)) {
       // Create two rooms if the key item is locked by its sibling
       createSingleRoom(node)
-      createSingleRoom(findCorrespondingNodeAsSibling(node))
+      createSingleRoom(findCorrespondingNodeAsSibling(node) as Node)
     } else if (isKey(node) && (isParentCombat(node) || isParentPuzzle(node))) {
       // If the key is locked by a puzzle or combat room, it should be a separate room
       createSingleRoom(node)
@@ -503,7 +540,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
     }
   }
 
-  const createPuzzleRooms = node => {
+  const createPuzzleRooms = (node : NonStartNode) => {
     if (node.parent.children.length === 2 && hasMatchingNodeAsSibling(node)) {
       let hasAlreadyAdded = false
       if (node.parent.type === KeyType.EXTERNAL_KEY) {
@@ -524,7 +561,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
     }
   }
 
-  const createExternalItemRooms = node => {
+  const createExternalItemRooms = (node : NonStartNode) => {
     if (node.parent.type === KeyType.EXTERNAL_KEY) {
       const combineExternalKeyPuzzles = randomizeResult({ ['true']: 30, ['false']: 70 })
 
@@ -615,7 +652,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
     }
   }
 
-  const createSingleLockRooms = node => {
+  const createSingleLockRooms = (node : NonStartNode) => {
     const parentType = node.parent.type
     if (isKey(node)) {
       if (parentType === KeyType.SINGLE_ROOM_PUZZLE) {
@@ -632,7 +669,7 @@ export const createRoomsFromSteps = (steps, randomizer) => {
         if (hasMatchingNodeAsSibling(node)) {
           createSingleRoom(node)
         } else {
-          const isSingleLockKey = child => child.type === node.type && isKey(child)
+          const isSingleLockKey = (child : Node) => child.type === node.type && isKey(child)
           const hasAnotherKey = node.parent.children.some(isSingleLockKey)
           if (hasAnotherKey) {
             const gatherKeysTogether = randomizeResult({ true: 10, false: 90 })
@@ -712,8 +749,8 @@ export const createRoomsFromSteps = (steps, randomizer) => {
 
   let tries = 0
 
-  const startNode = allPotentialNodes.pop()
-  const externalKeys = []
+  const startNode : Node = allPotentialNodes.pop() as Node
+  const externalKeys : Node[] = []
   startNode.children.forEach(child => {
     if (child.type === KeyType.EXTERNAL_KEY && !child.locked) {
       externalKeys.push(child)
@@ -725,8 +762,9 @@ export const createRoomsFromSteps = (steps, randomizer) => {
   roomGroups.push(firstRoom)
 
   while (allPotentialNodes.length && tries++ < 1000) {
-    const currentNode = allPotentialNodes.shift()
-
+    const currentNode = allPotentialNodes.shift() as NonStartNode
+    
+    if (!currentNode) continue
     if (listOfAddedRoomNames.includes(currentNode.name)) continue
 
     if (currentNode.name === 'end') {

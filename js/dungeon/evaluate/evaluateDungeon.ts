@@ -2,9 +2,12 @@ import { getDistanceBetweenLeafs, getLockedDistanceBetweenLeafs } from './calcul
 import { drawDungeonTree } from '../ui/drawGraph.js'
 import { verifyDungeons } from './verifyDungeon.js'
 import { KeyType } from '../dungeonStructure/keyTypes.js'
+import { Node } from '../dungeonStructure/treeNode.js'
+import { VerifiedDungeon } from './verifyDungeon.js'
+import { RandomDungeon } from '../randomDungeons/createRandomDungeon.js'
 
-export const isMeaningfulBranch = node => {
-  const nodeHasBranchingBinaryChildren = node => {
+export const isMeaningfulBranch = (node : Node) => {
+  const nodeHasBranchingBinaryChildren = (node : Node) => {
     return node.children.length === 2 && node.children.every(child => child.children.length >= 2)
   }
   return node.hasChildren() && (node.children.length >= 3 || nodeHasBranchingBinaryChildren(node))
@@ -12,7 +15,8 @@ export const isMeaningfulBranch = node => {
 
 // TODO - try using dfs and comparing the results (because players will likely do both - bfs is unlikely to be the sole/popular strategy)
 
-const calculateVisitedPathCost = visitedPath => {
+const calculateVisitedPathCost = (visitedPath : Node[]) => {
+  // @ts-ignore
   window.visitedPath = visitedPath
   let index1 = 0
   let index2 = 1
@@ -29,11 +33,57 @@ const calculateVisitedPathCost = visitedPath => {
   return distance
 }
 
+// @ts-ignore
 window.calcPath = calculateVisitedPathCost
 
-export const calculateDungeonScore = dungeon => {
-  let dungeonInfo = {
-    aName: dungeon.dungeon.seedName || dungeon.seedName,
+type BossKeyMetrics = {
+  distanceToStart : number
+  distanceToGate : number
+  lockedDistance: number
+  lockedDistanceToStart: number
+}
+
+type KeyItemMetrics = {
+  distanceToStart : number
+  avgDistanceToGate: number
+  avgLockedDistance: number
+}
+
+type NormalKeyMetrics = {
+  avgDistance: number
+  lockedDistance: number
+}
+
+type DefaultKeyMetrics = {
+  avgDistance: number
+  avgLockedDistance: number
+}
+
+type TreeHeightMap = {
+  [currentHeight: number]: number
+}
+
+export type DungeonInfo = {
+  aName: number
+  keys: {
+    bossKey: BossKeyMetrics
+    keyItem: KeyItemMetrics
+    normalKey: NormalKeyMetrics
+    specialKey: DefaultKeyMetrics
+    multiKey: DefaultKeyMetrics
+    multiLock: DefaultKeyMetrics
+  }
+  numberOfMeaningfulBranches: number
+  maxHeight: number
+  criticalPathDistance: number
+  numberOfNodes: number
+  treeStructure: TreeHeightMap
+  visitedPath: Node[]
+}
+
+export const calculateDungeonScore = (dungeon: VerifiedDungeon) => {
+  let dungeonInfo : DungeonInfo = {
+    aName: dungeon.dungeon.seedName,
     keys: {
       bossKey: {
         distanceToStart: 0,
@@ -71,7 +121,7 @@ export const calculateDungeonScore = dungeon => {
     numberOfNodes: dungeon.visitedPath.length,
   }
 
-  dungeon.visitedPath.forEach(node => {
+  dungeon.visitedPath.forEach((node : Node) => {
     if (isMeaningfulBranch(node)) {
       dungeonInfo.numberOfMeaningfulBranches++
     }
@@ -88,11 +138,11 @@ export const calculateDungeonScore = dungeon => {
   })
 
   Object.keys(dungeon.keysGroupedByType).forEach(classifiedNodeKeys => {
-    const currentNodeGroup = dungeon.keysGroupedByType[classifiedNodeKeys]
+    const currentNodeGroup : Node[] = dungeon.keysGroupedByType[classifiedNodeKeys]
     if (currentNodeGroup.length) {
       switch (classifiedNodeKeys) {
         case KeyType.BOSS: {
-          currentNodeGroup.forEach(key => {
+          currentNodeGroup.forEach((key : Node) => {
             const bossGate = key.locks[0]
             dungeonInfo.keys.bossKey.distanceToGate = getDistanceBetweenLeafs(
               bossGate,
@@ -110,11 +160,11 @@ export const calculateDungeonScore = dungeon => {
 
         case KeyType.KEY_ITEM: {
           let totalKeyItemDistanceFromStart = 0
-          currentNodeGroup.forEach(key => {
+          currentNodeGroup.forEach((key : Node) => {
             totalKeyItemDistanceFromStart += key.calculateHeight()
 
             const keyItemLocks = key.locks
-            keyItemLocks.forEach(keyItemLock => {
+            keyItemLocks.forEach((keyItemLock : Node) => {
               dungeonInfo.keys.keyItem.avgDistanceToGate += getDistanceBetweenLeafs(
                 keyItemLock,
                 key
@@ -137,9 +187,9 @@ export const calculateDungeonScore = dungeon => {
         }
 
         case KeyType.MULTI_KEY: {
-          currentNodeGroup.forEach(key => {
+          currentNodeGroup.forEach((key : Node) => {
             const locks = key.locks
-            locks.forEach(lock => {
+            locks.forEach((lock : Node) => {
               dungeonInfo.keys.multiKey.avgDistance += getDistanceBetweenLeafs(lock, key).distance
               dungeonInfo.keys.multiKey.avgLockedDistance += getLockedDistanceBetweenLeafs(
                 lock,
@@ -156,9 +206,9 @@ export const calculateDungeonScore = dungeon => {
         }
 
         case KeyType.MULTI_LOCK: {
-          currentNodeGroup.forEach(key => {
+          currentNodeGroup.forEach((key : Node) => {
             const locks = key.locks
-            locks.forEach(lock => {
+            locks.forEach((lock : Node) => {
               dungeonInfo.keys.multiLock.avgDistance += getDistanceBetweenLeafs(lock, key).distance
               dungeonInfo.keys.multiLock.avgLockedDistance += getLockedDistanceBetweenLeafs(
                 lock,
@@ -176,9 +226,9 @@ export const calculateDungeonScore = dungeon => {
         }
 
         case KeyType.NORMAL_KEY: {
-          currentNodeGroup.forEach(key => {
+          currentNodeGroup.forEach((key : Node) => {
             const locks = key.locks
-            locks.forEach(lock => {
+            locks.forEach((lock : Node) => {
               dungeonInfo.keys.normalKey.avgDistance += getDistanceBetweenLeafs(lock, key).distance
               dungeonInfo.keys.normalKey.lockedDistance += getLockedDistanceBetweenLeafs(lock, key)
             })
@@ -192,9 +242,9 @@ export const calculateDungeonScore = dungeon => {
 
         case KeyType.COMBAT_KEY:
         case KeyType.SINGLE_LOCK_KEY:
-          currentNodeGroup.forEach(key => {
+          currentNodeGroup.forEach((key : Node) => {
             const locks = key.locks
-            locks.forEach(lock => {
+            locks.forEach((lock : Node) => {
               dungeonInfo.keys.specialKey.avgDistance += getDistanceBetweenLeafs(lock, key).distance
               dungeonInfo.keys.specialKey.avgLockedDistance += getLockedDistanceBetweenLeafs(
                 lock,
@@ -223,7 +273,7 @@ export const calculateDungeonScore = dungeon => {
   let avgTreeWidth = 0
   let maxTreeWidth = 0
 
-  Object.values(dungeonInfo.treeStructure).forEach(levelResult => {
+  Object.values(dungeonInfo.treeStructure).forEach((levelResult : number) => {
     avgTreeWidth += levelResult
     if (levelResult > maxTreeWidth) {
       maxTreeWidth = levelResult
@@ -239,10 +289,10 @@ export const evaluateDungeon = () => {
   const verifiedDungeons = verifyDungeons(drawDungeonTree(true))
   if (verifiedDungeons) {
     const evaluations = verifiedDungeons
-      .filter(dungeon => !!dungeon.visitedPath.length)
+      .filter((dungeon : VerifiedDungeon) => !!dungeon.visitedPath.length)
       .map(calculateDungeonScore)
 
-    const calcScore = (aScore, bScore) => {
+    const calcScore = (aScore : number, bScore : number) => {
       if (aScore > bScore) {
         return 1
       } else if (aScore < bScore) {
@@ -251,14 +301,14 @@ export const evaluateDungeon = () => {
       return 0
     }
 
-    const sortByNormalizedCriticalPath = (a, b) => {
+    const sortByNormalizedCriticalPath = (a: DungeonInfo, b: DungeonInfo) : number => {
       const aScore = a.criticalPathDistance / a.numberOfNodes
       const bScore = b.criticalPathDistance / b.numberOfNodes
       return calcScore(aScore, bScore)
     }
 
     // This one does not seem to be as important - obviously, we want increase this value, but not as important as critical path
-    const sortByBossKey = (a, b) => {
+    const sortByBossKey = (a: DungeonInfo, b: DungeonInfo) : number => {
       const aKey = a.keys.bossKey
       const aScore =
         (aKey.distanceToStart + aKey.distanceToGate) / a.maxHeight +
@@ -271,7 +321,7 @@ export const evaluateDungeon = () => {
       return calcScore(aScore, bScore)
     }
 
-    const sortByKeyItem = (a, b) => {
+    const sortByKeyItem = (a: DungeonInfo, b: DungeonInfo) : number => {
       const aKey = a.keys.keyItem
       const aScore =
         (aKey.distanceToStart + aKey.avgDistanceToGate) / a.maxHeight +
@@ -285,7 +335,7 @@ export const evaluateDungeon = () => {
       return calcScore(aScore, bScore)
     }
 
-    const sortBySumOfKeys = (a, b) => {
+    const sortBySumOfKeys = (a: DungeonInfo, b: DungeonInfo) : number => {
       const aKey = a.keys
       const aDistanceAvg =
         (aKey.normalKey.avgDistance +
@@ -293,12 +343,12 @@ export const evaluateDungeon = () => {
           aKey.multiKey.avgDistance +
           aKey.multiLock.avgDistance) /
         a.numberOfNodes
-      const aLockedDistance =
-        (aKey.normalKey.lockedDistance +
-          aKey.specialKey.lockedDistance +
-          aKey.multiLock.lockedDistance +
-          aKey.multiKey.lockedDistance) /
-        a.numberOfNodes
+      // const aLockedDistance =
+      //   (aKey.normalKey.lockedDistance +
+      //     aKey.specialKey.lockedDistance +
+      //     aKey.multiLock.lockedDistance +
+      //     aKey.multiKey.lockedDistance) /
+      //   a.numberOfNodes
 
       const bKey = b.keys
       const bDistanceAvg =
@@ -307,20 +357,20 @@ export const evaluateDungeon = () => {
           bKey.multiKey.avgDistance +
           bKey.multiLock.avgDistance) /
         b.numberOfNodes
-      const bLockedDistance =
-        (bKey.normalKey.lockedDistance +
-          bKey.specialKey.lockedDistance +
-          bKey.multiLock.lockedDistance +
-          bKey.multiKey.lockedDistance) /
-        b.numberOfNodes
+      // const bLockedDistance =
+      //   (bKey.normalKey.lockedDistance +
+      //     bKey.specialKey.lockedDistance +
+      //     bKey.multiLock.lockedDistance +
+      //     bKey.multiKey.lockedDistance) /
+      //   b.numberOfNodes
 
-      const aScore = aDistanceAvg + aLockedDistance
-      const bScore = bDistanceAvg + bLockedDistance
+      const aScore = aDistanceAvg // + aLockedDistance
+      const bScore = bDistanceAvg // + bLockedDistance
 
       return calcScore(aScore, bScore)
     }
 
-    const noLog = () => {}
+    const noLog = (_dungeon: DungeonInfo) => {}
     evaluations.sort(sortByBossKey).forEach(dungeon => noLog(dungeon))
     evaluations.sort(sortByKeyItem).forEach(dungeon => noLog(dungeon))
     evaluations.sort(sortBySumOfKeys).forEach(dungeon => noLog(dungeon))

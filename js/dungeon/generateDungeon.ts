@@ -42,14 +42,14 @@ import { KeyType } from './dungeonStructure/keyTypes.js'
 import { calculateDungeonScore } from './evaluate/evaluateDungeon.js'
 import { verifyDungeon } from './evaluate/verifyDungeon.js'
 import { createHardCodedDungeons } from './hardcodedDungeons/createHardcodedDungeons.js'
-import { makeRandomDungeon } from './randomDungeons/createRandomDungeon.js'
+import { makeRandomDungeon, RandomDungeon } from './randomDungeons/createRandomDungeon.js'
 import { drawRooms } from './ui/drawDungeon.js'
-import { createRoomsFromSteps as createRoomsFromSteps2 } from './createRoomsFromSteps.js'
+import { createRoomsFromSteps as createRoomsFromSteps2, RoomType } from './createRoomsFromSteps.js'
 import { generateSeedName } from './utils/seedName.js'
 
-const showRoomsAdded = (dungeonData, roomData) => {
+const showRoomsAdded = (dungeonData : RandomDungeon[], roomData: RoomType[]) => {
   return dungeonData.map(dungeon => {
-    const roomsAdded = []
+    const roomsAdded : string[] = []
     roomData.forEach(roomGroup => {
       roomGroup.nodesInRoom.forEach(room => {
         roomsAdded.push(room.name)
@@ -72,9 +72,12 @@ const showRoomsAdded = (dungeonData, roomData) => {
   })
 }
 
-export const createDungeons = currentStep => {
+const showHardcodedDungeons = (currentStep : number) => {
   let newDungeons = createHardCodedDungeons(currentStep)
-
+  let averageKeyItemPos = 0
+  let averageNumberOfSteps = 0
+  let leastAmountOfSteps = 100
+  
   const toShow = [
     // 'explorersCrypt',
     // 'waterTemple2',
@@ -101,13 +104,7 @@ export const createDungeons = currentStep => {
     // 'moonlitGrotto',
     // 'snakeRemains',
   ]
-
-  let averageKeyItemPos = 0
-  let averageNumberOfSteps = 0
-  let leastAmountOfSteps = 100
   let totalLength = newDungeons.length
-
-  let showDebugInfo = false
 
   newDungeons = newDungeons.filter(dungeon => {
     averageNumberOfSteps += dungeon.numberOfSteps
@@ -125,6 +122,8 @@ export const createDungeons = currentStep => {
     return toShow.includes(dungeon.seedName)
   })
 
+  let showDebugInfo = false
+
   averageKeyItemPos /= totalLength
   averageNumberOfSteps /= totalLength
 
@@ -134,9 +133,20 @@ export const createDungeons = currentStep => {
     console.log('leastAmountOfSteps', leastAmountOfSteps)
   }
 
+  return newDungeons
+}
+
+export const createDungeons = (currentStep: number) => {
   let dungeonInfo
-  let currentDungeon
+  let currentDungeon : RandomDungeon
   let seed
+  let displayHardcodedDungeons = false
+
+  let newDungeons : RandomDungeon[] = []
+
+  if (displayHardcodedDungeons) {
+    showHardcodedDungeons(currentStep)
+  }
 
   const shouldGenerate = true
   // seed = 1588517936366.1255 // Handle multiKey rooms better?
@@ -184,14 +194,14 @@ export const createDungeons = currentStep => {
   // seed = 1590529275861.6543 // missing negative number?
 
   // Working test
-  // seed = 1590705763952.6433
+  seed = 1590705763952.6433
 
   // Broken
   // seed = 1590529175745.4773 // did not place all
   // seed = 1590529229238.0076 // slow
   // seed = 1590698133823.4531 // Too much recursion error
 
-  // currentDungeon = makeRandomDungeon(currentStep, 1588407025859.6)
+  currentDungeon = makeRandomDungeon(currentStep, 1588407025859.6)
   // currentDungeon = makeRandomDungeon(currentStep, 1588408837510.7258)
   // currentDungeon = makeRandomDungeon(currentStep, 1588414788646.3752) // Problem with this one - we are generating a key lock pair that is technically skippable if key-locks are treated as non-unique
 
@@ -206,6 +216,7 @@ export const createDungeons = currentStep => {
       while (tries++ < 1000) {
         currentDungeon = makeRandomDungeon(currentStep)
         dungeonInfo = verifyDungeon(currentDungeon)
+        if (!dungeonInfo) continue
         const dungeonScore = calculateDungeonScore(dungeonInfo)
         if (dungeonScore.criticalPathDistance / dungeonScore.numberOfNodes > 5) {
           newDungeons.push(currentDungeon)
@@ -213,11 +224,16 @@ export const createDungeons = currentStep => {
         }
       }
     }
+
+    if (!dungeonInfo) {
+      throw new Error('No dungeoninof')
+    }
+
     console.log('seed', dungeonInfo.dungeon.seedName)
     const rooms = createRoomsFromSteps2(dungeonInfo, currentDungeon.randomizer)
     console.log('rooms', rooms)
     const totalRoomsAdded = rooms.reduce((accumulator, value) => {
-      return accumulator + value.nodesInRoom.length
+      return accumulator + (value.nodesInRoom ? value.nodesInRoom.length : 0)
     }, 0)
 
     if (totalRoomsAdded !== dungeonInfo.visitedPath.length) {
@@ -242,7 +258,15 @@ export const createDungeons = currentStep => {
 
   let hasPushedADungeon = false
 
-  const roomCount = {}
+  interface RoomHash {
+    [details: string]: number[]
+  }
+
+  interface RoomHashCount {
+    [details: string]: number
+  }
+
+  const roomCount : RoomHash = {}
 
   while (verificationTries++ < 50000) {
     if (verificationTries % 100 === 0) console.log('attempt:', verificationTries)
@@ -251,6 +275,7 @@ export const createDungeons = currentStep => {
     while (creationTries++ < 100) {
       currentDungeon = makeRandomDungeon(currentStep, newSeed)
       dungeonInfo = verifyDungeon(currentDungeon)
+      if (!dungeonInfo) continue
       const dungeonScore = calculateDungeonScore(dungeonInfo)
       if (dungeonScore.criticalPathDistance / dungeonScore.numberOfNodes > 5) {
         if (!hasPushedADungeon) {
@@ -261,6 +286,10 @@ export const createDungeons = currentStep => {
       } else {
         newSeed = generateSeedName()
       }
+    }
+
+    if (!dungeonInfo) {
+      throw new Error('No dungeoninof')
     }
 
     let rooms
@@ -275,7 +304,7 @@ export const createDungeons = currentStep => {
     rooms
       .filter(roomGroup => !roomGroup.isFirstRoom)
       .forEach(roomGroup => {
-        const roomKey = roomGroup.nodesInRoom
+        const roomKey = (roomGroup.nodesInRoom ? roomGroup.nodesInRoom : [])
           .map(node => {
             if (node.type === KeyType.SINGLE_ROOM_PUZZLE) {
               if (node.isPuzzle) return 'puzzle'
@@ -301,7 +330,7 @@ export const createDungeons = currentStep => {
       })
 
     const totalRoomsAdded = rooms.reduce((accumulator, value) => {
-      return accumulator + value.nodesInRoom.length
+      return accumulator + (value.nodesInRoom ? value.nodesInRoom.length : 0)
     }, 0)
 
     if (totalRoomsAdded !== dungeonInfo.visitedPath.length) {
@@ -317,11 +346,13 @@ export const createDungeons = currentStep => {
   }
 
   console.log('roomCount', roomCount)
-  const roomCountLengths = {}
+  const roomCountLengths : RoomHashCount = {}
   Object.keys(roomCount).forEach(key => {
     roomCountLengths[key] = roomCount[key].length
   })
   console.log('roomCountLengths', JSON.stringify(roomCountLengths))
+
+  if (!dungeonInfo) throw new Error('Needed DungeonInfo at this point')
 
   const rooms = createRoomsFromSteps2(dungeonInfo, currentDungeon.randomizer)
   const groupingCanvas = document.getElementById('dungeonRooms')

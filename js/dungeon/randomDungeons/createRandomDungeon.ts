@@ -1,6 +1,6 @@
 import { AleaRandomizer } from '../../utils/AleaRandomizer.js'
-import { Tree } from '../dungeonStructure/dungeonTree.js'
-import { HardCodedObstacle, Obstacle } from '../dungeonStructure/treeNode.js'
+import { Tree, Connection } from '../dungeonStructure/dungeonTree.js'
+import { HardCodedObstacle, Obstacle, NodeValue } from '../dungeonStructure/treeNode.js'
 import { generateSeedName } from '../utils/seedName.js'
 import { KeyType } from '../dungeonStructure/keyTypes.js'
 import {
@@ -130,7 +130,18 @@ const createRandomSteps2 = (tree : Tree, currentStep : number, randomizer : () =
   }
 }
 
-export const makeRandomDungeon = (currentStep : number, seedName : number, arrayOfSteps?: HardCodedObstacle[]) => {
+export type RandomDungeon = {
+  tree: Tree
+  randomizer: () => number
+  seedName: number
+  numberOfSteps: number
+  convertedSteps: Obstacle[]
+  nodes: NodeValue[]
+  connections: Connection[]
+  keyLockConnections: Connection[]
+}
+
+export const makeRandomDungeon = (currentStep : number, seedName? : number, arrayOfSteps?: HardCodedObstacle[]) : RandomDungeon => {
   if (!seedName) {
     seedName = generateSeedName()
   }

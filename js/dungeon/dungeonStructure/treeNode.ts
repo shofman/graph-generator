@@ -26,10 +26,10 @@ export type HardCodedObstacle  = Obstacle & {
   childrenToLock: Node[]
 }
 
-export type RandomObstacle = Obstacle & {
-  randomizer: () => number
-  childrenToLock: Node[]
-}
+// export type RandomObstacle = Obstacle & {
+//   randomizer: () => number
+//   // childrenToLock: Node[]
+// }
 
 export class Node {
   parent: Nullable<Node>
@@ -207,10 +207,8 @@ export class Node {
     isPuzzle,
     isMiniboss,
     color,
-    childrenToLock,
-    randomizer,
     probabilityToAdd,
-  } : RandomObstacle) {
+  } : Obstacle, randomizer: () => number, childrenToLock: Node[]) {
     const addedLocks : Node[] = []
     const addedKeys : Node[] = []
 
@@ -222,7 +220,7 @@ export class Node {
     let isLockingSingleRoom = false
     let isLockingSpecialLock = false
 
-    childrenToLock = childrenToLock.filter(child => {
+    const validChildren = childrenToLock.filter(child => {
       if (child.type === KeyType.SINGLE_ROOM_PUZZLE) {
         isLockingSingleRoom = true
       } else if (child.type === KeyType.SINGLE_LOCK_KEY) {
@@ -234,7 +232,7 @@ export class Node {
       )
     })
 
-    let nodeSubsets = getAllSubsets(childrenToLock).filter((item : Node[]) => item.length !== 0)
+    let nodeSubsets = getAllSubsets(validChildren).filter((item : Node[]) => item.length !== 0)
 
     if (isLockingSingleRoom) {
       nodeSubsets = nodeSubsets.filter((subsetArray : Node[]) => {
@@ -245,7 +243,7 @@ export class Node {
       })
     }
 
-    childrenToLock.forEach(child => {
+    validChildren.forEach(child => {
       let result
       if (forceAdd) {
         result = 1
@@ -273,7 +271,7 @@ export class Node {
     if (!hasAdded) {
       // Pick one entry at random
       const lockNode = createNode(`${name}Gate`, color)
-      const childToLock = childrenToLock[Math.floor(randomizer() * childrenToLock.length)]
+      const childToLock = validChildren[Math.floor(randomizer() * validChildren.length)]
 
       if (childToLock.type === KeyType.SINGLE_ROOM_PUZZLE) {
         if (childToLock.locked) {
