@@ -11,10 +11,12 @@ const createConnection = (start: string, end: string) : Connection => ({ from: s
 
 export class Tree {
   rootValue: Node
+  endValue: Node
 
   constructor() {
     this.rootValue = createNode('start', '#96c2fc', null)
     this.rootValue.setType(KeyType.START)
+    this.endValue = this.addEndState()
   }
 
   draw() {
@@ -64,40 +66,38 @@ export class Tree {
     return endNode
   }
 
-  createBossObstacle(endNode: Node){
+  createBossObstacle(){
     return {
       name: 'boss',
       type: KeyType.BOSS,
       numberOfKeys: 1,
       numberOfLocks: 1,
       color: 'red',
-      getChildrenToLock: () => [endNode],
     }
   }
 
   // Ignore the hardcoded values for now
   // @ts-ignore
   createHardCodedDungeon(step, uniqueObstacles) {
-    const baseObstacles = [this.createBossObstacle(this.addEndState())]
+    const baseObstacles = [this.createBossObstacle()]
     const obstacles = baseObstacles.concat(uniqueObstacles).slice(0, step)
     this.addDungeonObstacles(obstacles)
     return obstacles.length
   }
 
   createRandomDungeon(step : number, randomizer : () => number, uniqueObstacles : Obstacle[]) : number {
-    const baseObstacles = [this.createRandomBossObstacle(this.addEndState())]
+    const baseObstacles = [this.createRandomBossObstacle()]
     const obstacles = baseObstacles.concat(uniqueObstacles).slice(0, step)
     this.addRandomDungeonObstacles(obstacles, randomizer)
 
     return obstacles.length
   }
 
-  createRandomBossObstacle(endNode : Node) : Obstacle {
+  createRandomBossObstacle() : Obstacle {
     return {
       name: 'boss',
       type: KeyType.BOSS,
       color: 'red',
-      getChildrenToLock: () => [endNode],
       isSingleKey: true,
       isSingleLock: true,
       probabilityToAdd: '100',
@@ -119,7 +119,7 @@ export class Tree {
 
   addRandomDungeonObstacles(obstacles : Obstacle[], randomizer : () => number) {
     obstacles.forEach(obstacle => {
-      this.rootValue.addRandomObstacle(obstacle, randomizer, obstacle.getChildrenToLock(this.rootValue))
+      this.rootValue.addRandomObstacle(obstacle, randomizer, this.rootValue.getChildren())
     })
   }
 }

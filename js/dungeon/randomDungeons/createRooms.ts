@@ -10,7 +10,6 @@ export const createRandomLock = (name: string, type : KeyType, color: string) : 
     name,
     type,
     color,
-    getChildrenToLock: rootValue => rootValue.getChildren(),
     isSingleLock: true,
     isSingleKey: true,
   }
@@ -21,7 +20,6 @@ export const createRandomMiniboss = (name : string) : Obstacle => {
     name,
     type: KeyType.SINGLE_ROOM_PUZZLE,
     color: 'purple',
-    getChildrenToLock: rootValue => rootValue.getChildren(),
     isSingleKey: true,
     isSingleLock: true,
     isMiniboss: true,
@@ -33,7 +31,6 @@ export const createRandomKeyItem = (name : string, numberOfLocks: number) : Obst
     name,
     type: KeyType.KEY_ITEM,
     color: 'lightgreen',
-    getChildrenToLock: rootValue => rootValue.getChildren(),
     isSingleKey: true,
     isSingleLock: numberOfLocks === 1,
   }
@@ -44,7 +41,6 @@ export const createRandomMultiLock = (name : string, color : string) : Obstacle 
     name,
     type: KeyType.MULTI_LOCK,
     color,
-    getChildrenToLock: rootValue => rootValue.getChildren(),
     isSingleKey: true,
     isSingleLock: false,
   }
@@ -55,7 +51,6 @@ export const createRandomMultiKey = (name : string, color : string) : Obstacle =
     name,
     type: KeyType.MULTI_KEY,
     color,
-    getChildrenToLock: rootValue => rootValue.getChildren(),
     isSingleLock: true,
     isSingleKey: false,
   }

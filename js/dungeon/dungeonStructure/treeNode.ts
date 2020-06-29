@@ -9,14 +9,13 @@ export type NodeValue = {
 
 export type Obstacle = {
   name: string,
+  color: string,
   type: KeyType,
   isSingleLock: boolean
   isSingleKey: boolean
   isCombat?: boolean
   isPuzzle?: boolean
   isMiniboss?: boolean
-  color: string,
-  getChildrenToLock: (rootValue : Node) => Node[]
   probabilityToAdd?: string,
 }
 
@@ -26,23 +25,20 @@ export type HardCodedObstacle  = Obstacle & {
   childrenToLock: Node[]
 }
 
-// export type RandomObstacle = Obstacle & {
-//   randomizer: () => number
-//   // childrenToLock: Node[]
-// }
-
 export class Node {
   parent: Nullable<Node>
-  locks: Array<Node>
-  keys: Array<Node>
   locked: boolean
   name: string
   value: NodeValue
   children: Array<Node>
   type: KeyType
+
   isCombat: boolean
   isPuzzle: boolean
   isMiniboss: boolean
+
+  locks: Array<Node>
+  keys: Array<Node>
 
   constructor(parent : Nullable<Node>, value : NodeValue) {
     this.parent = parent
