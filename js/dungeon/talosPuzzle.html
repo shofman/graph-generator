@@ -1,0 +1,129 @@
+<html lang="en">
+<head>
+    <script type="text/javascript" src="./ui/vis.js"></script>
+    <link href="./ui/vis.css" rel="stylesheet" type="text/css" />
+
+    <style type="text/css">
+        #generation, #mynetwork {
+            float: left;
+        }
+        #generation2 {
+            display: block;
+        }
+        #dungeonVisual, #dungeonRooms {
+            border: 1px solid black;
+            float: left;
+        }
+
+        #dungeonVisual {
+            max-width: 1000px;
+            min-width: 400px;
+        }
+        .space-left {
+            margin-left: 18px;
+        }
+        .dungeon-grouping {
+            display: flex;
+            flex-direction: column;
+        }
+        .dungeon-header {
+            flex-direction: row;
+        }
+        table {
+            table-layout: fixed;
+            width: 100%;
+        }
+    
+        table td {
+            width: 50px;
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid lightgray;
+            word-wrap: break-word;
+        }
+
+        ul, li {
+            margin: 0;
+            padding: 0;
+        }
+
+        li {
+            list-style: none;
+        }
+
+        td.filled {
+            background: lightgray;
+            border: 4px solid black;
+            padding: 10px;
+        }
+
+        td.filled {
+            min-width: 20px;
+        }
+
+        td.empty {
+            display: none;
+        }
+
+        td.lower-parent {
+            border-bottom: 0px solid black;
+        }
+
+        td.upper-child {
+            border-top: 0px solid black;
+        }
+
+        td.left-child {
+            border-left: 0px solid black;
+        }
+
+        td.right-parent {
+            border-right: 0px solid black;
+        }
+
+        td.right-child {
+            border-right: 0px solid black;
+        }
+
+        td.left-parent {
+            border-left: 0px solid black;
+        }
+
+        td.lower-child {
+            border-bottom: 0px solid black;
+        }
+
+        td.upper-parent {
+            border-top: 0px solid black;
+        }
+        .dungeon-room-visual {
+            display: flex;
+        }
+        #roomdebugger {
+            display: flex;
+            flex-direction: column;
+            float: left;
+        }
+    </style>
+</head>
+<body>
+    
+<script type="module" src="../built/dungeon/generatePuzzle.js"></script>
+
+<button id="rewind" onclick="rewind()">-</button>
+<input id="generation" type="range" min="0" range="1" onchange="drawDungeonTree()"/>
+<button id="advance" onclick="advance()">+</button>
+<input id="keys" type="checkbox" onchange="drawDungeonTree()"/>
+<button id="verify" onclick="verify()">Verify</button>
+<button id="evaluate" onclick="evaluateDungeon()">Evaluate</button>
+<span id="seed"></span>
+<button id="generation2" onclick="drawDungeonTree()" type="button">Refresh</button>
+
+<div id="roomdebugger">
+    <div id="mynetwork"></div>
+
+    <canvas id="laser-puzzle"></canvas>
+</div>
+
+</body>
+</html>

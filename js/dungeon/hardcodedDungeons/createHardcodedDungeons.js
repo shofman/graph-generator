@@ -55,7 +55,8 @@ import {
   fireTemple,
   jabujabuOcarina,
 } from './hardcodedDungeons.js'
-import { Tree } from '../dungeonStructure/dungeonTree.js'
+import { testPuzzle } from './hardcodedPuzzles.js'
+import { Tree } from '../../dungeon/dungeonStructure/dungeonTree.js'
 import { generateSeedName } from '../utils/seedName.js'
 
 const makeDungeon = (currentStep, seedName, arrayOfSteps = fortressOfWinds) => {
@@ -147,4 +148,12 @@ export const createHardCodedDungeons = currentStep => {
   newDungeons.push(makeDungeon(currentStep, 'dragonRoostCavern', dragonRoostCavern))
 
   return newDungeons
+}
+
+export const createHardcodedPuzzles = currentStep => {
+  const newPuzzles = []
+
+  newPuzzles.push(makeDungeon(currentStep, 'testPuzzle', testPuzzle))
+
+  return newPuzzles
 }
